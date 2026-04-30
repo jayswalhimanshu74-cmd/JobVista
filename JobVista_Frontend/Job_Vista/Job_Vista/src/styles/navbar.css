@@ -1,0 +1,79 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  position: relative;
+  background: #0f172a;
+  color: white;
+}
+
+/* LEFT */
+.logo {
+  font-size: 22px;
+  font-weight: 600;
+  color: #38bdf8;
+}
+
+/* CENTER */
+.nav-center {
+  display: flex;
+  gap: 40px;
+  list-style: none;
+}
+
+.nav-center a {
+  text-decoration: none;
+  color: #cbd5f5;
+  font-size: 15px;
+  transition: 0.3s;
+}
+
+.nav-center a:hover {
+  color: white;
+  transform: scaleY(1.05);
+}
+
+/* RIGHT */
+.nav-right {
+  display: flex;
+  gap: 12px;
+}
+
+/* BUTTON BASE */
+.btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+}
+
+/* PROFILE */
+.profile-btn {
+  background: #1e293b;
+  color: white;
+}
+
+/* LOGOUT */
+.logout-btn {
+  background: #ef4444;
+  color: white;
+}
+
+/* LOGIN */
+.login-btn {
+  background: transparent;
+  color: white;
+  border: 1px solid #334155;
+}
+
+/* SIGNUP */
+.signup-btn {
+  background: #38bdf8;
+  color: black;
+}
+.navbar {
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
