@@ -81,5 +81,23 @@ public class UserController {
 
         return ResponseEntity.ok(userService.getUserById(id));
     }
+
+    @PostMapping("/upload-photo")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> uploadProfilePicture(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        String email = securityUtil.getCurrentUserEmail();
+        String fileName = userService.uploadProfilePicture(email, file);
+        return ResponseEntity.ok(fileName);
+    }
+
+    @PostMapping("/upload-cover")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> uploadCoverPhoto(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        String email = securityUtil.getCurrentUserEmail();
+        String fileName = userService.uploadCoverPhoto(email, file);
+        return ResponseEntity.ok(fileName);
+    }
 }
 

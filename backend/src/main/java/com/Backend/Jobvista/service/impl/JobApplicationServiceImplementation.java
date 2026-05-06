@@ -35,6 +35,7 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
 
     @Override
     @PreAuthorize("hasRole('USER')")
+    @Transactional
     public JobApplicationResponseDToO applyToJob(UUID jobId, String email) {
 
         Job job = jobRepository.findByJobId(jobId)
@@ -50,6 +51,7 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
                 .orElseGet(() -> {
                     JobSeeker newProfile = new JobSeeker();
                     newProfile.setUser(user);
+                    newProfile.setJobSeekerId(UUID.randomUUID());
                     return jobSeekerRepository.save(newProfile);
                 });
 
@@ -62,19 +64,34 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
         JobApplication application = JobApplication.builder()
                 .job(job)
                 .jobSeeker(jobSeeker)
+                .jobApplicationId(UUID.randomUUID())
+                .applicationStatus(ApplicationStatus.APPLIED)
+                .appliedAt(java.time.LocalDateTime.now())
                 .build();
 
         JobApplication saved = applicationRepository.save(application);
-        eventPublisher.publishEvent(
-                new ApplicationEvent(
-                        user.getEmail(),
-                        user.getName(),
-                        job.getTitle(),
-                        "APPLIED",
-                        ApplicationEvent.EventType.APPLICATION_SUBMITTED,
-                        null
-                )
-        );
+        
+        // Fire-and-forget: run notification in a separate thread so it NEVER blocks the response
+        final String userEmail = user.getEmail();
+        final String userName = user.getName();
+        final String jobTitle = job.getTitle();
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                eventPublisher.publishEvent(
+                        new ApplicationEvent(
+                                userEmail,
+                                userName,
+                                jobTitle,
+                                "APPLIED",
+                                ApplicationEvent.EventType.APPLICATION_SUBMITTED,
+                                null
+                        )
+                );
+            } catch (Exception e) {
+                System.err.println("Background notification failed (non-blocking): " + e.getMessage());
+            }
+        });
+        
         return JobApplicationMapper.toResponse(saved);
     }
 
@@ -240,6 +257,36 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
         }
 
         return applications.map(JobApplicationMapper::toResponse);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('USER')")
+    @Transactional
+    public void withdrawApplication(UUID jobId, String email) {
+        Job job = jobRepository.findByJobId(jobId)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Job not found"));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "User not found"));
+
+        JobSeeker jobSeeker = jobSeekerRepository.findByUser(user)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Job seeker profile not found"));
+
+        JobApplication application = applicationRepository.findByJobAndJobSeeker(job, jobSeeker)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Application not found"));
+
+        // Only allow withdrawal if still in APPLIED status
+        if (application.getApplicationStatus() != ApplicationStatus.APPLIED) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Cannot withdraw application with status: " + application.getApplicationStatus());
+        }
+
+        applicationRepository.delete(application);
     }
 
 }

@@ -12,7 +12,7 @@ export default {
         accent: "#10B981",
       },
       fontFamily: {
-        sans: ["Segoe UI", "Tahoma", "Geneva", "Verdana", "sans-serif"],
+        sans: ["Poppins", "sans-serif"],
       },
     },
   },

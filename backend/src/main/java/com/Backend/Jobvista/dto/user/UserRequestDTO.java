@@ -17,5 +17,7 @@ public class UserRequestDTO {
     private String mobileNumber;
     private Role role;
     private Status status;
+    private String profilePicture;
+    private String coverPhoto;
 
 }

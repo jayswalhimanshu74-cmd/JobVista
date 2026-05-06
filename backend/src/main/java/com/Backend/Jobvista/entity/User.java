@@ -56,6 +56,9 @@
         private LocalDateTime createdAt= LocalDateTime.now();
         private LocalDateTime updatedAt = LocalDateTime.now();
 
+        private String profilePicture;
+        private String coverPhoto;
+
         @PrePersist
         public void onCreate() {
             LocalDateTime time = LocalDateTime.now();

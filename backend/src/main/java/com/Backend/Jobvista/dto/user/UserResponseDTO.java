@@ -25,6 +25,8 @@ public class UserResponseDTO {
     private String password;
     private LocalDateTime updatedAt;
     private Status status;
+    private String profilePicture;
+    private String coverPhoto;
 
     // getters & setters
 }

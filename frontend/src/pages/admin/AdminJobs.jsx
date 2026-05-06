@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../api/axiosConfig";
+import { 
+  Briefcase, 
+  MapPin, 
+  Calendar, 
+  Trash2, 
+  ChevronLeft, 
+  ChevronRight, 
+  Clock, 
+  AlertCircle, 
+  Check 
+} from "lucide-react";
 
 function AdminJobs() {
   const [jobs, setJobs] = useState([]);
@@ -22,12 +33,13 @@ function AdminJobs() {
     try {
       setLoading(true);
       const res = await axiosInstance.get("/job/all", {
-        params: { page: pageNum, size: 15 },
+        params: { page: pageNum, size: 10 },
       });
       setJobs(res.data.content || []);
       setTotalPages(res.data.totalPages || 0);
       setTotalElements(res.data.totalElements || 0);
       setPage(res.data.number || 0);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error("Failed to fetch jobs", err);
     } finally {
@@ -36,138 +48,165 @@ function AdminJobs() {
   };
 
   const handleDeleteJob = async (jobId) => {
-    if (!confirm("Are you sure you want to delete this job?")) return;
+    if (!confirm("Are you sure you want to delete this job listing? This action cannot be undone.")) return;
     try {
       await axiosInstance.delete(`/job/${jobId}`);
-      setJobs(jobs.filter((j) => j.jobId !== jobId));
-      showToast("Job deleted successfully");
+      setJobs(jobs.filter((j) => (j.jobId || j.id) !== jobId));
+      showToast("Job listing removed successfully");
     } catch (err) {
-      console.error("Delete failed", err);
       showToast(err.response?.data || "Failed to delete job", "error");
     }
   };
 
   const formatDate = (d) => {
     if (!d) return "—";
-    return new Date(d).toLocaleDateString("en-IN", {
+    return new Date(d).toLocaleDateString("en-US", {
       day: "2-digit", month: "short", year: "numeric",
     });
   };
 
-  const TYPE_COLORS = {
-    FULL_TIME: { bg: "rgba(125,211,192,0.2)", color: "#7dd3c0" },
-    PART_TIME: { bg: "rgba(108,143,220,0.2)", color: "#6c8fdc" },
-    INTERNSHIP: { bg: "rgba(245,169,98,0.2)", color: "#f5a962" },
-    CONTRACT: { bg: "rgba(168,85,247,0.2)", color: "#a855f7" },
-    FREELANCE: { bg: "rgba(239,68,68,0.2)", color: "#ff6b6b" },
+  const formatEnum = (str) => {
+    if (!str) return "—";
+    return str
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  };
+
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxVisible = 5;
+    let start = Math.max(0, page - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible);
+    if (end - start < maxVisible) start = Math.max(0, end - maxVisible);
+
+    for (let i = start; i < end; i++) {
+      buttons.push(
+        <button
+          key={i}
+          onClick={() => fetchJobs(i)}
+          style={{
+            width: "40px", height: "40px", borderRadius: "10px", border: "none",
+            background: i === page ? "var(--primary-gradient)" : "var(--bg-accent)",
+            color: i === page ? "white" : "var(--text-main)",
+            fontWeight: 800, cursor: "pointer", transition: "var(--transition)"
+          }}
+        >
+          {i + 1}
+        </button>
+      );
+    }
+    return buttons;
   };
 
   return (
-    <div className="admin-jobs">
+    <div className="admin-jobs-content">
       {toast && (
-        <div style={{
-          position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)",
-          padding: "12px 24px", borderRadius: 12, zIndex: 99999, fontWeight: 500,
-          background: toast.type === "error" ? "rgba(220,38,38,0.95)" : "rgba(5,150,105,0.95)",
-          color: "#fff", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", animation: "fadeIn 0.3s ease"
-        }}>
+        <div className={`comp-toast ${toast.type}`}>
+          {toast.type === "success" ? <Check size={18} /> : <AlertCircle size={18} />}
           {toast.msg}
         </div>
       )}
 
-      <div className="section-header">
-        <div>
-          <h1>Job Management</h1>
-          <p style={{ color: "#94a3b8", margin: "6px 0 0", fontSize: "0.95rem" }}>
-            {totalElements} job{totalElements !== 1 ? "s" : ""} on the platform
-          </p>
-        </div>
-      </div>
+      <header className="dashboard-header">
+        <h1>Job Inventory</h1>
+        <p>Global management of all employment opportunities on the platform</p>
+      </header>
 
-      {loading ? (
-        <p style={{ textAlign: "center", color: "#94a3b8", padding: 40 }}>Loading jobs...</p>
-      ) : jobs.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 60, color: "#64748b", background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)" }}>
-          <p style={{ fontSize: "1.2rem" }}>No jobs found</p>
+      <section className="dashboard-section" style={{ padding: "0 40px 40px" }}>
+        <div className="section-title-wrapper" style={{ padding: "40px 0 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 style={{ margin: 0 }}>
+            <Briefcase size={22} style={{ color: "var(--primary)", marginRight: "12px" }} />
+            Active Listings ({totalElements})
+          </h2>
         </div>
-      ) : (
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Job Title</th>
-                <th>Company</th>
-                <th>Location</th>
-                <th>Type</th>
-                <th>Salary</th>
-                <th>Posted</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.map((job) => {
-                const empType = job.employmentType || "";
-                const tc = TYPE_COLORS[empType] || { bg: "rgba(255,255,255,0.08)", color: "#94a3b8" };
-                return (
-                  <tr key={job.jobId || job.id}>
-                    <td className="title-cell">{job.title || "—"}</td>
-                    <td>{job.companyName || "—"}</td>
-                    <td>{job.location || "—"}</td>
-                    <td>
-                      <span style={{
-                        display: "inline-block", padding: "4px 10px", borderRadius: 14,
-                        fontSize: "0.78rem", fontWeight: 600,
-                        background: tc.bg, color: tc.color,
-                        border: `1px solid ${tc.color}33`,
-                      }}>
-                        {empType ? empType.replace(/_/g, " ") : "—"}
-                      </span>
-                    </td>
-                    <td style={{ whiteSpace: "nowrap" }}>{job.salaryOrStipend || "—"}</td>
-                    <td style={{ whiteSpace: "nowrap" }}>{formatDate(job.postedAt)}</td>
-                    <td className="action-cell">
-                      <button
-                        className="btn-small delete"
-                        onClick={() => handleDeleteJob(job.jobId)}
-                      >
-                        Delete
-                      </button>
-                    </td>
+
+        {loading ? (
+          <div className="comp-empty" style={{ padding: "80px" }}>
+            <Clock className="animate-spin" size={40} />
+            <p>Fetching platform job data...</p>
+          </div>
+        ) : jobs.length === 0 ? (
+          <div className="comp-empty" style={{ padding: "80px" }}>
+            <AlertCircle size={48} style={{ color: "#94a3b8", marginBottom: "16px" }} />
+            <p style={{ fontSize: "1.1rem", fontWeight: 700 }}>No listings found</p>
+            <p>There are currently no active job postings available.</p>
+          </div>
+        ) : (
+          <>
+            <div className="data-table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Position Title</th>
+                    <th>Listed By</th>
+                    <th>Location</th>
+                    <th>Type</th>
+                    <th>Salary</th>
+                    <th>Posted Date</th>
+                    <th style={{ textAlign: "right" }}>Actions</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                </thead>
+                <tbody>
+                  {jobs.map((job) => (
+                    <tr key={job.jobId || job.id}>
+                      <td className="title-cell">{job.title}</td>
+                      <td>{job.companyName || "Private Firm"}</td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <MapPin size={14} /> {job.location || "Remote"}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="comp-badge" style={{ background: "rgba(37,99,235,0.08)", color: "var(--primary)", fontWeight: 800, fontSize: "0.75rem" }}>
+                          {formatEnum(job.employmentType)}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 700 }}>{job.salaryOrStipend || "TBA"}</td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <Calendar size={14} /> {formatDate(job.postedAt)}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="actions-cell">
+                          <button className="admin-btn danger" onClick={() => handleDeleteJob(job.jobId || job.id)} title="Delete Job">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
-          <button
-            disabled={page === 0}
-            onClick={() => fetchJobs(page - 1)}
-            style={{
-              padding: "8px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.05)", color: "#cbd3de",
-              cursor: page === 0 ? "not-allowed" : "pointer", opacity: page === 0 ? 0.4 : 1,
-            }}
-          >‹ Prev</button>
-          <span style={{ padding: "8px 16px", color: "#94a3b8" }}>
-            Page {page + 1} of {totalPages}
-          </span>
-          <button
-            disabled={page + 1 >= totalPages}
-            onClick={() => fetchJobs(page + 1)}
-            style={{
-              padding: "8px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.05)", color: "#cbd3de",
-              cursor: page + 1 >= totalPages ? "not-allowed" : "pointer",
-              opacity: page + 1 >= totalPages ? 0.4 : 1,
-            }}
-          >Next ›</button>
-        </div>
-      )}
+            {totalPages > 1 && (
+              <div className="pagination-bar" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "40px" }}>
+                <button
+                  disabled={page === 0}
+                  onClick={() => fetchJobs(page - 1)}
+                  className="admin-btn edit"
+                  style={{ borderRadius: "10px", padding: "10px" }}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {renderPaginationButtons()}
+                </div>
+                <button
+                  disabled={page + 1 >= totalPages}
+                  onClick={() => fetchJobs(page + 1)}
+                  className="admin-btn edit"
+                  style={{ borderRadius: "10px", padding: "10px" }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }

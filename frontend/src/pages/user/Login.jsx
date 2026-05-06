@@ -8,14 +8,18 @@ import { AuthContext } from "../../context/AuthContext";
 function Login() {
 
    const { login } = useContext(AuthContext);
-
   const navigate = useNavigate();
-   const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-  const [error, setError] = useState("");
+  const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -47,7 +51,8 @@ function Login() {
       }
     } catch (error) {
       console.error("Login failed", error);
-      setError(error.response?.data?.message || "Login failed. Please check your credentials and try again.");
+      const msg = error.response?.data?.message || "Login failed. Please check your credentials.";
+      showToast(msg, "error");
     } finally {
       setLoading(false);
     }
@@ -55,17 +60,25 @@ function Login() {
 
   return (
     <div className="login-container">
+      {/* Toast */}
+      <div className="toast-container">
+        {toast && (
+          <div className={`app-toast toast-${toast.type}`}>
+            <span>{toast.message}</span>
+            <button onClick={() => setToast(null)} className="toast-close">✕</button>
+          </div>
+        )}
+      </div>
+
       <div className="login-card">
         <h2>Welcome Back</h2>
         <p className="login-subtitle">Login to your account</p>
-
-        {error && <div className="error-message" style={{ color: "red", marginBottom: "10px", fontSize: "14px", textAlign: "center" }}>{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <input
             type="email"
             name="email"
-            className="input"
+            className="login-input"
             placeholder="Enter your email"
             value={formData.email}
             onChange={handleChange}
@@ -75,14 +88,14 @@ function Login() {
           <input
             type="password"
             name="password"
-            className="input"
+            className="login-input"
             placeholder="Enter your password"
             value={formData.password}
             onChange={handleChange}
             required
           />
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
+          <button type="submit" className="login-btn" disabled={loading}>
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>

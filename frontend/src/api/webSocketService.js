@@ -33,7 +33,17 @@ class WebSocketService {
         }
 
         const subscription = this.stompClient.subscribe(topic, (message) => {
-            callback(JSON.parse(message.body));
+            try {
+                // Safely parse JSON or return the raw body if it's just a string
+                const body = message.body;
+                const parsed = (body && (body.startsWith('{') || body.startsWith('['))) 
+                    ? JSON.parse(body) 
+                    : body;
+                callback(parsed);
+            } catch (e) {
+                console.warn('WebSocket message parsing error:', e, 'Body:', message.body);
+                callback(message.body);
+            }
         });
 
         this.subscriptions.set(topic, subscription);
@@ -49,9 +59,14 @@ class WebSocketService {
     }
 
     disconnect() {
-        if (this.stompClient !== null) {
-            this.stompClient.disconnect();
+        if (this.stompClient !== null && this.stompClient.connected) {
+            try {
+                this.stompClient.disconnect();
+            } catch (e) {
+                console.warn("Error during WebSocket disconnect:", e);
+            }
         }
+        this.stompClient = null;
         this.subscriptions.clear();
         console.log("Disconnected WebSocket");
     }

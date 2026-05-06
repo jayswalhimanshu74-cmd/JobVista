@@ -107,14 +107,84 @@ public class UserServiceImplementation implements UserService {
 
     @Override
     @Transactional
-    public void deleteUserByEmail(String email) throws  UserNotFoundException {
+    public void deleteUserByEmail(String email) throws UserNotFoundException {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found"));
         // We need to delete dependent records first to avoid foreign key violations
         jobSeekerRepository.findByUser(user).ifPresent(jobSeekerRepository::delete);
         companyRepository.findByUser(user).ifPresent(companyRepository::delete);
-        // Assuming companyRepository is available, but UserServiceImplementation doesn't have it injected.
-        // It's better to inject it or handle it.
         userRepository.delete(user);
+    }
+
+    @Override
+    @Transactional
+    public String uploadProfilePicture(String email, org.springframework.web.multipart.MultipartFile file) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+
+        try {
+            // Validate file
+            if (file.isEmpty()) throw new RuntimeException("File is empty");
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new RuntimeException("Only image files are allowed");
+            }
+
+            // Delete old picture if exists and not a default one
+            if (user.getProfilePicture() != null) {
+                try {
+                    java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get("uploads/profiles/").resolve(user.getProfilePicture()));
+                } catch (Exception e) { /* ignore */ }
+            }
+
+            String fileName = user.getUserId() + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads/profiles/").toAbsolutePath().normalize();
+            java.nio.file.Files.createDirectories(uploadPath);
+
+            java.nio.file.Path filePath = uploadPath.resolve(fileName);
+            java.nio.file.Files.write(filePath, file.getBytes());
+
+            user.setProfilePicture(fileName);
+            userRepository.save(user);
+
+            return fileName;
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Profile picture upload failed", e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public String uploadCoverPhoto(String email, org.springframework.web.multipart.MultipartFile file) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+
+        try {
+            if (file.isEmpty()) throw new RuntimeException("File is empty");
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new RuntimeException("Only image files are allowed");
+            }
+
+            if (user.getCoverPhoto() != null) {
+                try {
+                    java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get("uploads/banners/").resolve(user.getCoverPhoto()));
+                } catch (Exception e) { /* ignore */ }
+            }
+
+            String fileName = "banner_" + user.getUserId() + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads/banners/").toAbsolutePath().normalize();
+            java.nio.file.Files.createDirectories(uploadPath);
+
+            java.nio.file.Path filePath = uploadPath.resolve(fileName);
+            java.nio.file.Files.write(filePath, file.getBytes());
+
+            user.setCoverPhoto(fileName);
+            userRepository.save(user);
+
+            return fileName;
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Cover photo upload failed", e);
+        }
     }
 }
 

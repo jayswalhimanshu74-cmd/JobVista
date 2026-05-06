@@ -45,4 +45,6 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication,L
     List<JobApplication> findTop5ByOrderByAppliedAtDesc();
 
     Page<JobApplication> findByApplicationStatus(ApplicationStatus status, Pageable pageable);
+
+    Optional<JobApplication> findByJobAndJobSeeker(Job job, JobSeeker jobSeeker);
 }

@@ -98,17 +98,14 @@ const Companies = () => {
   return (
     <div className="companies-container">
       {/* Toast */}
-      {toast && (
-        <div style={{
-          position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)",
-          padding: "12px 24px", borderRadius: 12, zIndex: 99999, fontWeight: 500,
-          background: toast.type === "error" ? "rgba(220,38,38,0.95)" : toast.type === "info" ? "rgba(15,23,42,0.95)" : "rgba(5,150,105,0.95)",
-          color: "#fff", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", fontFamily: "'Poppins',sans-serif",
-          animation: "fadeIn 0.3s ease",
-        }}>
-          {toast.msg}
-        </div>
-      )}
+      <div className="toast-container">
+        {toast && (
+          <div className={`app-toast toast-${toast.type}`}>
+            <span>{toast.msg}</span>
+            <button onClick={() => setToast(null)} className="toast-close">✕</button>
+          </div>
+        )}
+      </div>
 
       <div className="companies-header">
         <h1>Explore Top Companies</h1>
@@ -121,23 +118,25 @@ const Companies = () => {
       <div className="companies-grid">
         {companies.map((company) => (
           <div key={company.id || company.companyId} className="company-card">
-            <div className="company-header">
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                {company.logoUrl ? (
-                  <img src={company.logoUrl} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }}
-                    onError={(e) => { e.target.style.display = "none"; }} />
-                ) : (
-                  <span style={{
-                    width: 36, height: 36, borderRadius: 8, display: "inline-flex",
-                    alignItems: "center", justifyContent: "center",
-                    background: "rgba(108,143,220,0.2)", color: "#6c8fdc",
-                    fontSize: "1rem", fontWeight: 700, flexShrink: 0,
-                  }}>
-                    {(company.companyName || "?")[0].toUpperCase()}
-                  </span>
-                )}
-                <h3>{company.companyName}</h3>
-              </div>
+            <div className="company-header-row">
+              {company.logoUrl ? (
+                <div className="company-logo-container small">
+                  <img 
+                    src={company.logoUrl} 
+                    alt={company.companyName} 
+                    className="company-logo-img"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.parentElement.innerHTML = `<span class="company-letter-logo small">${(company.companyName || "?")[0].toUpperCase()}</span>`;
+                    }}
+                  />
+                </div>
+              ) : (
+                <span className="company-letter-logo small">
+                  {(company.companyName || "?")[0].toUpperCase()}
+                </span>
+              )}
+              <h3>{company.companyName}</h3>
             </div>
 
             {company.location && (
@@ -178,122 +177,105 @@ const Companies = () => {
       {/* Company Jobs Modal */}
       {selectedCompany && (
         <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 700 }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={handleCloseModal}>✕</button>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-              {selectedCompany.logoUrl ? (
-                <img src={selectedCompany.logoUrl} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover" }}
-                  onError={(e) => { e.target.style.display = "none"; }} />
-              ) : (
-                <span style={{
-                  width: 44, height: 44, borderRadius: 10, display: "inline-flex",
-                  alignItems: "center", justifyContent: "center",
-                  background: "rgba(108,143,220,0.2)", color: "#6c8fdc",
-                  fontSize: "1.2rem", fontWeight: 700,
-                }}>
-                  {(selectedCompany.companyName || "?")[0].toUpperCase()}
+            <div className="modal-header">
+              <div className="modal-logo-section">
+                {selectedCompany.logoUrl ? (
+                  <img src={selectedCompany.logoUrl} alt="" className="modal-company-logo" 
+                       onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}/>
+                ) : null}
+                <span className="modal-letter-avatar" style={{display: selectedCompany.logoUrl ? 'none' : 'flex'}}>
+                  {(selectedCompany.companyName || "C")[0]}
                 </span>
-              )}
+              </div>
               <div>
-                <h2 style={{ margin: 0 }}>{selectedCompany.companyName}</h2>
-                {selectedCompany.location && <p className="modal-subtitle" style={{ margin: 0 }}>📍 {selectedCompany.location}</p>}
+                <h2 className="modal-company-title">{selectedCompany.companyName}</h2>
+                {selectedCompany.location && <p className="modal-company-name">📍 {selectedCompany.location}</p>}
               </div>
             </div>
 
-            {selectedCompany.description && (
+            <div className="modal-body">
+              {selectedCompany.description && (
+                <div className="detail-section">
+                  <h3>About Company</h3>
+                  <p>{selectedCompany.description}</p>
+                </div>
+              )}
+
+              <div className="detail-grid">
+                {selectedCompany.companyEmail && (
+                  <div className="detail-item">
+                    <span className="label">Contact Email</span>
+                    <span className="value">{selectedCompany.companyEmail}</span>
+                  </div>
+                )}
+                {selectedCompany.companyWebsite && (
+                  <div className="detail-item">
+                    <span className="label">Official Website</span>
+                    <span className="value">
+                      <a href={selectedCompany.companyWebsite.startsWith("http") ? selectedCompany.companyWebsite : `https://${selectedCompany.companyWebsite}`}
+                        target="_blank" rel="noopener noreferrer" style={{ color: "var(--primary)", textDecoration: "none" }}>
+                        {selectedCompany.companyWebsite}
+                      </a>
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Jobs List */}
               <div className="detail-section">
-                <h3>About</h3>
-                <p>{selectedCompany.description}</p>
-              </div>
-            )}
+                <h3>Open Positions ({selectedCompany.jobs?.length || 0})</h3>
 
-            <div className="detail-grid">
-              {selectedCompany.companyEmail && (
-                <div className="detail-item">
-                  <span className="label">Email</span>
-                  <span className="value">{selectedCompany.companyEmail}</span>
-                </div>
-              )}
-              {selectedCompany.companyWebsite && (
-                <div className="detail-item">
-                  <span className="label">Website</span>
-                  <span className="value">
-                    <a href={selectedCompany.companyWebsite.startsWith("http") ? selectedCompany.companyWebsite : `https://${selectedCompany.companyWebsite}`}
-                      target="_blank" rel="noopener noreferrer" style={{ color: "#6c8fdc", textDecoration: "none" }}>
-                      {selectedCompany.companyWebsite}
-                    </a>
-                  </span>
-                </div>
-              )}
-            </div>
+                {selectedCompany.loadingJobs ? (
+                  <p style={{ color: "var(--text-light)", textAlign: "center", padding: 30 }}>Loading positions...</p>
+                ) : selectedCompany.jobs?.length > 0 ? (
+                  <div className="jobs-list">
+                    {selectedCompany.jobs.map((job) => {
+                      const jobId = job.jobId;
+                      const isApplied = appliedJobs.has(jobId);
+                      const isApplying = applyingId === jobId;
 
-            {/* Jobs List */}
-            <div className="detail-section">
-              <h3>Open Positions ({selectedCompany.jobs?.length || 0})</h3>
-
-              {selectedCompany.loadingJobs ? (
-                <p style={{ color: "#94a3b8", textAlign: "center", padding: 20 }}>Loading jobs...</p>
-              ) : selectedCompany.jobs?.length > 0 ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {selectedCompany.jobs.map((job) => {
-                    const jobId = job.jobId;
-                    const isApplied = appliedJobs.has(jobId);
-                    const isApplying = applyingId === jobId;
-
-                    return (
-                      <div key={jobId} style={{
-                        background: "rgba(255,255,255,0.04)", borderRadius: 12,
-                        padding: "14px 18px", border: "1px solid rgba(255,255,255,0.08)",
-                        display: "flex", justifyContent: "space-between", alignItems: "center",
-                        gap: 12, flexWrap: "wrap",
-                      }}>
-                        <div style={{ flex: 1, minWidth: 200 }}>
-                          <p style={{ margin: "0 0 4px", fontWeight: 600, color: "#f5f5fc", fontSize: "0.95rem" }}>
-                            💼 {job.title}
-                          </p>
-                          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", fontSize: "0.82rem", color: "#94a3b8" }}>
-                            {job.location && <span>📍 {job.location}</span>}
-                            {job.employmentType && (
-                              <span style={{
-                                padding: "2px 8px", borderRadius: 10,
-                                background: "rgba(108,143,220,0.15)", color: "#6c8fdc", fontSize: "0.78rem",
-                              }}>
-                                {job.employmentType.replace(/_/g, " ")}
-                              </span>
-                            )}
-                            {job.salaryOrStipend && <span>💰 {job.salaryOrStipend}</span>}
-                            {job.postedAt && <span>📅 {formatDate(job.postedAt)}</span>}
+                      return (
+                        <div key={jobId} className="job-item-card">
+                          <div className="job-item-info">
+                            <h4>{job.title}</h4>
+                            <div className="job-item-meta">
+                              {job.location && <span>📍 {job.location}</span>}
+                              {job.employmentType && (
+                                <span style={{ color: "var(--primary)", fontWeight: 600 }}>
+                                  💼 {job.employmentType.replace(/_/g, " ")}
+                                </span>
+                              )}
+                              {job.salaryOrStipend && <span>💰 {job.salaryOrStipend}</span>}
+                            </div>
                           </div>
-                        </div>
 
-                        <button
-                          disabled={isApplied || isApplying}
-                          onClick={() => handleApply(jobId)}
-                          style={{
-                            padding: "8px 20px", borderRadius: 8, border: "none",
-                            fontWeight: 600, fontSize: "0.85rem", cursor: isApplied ? "default" : "pointer",
-                            fontFamily: "'Poppins',sans-serif",
-                            background: isApplied
-                              ? "rgba(125,211,192,0.2)"
-                              : "linear-gradient(135deg, #145046, #7dd3c0)",
-                            color: isApplied ? "#7dd3c0" : "#fff",
-                            transition: "all 0.3s ease",
-                            minWidth: 100,
-                          }}
-                        >
-                          {isApplying ? "..." : isApplied ? "✓ Applied" : "Apply"}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p style={{ color: "#64748b", textAlign: "center", padding: 20 }}>No open positions available.</p>
-              )}
+                          <button
+                            disabled={isApplied || isApplying}
+                            onClick={() => handleApply(jobId)}
+                            className={`job-apply-btn ${isApplied ? "applied" : "primary"}`}
+                          >
+                            {isApplying ? "Applying..." : isApplied ? "✓ Applied" : "Apply Now"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p style={{ color: "var(--text-light)", textAlign: "center", padding: 30 }}>
+                    No open positions currently available at this company.
+                  </p>
+                )}
+              </div>
             </div>
 
-            <button className="modal-action-btn" onClick={handleCloseModal}>Close</button>
+            <div className="modal-footer">
+              <button className="modal-action-btn" onClick={handleCloseModal}>
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -8,6 +8,12 @@ import "../../styles/signup.css";
 function Signup() {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const [role, setRole] = useState("USER");
 
@@ -46,7 +52,7 @@ function Signup() {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match!");
+      showToast("Passwords do not match!", "error");
       return;
     }
 
@@ -101,21 +107,19 @@ function Signup() {
         } catch (companyErr) {
           console.error("Company setup error:", companyErr);
           // User was created but company profile failed — still redirect to login
-          alert("Account created! Company profile setup can be done from your dashboard. Please login.");
-          navigate("/login");
+          showToast("Account created! Profile setup needed.", "warning");
+          setTimeout(() => navigate("/login"), 1500);
           return;
         }
       }
 
       // For USER role, just go to login
-      alert("Signup successful! Please login.");
-      navigate("/login");
+      showToast("Signup successful! Please login.", "success");
+      setTimeout(() => navigate("/login"), 1500);
 
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        "Registration failed. Please try again."
-      );
+      const msg = err.response?.data?.message || "Registration failed. Please try again.";
+      showToast(msg, "error");
     } finally {
       setLoading(false);
     }
@@ -123,15 +127,25 @@ function Signup() {
 
   return (
     <div className="signup-container">
+      {/* Toast */}
+      <div className="toast-container">
+        {toast && (
+          <div className={`app-toast toast-${toast.type}`}>
+            <span>{toast.message}</span>
+            <button onClick={() => setToast(null)} className="toast-close">✕</button>
+          </div>
+        )}
+      </div>
+
       <div className="signup-card">
         <h2>Create Account</h2>
         <p className="signup-subtitle">Join JobVista today</p>
 
         {/* ROLE TOGGLERS */}
-        <div className="role-toggle p-2 m-2">
+        <div className="role-toggle">
           <button
             type="button"
-            className={`m-2 hover:bg-blue-800 text-white p-2 rounded-2xl ${role === "USER" ? "active-role" : ""}`}
+            className={`role-btn ${role === "USER" ? "active-role" : ""}`}
             onClick={() => setRole("USER")}
           >
             Job-Seeker
@@ -139,7 +153,7 @@ function Signup() {
 
           <button
             type="button"
-            className={`m-2 hover:bg-blue-800 text-white p-2 rounded-2xl ${role === "COMPANY" ? "active-role" : ""}`}
+            className={`role-btn ${role === "COMPANY" ? "active-role" : ""}`}
             onClick={() => setRole("COMPANY")}
           >
             Company

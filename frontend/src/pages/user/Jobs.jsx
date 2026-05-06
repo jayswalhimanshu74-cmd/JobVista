@@ -18,6 +18,7 @@ const Jobs = () => {
   const [applyingJobId, setApplyingJobId] = useState(null);
   const [savingJobId, setSavingJobId] = useState(null);
   const [appliedJobIds, setAppliedJobIds] = useState(new Set());
+  const [withdrawingJobId, setWithdrawingJobId] = useState(null);
 
   // Toast state
   const [toast, setToast] = useState(null);
@@ -110,12 +111,8 @@ const Jobs = () => {
       return;
     }
 
-    if (appliedJobIds.has(job.jobId)) {
-      showToast("You've already applied for this job!", "warning");
-      return;
-    }
-
-    if (applyingJobId === job.jobId) return;
+    // Guard against multiple actions
+    if (appliedJobIds.has(job.jobId) || applyingJobId === job.jobId || withdrawingJobId === job.jobId) return;
 
     try {
       setApplyingJobId(job.jobId);
@@ -131,26 +128,13 @@ const Jobs = () => {
       }
     } catch (error) {
       console.error("Apply error:", error);
+      const status = error.response?.status;
 
-      if (!error.response) {
-        showToast("Network error: Could not reach the server. Is the backend running?", "error");
-        return;
-      }
-
-      const status = error.response.status;
-      const serverMsg = error.response.data?.message || error.response.data?.error || "";
-
-      if (status === 400) {
-        // Profile/resume related issues
-        if (serverMsg.toLowerCase().includes("profile") || serverMsg.toLowerCase().includes("jobseeker")) {
-          showToast("Complete your profile first! Redirecting...", "warning");
-          setTimeout(() => navigate("/profile"), 2000);
-        } else if (serverMsg.toLowerCase().includes("resume")) {
-          showToast("Please upload your resume first! Redirecting...", "warning");
-          setTimeout(() => navigate("/resume"), 2000);
-        } else {
-          showToast(serverMsg || "Cannot apply right now.", "error");
-        }
+      if (status === 409) {
+        setAppliedJobIds(prev => new Set([...prev, job.jobId]));
+        showToast("You've already applied for this job!", "info");
+      } else if (status >= 500) {
+        showToast("Server error. Please try again in a moment.", "error");
       } else if (status === 401) {
         showToast("Session expired. Please log in again.", "error");
         localStorage.removeItem("accessToken");
@@ -159,17 +143,45 @@ const Jobs = () => {
         showToast("Permission denied. Only job seekers can apply.", "error");
       } else if (status === 404) {
         showToast("Job not found. It may have been removed.", "error");
-      } else if (status === 409) {
-        // Already applied (conflict)
-        setAppliedJobIds(prev => new Set([...prev, job.jobId]));
-        showToast("You've already applied for this job!", "warning");
-      } else if (status >= 500) {
-        showToast(`Server error: ${serverMsg || "Please try again later."}`, "error");
+      } else if (!error.response) {
+        showToast("Network error: Could not reach the server.", "error");
       } else {
-        showToast(`Unexpected error (${status}). Please try again.`, "error");
+        const serverMsg = error.response.data?.message || error.response.data?.error || "";
+        showToast(serverMsg || `Unexpected error (${status}). Please try again.`, "error");
       }
     } finally {
       setApplyingJobId(null);
+    }
+  };
+
+  const handleWithdrawClick = async (job) => {
+    if (withdrawingJobId === job.jobId || applyingJobId === job.jobId) return;
+
+    if (!window.confirm(`Are you sure you want to withdraw your application for "${job.title}"?`)) {
+      return;
+    }
+
+    try {
+      setWithdrawingJobId(job.jobId);
+      await jobService.withdrawJob(job.jobId);
+      
+      // Remove from applied locally
+      setAppliedJobIds(prev => {
+        const next = new Set(prev);
+        next.delete(job.jobId);
+        return next;
+      });
+      showToast("Application withdrawn successfully", "info");
+      
+      if (viewingJob?.jobId === job.jobId) {
+        setViewingJob(null);
+      }
+    } catch (error) {
+      console.error("Withdraw error:", error);
+      const msg = error.response?.data?.message || "Failed to withdraw application.";
+      showToast(msg, "error");
+    } finally {
+      setWithdrawingJobId(null);
     }
   };
 
@@ -201,13 +213,32 @@ const Jobs = () => {
   };
 
   const getApplyButtonState = (job) => {
+    if (withdrawingJobId === job.jobId) {
+      return { text: "Revoking...", disabled: true, className: "apply-btn withdrawing" };
+    }
     if (appliedJobIds.has(job.jobId)) {
-      return { text: "✓ Applied", disabled: true, className: "apply-btn applied" };
+      return { 
+        text: "Withdraw", 
+        disabled: false, 
+        className: "apply-btn applied withdraw-mode",
+        onClick: (e) => {
+          e.stopPropagation();
+          handleWithdrawClick(job);
+        }
+      };
     }
     if (applyingJobId === job.jobId) {
       return { text: "Applying...", disabled: true, className: "apply-btn applying" };
     }
-    return { text: "Apply Now", disabled: false, className: "apply-btn" };
+    return { 
+      text: "Apply Now", 
+      disabled: false, 
+      className: "apply-btn",
+      onClick: (e) => {
+        e.stopPropagation();
+        handleApplyClick(job);
+      }
+    };
   };
 
   const getPaginationNumbers = () => {
@@ -251,12 +282,14 @@ const Jobs = () => {
   return (
     <div className="jobs-container">
       {/* TOAST */}
-      {toast && (
-        <div className={`jobs-toast jobs-toast-${toast.type}`}>
-          <span>{toast.message}</span>
-          <button onClick={() => setToast(null)} className="toast-close">✕</button>
-        </div>
-      )}
+      <div className="toast-container">
+        {toast && (
+          <div className={`app-toast toast-${toast.type}`}>
+            <span>{toast.message}</span>
+            <button onClick={() => setToast(null)} className="toast-close">✕</button>
+          </div>
+        )}
+      </div>
 
       <div className="jobs-header">
         <h1>Find Your Dream Job</h1>
@@ -313,14 +346,33 @@ const Jobs = () => {
           return (
             <div key={job.id || index} className="job-card">
               {/* Card Header */}
-              <div className="job-card-top">
+              <div className="job-card-header">
+                <div className="company-info-row">
+                  {job.companyLogo || job.logoUrl ? (
+                    <div className="company-logo-container mini">
+                      <img 
+                        src={job.companyLogo || job.logoUrl} 
+                        alt={job.companyName} 
+                        className="company-logo-img"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.parentElement.innerHTML = `<span class="company-letter-logo mini">${(job.companyName || "?")[0].toUpperCase()}</span>`;
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <span className="company-letter-logo mini">
+                      {(job.companyName || "?")[0].toUpperCase()}
+                    </span>
+                  )}
+                  <span className="job-company-name">{job.companyName}</span>
+                </div>
                 <div className="job-card-title-row">
-                  <h3 className="job-title" style={{ color: "#f5f5fc",textDecoration: "none" }}>{job.title}</h3>
-                  <span className="job-type-badge" style={{ color: "#f5f5fc" }}>
+                  <h3 className="job-title">{job.title}</h3>
+                  <span className="job-type-badge">
                     {(job.employmentType || "").replace(/_/g, " ")}
                   </span>
                 </div>
-                <p className="job-company-name" style={{ color: "#a5b4fc" }}>🏢 {job.companyName}</p>
               </div>
 
               {/* Card Body */}
@@ -329,7 +381,7 @@ const Jobs = () => {
                   <span className="job-meta-item">📍 {job.location || "Remote"}</span>
                   <span className="job-meta-item salary">
                     💰 {job.salaryOrStipend || job.salary || "Not disclosed"}
-                  </span>
+                  </span> 
                 </div>
 
                 {job.requiredSkills && (
@@ -355,18 +407,19 @@ const Jobs = () => {
               {/* Card Actions */}
               <div className="job-card-actions">
                 <button
-                  className="save-btn"
+                  className={`save-btn ${job.isSaved || job.saved ? "saved" : ""}`}
                   onClick={() => handleSaveClick(job)}
                   disabled={savingJobId === job.jobId}
+                  title={job.isSaved || job.saved ? "Remove from saved" : "Save job"}
                 >
-                  {job.isSaved || job.saved ? "♥ Saved" : "♡ Save"}
+                  {job.isSaved || job.saved ? "❤️" : "🤍"}
                 </button>
                 <button className="view-btn" onClick={() => setViewingJob(job)}>
                   View Details
                 </button>
                 <button
                   className={applyState.className}
-                  onClick={() => handleApplyClick(job)}
+                  onClick={applyState.onClick || (() => handleApplyClick(job))}
                   disabled={applyState.disabled}
                 >
                   {applyState.text}
@@ -402,80 +455,87 @@ const Jobs = () => {
         <div className="modal-overlay" onClick={() => setViewingJob(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setViewingJob(null)}>✕</button>
-            <div className="job-details-modal">
-              <h2>{viewingJob.title}</h2>
-              <p className="modal-company">{viewingJob.companyName}</p>
-              <div className="job-info-grid">
-                <div className="info-item"><strong>Location:</strong> {viewingJob.location}</div>
-                <div className="info-item"><strong>Salary:</strong> {viewingJob.salaryOrStipend || viewingJob.salary || "Not disclosed"}</div>
-                <div className="info-item"><strong>Type:</strong> {(viewingJob.employmentType || "").replace(/_/g, " ")}</div>
+            
+            <div className="modal-header">
+              <div className="modal-logo-section">
+                {viewingJob.companyLogo || viewingJob.logoUrl ? (
+                  <img src={viewingJob.companyLogo || viewingJob.logoUrl} alt="" className="modal-company-logo" 
+                       onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}/>
+                ) : null}
+                <span className="modal-letter-avatar" style={{display: viewingJob.companyLogo || viewingJob.logoUrl ? 'none' : 'flex'}}>
+                  {(viewingJob.companyName || "J")[0]}
+                </span>
+              </div>
+              <div>
+                <h2 className="modal-job-title">{viewingJob.title}</h2>
+                <p className="modal-company-name">{viewingJob.companyName}</p>
+              </div>
+            </div>
+
+            <div className="modal-body">
+              <div className="modal-grid">
+                <div className="modal-info-card">
+                  <span className="modal-info-label">Location</span>
+                  <span className="modal-info-value">📍 {viewingJob.location || "Remote"}</span>
+                </div>
+                <div className="modal-info-card">
+                  <span className="modal-info-label">Salary Range</span>
+                  <span className="modal-info-value">💰 {viewingJob.salaryOrStipend || viewingJob.salary || "Not disclosed"}</span>
+                </div>
+                <div className="modal-info-card">
+                  <span className="modal-info-label">Job Type</span>
+                  <span className="modal-info-value">💼 {(viewingJob.employmentType || "").replace(/_/g, " ")}</span>
+                </div>
                 {viewingJob.experienceRequired != null && (
-                  <div className="info-item"><strong>Experience:</strong> {viewingJob.experienceRequired} years</div>
-                )}
-                {viewingJob.postedAt && (
-                  <div className="info-item"><strong>Posted:</strong> {formatDate(viewingJob.postedAt)} ({timeAgo(viewingJob.postedAt)})</div>
-                )}
-                {viewingJob.lastDate && (
-                  <div className="info-item"><strong>Last Date:</strong> {formatDate(viewingJob.lastDate)}</div>
+                  <div className="modal-info-card">
+                    <span className="modal-info-label">Experience</span>
+                    <span className="modal-info-value">🎓 {viewingJob.experienceRequired} Years</span>
+                  </div>
                 )}
               </div>
 
               {viewingJob.requiredSkills && (
-                <div className="job-description-section">
-                  <h3>Required Skills</h3>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <div className="modal-section">
+                  <h3 className="modal-section-title">Required Skills</h3>
+                  <div className="modal-skills-grid">
                     {viewingJob.requiredSkills.split(",").map((skill, i) => (
-                      <span key={i} style={{
-                        padding: "6px 14px",
-                        background: "rgba(108,143,220,0.15)",
-                        border: "1px solid rgba(108,143,220,0.3)",
-                        borderRadius: 20,
-                        fontSize: "0.85rem",
-                        color: "#a5b4fc"
-                      }}>{skill.trim()}</span>
+                      <span key={i} className="skill-chip">{skill.trim()}</span>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="job-description-section">
-                <h3>Job Description</h3>
-                <p>{viewingJob.description || "No description available"}</p>
+              <div className="modal-section">
+                <h3 className="modal-section-title">Job Description</h3>
+                <div className="modal-description">
+                  {viewingJob.description || "No detailed description available for this position."}
+                </div>
               </div>
 
               {viewingJob.redirectUrl && (
-                <a
-                  href={viewingJob.redirectUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "inline-block",
-                    marginBottom: 15,
-                    color: "#7dd3c0",
-                    textDecoration: "underline",
-                    fontSize: "0.95rem"
-                  }}
-                >
-                  🔗 View on company website
-                </a>
+                <div className="modal-redirect">
+                  <a href={viewingJob.redirectUrl} target="_blank" rel="noopener noreferrer">
+                    🔗 View Official Company Posting
+                  </a>
+                </div>
               )}
+            </div>
 
+            <div className="modal-footer">
+              <button className="view-btn" style={{ minWidth: "150px" }} onClick={() => setViewingJob(null)}>
+                Close
+              </button>
               {(() => {
                 const applyState = getApplyButtonState(viewingJob);
                 return (
                   <button
                     className={applyState.className}
-                    onClick={() => handleApplyClick(viewingJob)}
+                    onClick={applyState.onClick || (() => handleApplyClick(viewingJob))}
                     disabled={applyState.disabled}
-                    style={{
-                      width: "100%",
-                      padding: "14px 20px",
-                      marginTop: 10,
-                      fontSize: "1.05rem",
-                      ...(appliedJobIds.has(viewingJob.jobId) ? {
-                        background: "linear-gradient(135deg, #059669, #10b981)",
-                        cursor: "default"
-                      } : {})
+                    style={{ 
+                      minWidth: "200px",
+                      padding: "12px 30px",
+                      fontSize: "1rem"
                     }}
                   >
                     {applyState.text}
@@ -487,7 +547,9 @@ const Jobs = () => {
         </div>
       )}
     </div>
+    
   );
 };
+
 
 export default Jobs;

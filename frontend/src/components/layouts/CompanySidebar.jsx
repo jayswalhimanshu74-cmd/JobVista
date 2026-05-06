@@ -1,21 +1,24 @@
 import React from "react";
+import { LayoutDashboard, Briefcase, PlusCircle, Users, Settings } from "lucide-react";
 
 function CompanySidebar({ activeTab, setActiveTab, companyName }) {
   const tabs = [
-    { id: "overview", label: "Overview", icon: "📊" },
-    { id: "jobs", label: "My Jobs", icon: "💼" },
-    { id: "post", label: "Post Job", icon: "➕" },
-    { id: "applications", label: "Applications", icon: "📝" },
-    { id: "profile", label: "Company Profile", icon: "🏢" },
+    { id: "overview", label: "Dashboard", icon: <LayoutDashboard size={22} /> },
+    { id: "jobs", label: "My Jobs", icon: <Briefcase size={22} /> },
+    { id: "post", label: "Post a Job", icon: <PlusCircle size={22} /> },
+    { id: "applications", label: "Applications", icon: <Users size={22} /> },
+    { id: "profile", label: "Settings", icon: <Settings size={22} /> },
   ];
 
   return (
     <aside className="company-sidebar">
       <div className="sidebar-brand">
-        <h2>🏢 {companyName || "Company"}</h2>
-        <p>Company Dashboard</p>
+        <h2>
+        {companyName || "Company"}
+        </h2>
+        <p>Business Central</p>
       </div>
-      <div className="nav-items">
+      <nav className="nav-items">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -26,7 +29,7 @@ function CompanySidebar({ activeTab, setActiveTab, companyName }) {
             <span>{tab.label}</span>
           </button>
         ))}
-      </div>
+      </nav>
     </aside>
   );
 }

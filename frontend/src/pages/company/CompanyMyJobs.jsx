@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../api/axiosConfig";
+import { Edit, Trash2, MapPin, Calendar, Clock, AlertCircle } from "lucide-react";
 
 function CompanyMyJobs({ company, onEditJob }) {
   const [jobs, setJobs] = useState([]);
@@ -23,11 +24,11 @@ function CompanyMyJobs({ company, onEditJob }) {
   };
 
   const handleDelete = async (jobId) => {
-    if (!confirm("Delete this job listing?")) return;
+    if (!confirm("Are you sure you want to delete this job listing? This action cannot be undone.")) return;
     try {
       await axiosInstance.delete(`/job/${jobId}`);
       setJobs(jobs.filter(j => j.jobId !== jobId));
-      setToast({ msg: "Job deleted", type: "success" });
+      setToast({ msg: "Job listing deleted successfully", type: "success" });
       setTimeout(() => setToast(null), 3000);
     } catch (err) {
       setToast({ msg: "Failed to delete job", type: "error" });
@@ -37,64 +38,86 @@ function CompanyMyJobs({ company, onEditJob }) {
 
   const formatDate = (d) => {
     if (!d) return "—";
-    return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    return new Date(d).toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
+  };
+
+  const formatEnum = (str) => {
+    if (!str) return "—";
+    return str
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
   };
 
   return (
-    <div>
+    <div className="company-jobs-content">
       {toast && <div className={`comp-toast ${toast.type}`}>{toast.msg}</div>}
 
-      <div className="comp-page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div>
-          <h1>My Jobs</h1>
-          <p>{jobs.length} job listing{jobs.length !== 1 ? "s" : ""}</p>
-        </div>
-      </div>
+      <header className="comp-page-header">
+        <h1>My Job Listings</h1>
+        <p>Manage and track your active job opportunities</p>
+      </header>
 
       {loading ? (
-        <p style={{ color: "#94a3b8", textAlign: "center", padding: 40 }}>Loading...</p>
+        <div className="comp-empty">
+          <Clock className="animate-spin" size={40} />
+          <p>Loading your job listings...</p>
+        </div>
       ) : jobs.length === 0 ? (
         <div className="comp-empty">
-          <p style={{ fontSize: "1.2rem" }}>No jobs posted yet</p>
-          <p>Click "Post Job" in the sidebar to create your first listing!</p>
+          <AlertCircle size={48} style={{ color: "#94a3b8", marginBottom: "16px" }} />
+          <p style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-main)" }}>No jobs posted yet</p>
+          <p>Start hiring by creating your first job listing today.</p>
         </div>
       ) : (
-        <div className="comp-section" style={{ padding: 0, overflow: "hidden" }}>
-          <table className="comp-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Location</th>
-                <th>Type</th>
-                <th>Salary</th>
-                <th>Posted</th>
-                <th>Deadline</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.map((job) => (
-                <tr key={job.jobId}>
-                  <td className="title-cell">{job.title}</td>
-                  <td>{job.location || "—"}</td>
-                  <td>
-                    <span className="comp-badge" style={{ background: "rgba(108,143,220,0.15)", color: "#6c8fdc" }}>
-                      {(job.employmentType || "").replace(/_/g, " ")}
-                    </span>
-                  </td>
-                  <td>{job.salaryOrStipend || "—"}</td>
-                  <td style={{ whiteSpace: "nowrap" }}>{formatDate(job.postedAt)}</td>
-                  <td style={{ whiteSpace: "nowrap" }}>{formatDate(job.lastDate)}</td>
-                  <td>
-                    <div className="comp-actions">
-                      <button className="comp-btn small edit" onClick={() => onEditJob(job)}>Edit</button>
-                      <button className="comp-btn small delete" onClick={() => handleDelete(job.jobId)}>Delete</button>
-                    </div>
-                  </td>
+        <div className="comp-section" style={{ padding: "0 40px 40px" }}>
+          <div className="comp-table-container">
+            <table className="comp-table">
+              <thead>
+                <tr>
+                  <th>Job Title</th>
+                  <th>Location</th>
+                  <th>Type</th>
+                  <th>Salary</th>
+                  <th>Deadline</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {jobs.map((job) => (
+                  <tr key={job.jobId}>
+                    <td className="title-cell">{job.title}</td>
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <MapPin size={14} /> {job.location || "Remote"}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="comp-badge" style={{ background: "rgba(37,99,235,0.08)", color: "var(--primary)" }}>
+                        {formatEnum(job.employmentType)}
+                      </span>
+                    </td>
+                    <td style={{ fontWeight: 700, color: "var(--text-main)" }}>{job.salaryOrStipend || "Not specified"}</td>
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Calendar size={14} /> {formatDate(job.lastDate)}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="comp-actions" style={{ justifyContent: "flex-end" }}>
+                        <button className="comp-btn edit" onClick={() => onEditJob(job)} title="Edit Job">
+                          <Edit size={16} />
+                        </button>
+                        <button className="comp-btn delete" onClick={() => handleDelete(job.jobId)} title="Delete Job">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
@@ -102,3 +125,4 @@ function CompanyMyJobs({ company, onEditJob }) {
 }
 
 export default CompanyMyJobs;
+

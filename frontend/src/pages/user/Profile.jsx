@@ -4,80 +4,57 @@ import jobService from "../../api/jobService";
 import profileService from "../../api/profileService";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { 
+  User, Mail, Phone, MapPin, Briefcase, GraduationCap, 
+  Code, Star, Check, Trash2, Edit3, Clock, 
+  AlertCircle, ChevronRight, ShieldCheck, FileText, Bookmark,
+  Award, Globe, Target
+} from "lucide-react";
 
 const Profile = () => {
   const { logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  // 1. State Management
   const [user, setUser] = useState({
-    fullName: "", email: "", phone: "",
-    skills: "", experience: "", education: "",
-    careerGoal: "", profilePicture: "",
-    companyName: "", companyEmail: "", companyLocation: "",
-    companyWebsite: "", description: "", logoUrl: "",
+    fullName: "", email: "", phone: "", skills: "", 
+    experience: "", education: "", careerGoal: "", 
+    profilePicture: "", location: "", resumeUrl: ""
   });
   const [role, setRole] = useState("USER");
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState("overview");
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [savedJobs, setSavedJobs] = useState([]);
-  const [companyPostedJobs, setCompanyPostedJobs] = useState([]);
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [applicants, setApplicants] = useState([]);
-  const [postJobForm, setPostJobForm] = useState({ title: "", description: "", responsibilities: "", requirements: "", salaryMin: "", salaryMax: "", location: "", jobType: "FULL_TIME", experienceLevel: "ENTRY_LEVEL", applicationDeadline: "" });
   const token = localStorage.getItem("accessToken");
 
-  const showToast = (msg) => {
-    setToast(msg);
+  // 2. Utility Functions
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
   const parseList = (v) => v ? v.split(",").map(s => s.trim()).filter(Boolean) : [];
 
-  const avatarUrl = (u) =>
-    u.profilePicture ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || "U")}&background=2563eb&color=fff&size=88&bold=true`;
+  const getProfileProgress = () => {
+    let fields = [user.fullName, user.phone, user.skills, user.experience, user.education, user.careerGoal, user.location];
+    let completed = fields.filter(f => f && f.toString().length > 0).length;
+    return Math.round((completed / fields.length) * 100);
+  };
 
+  // 3. Lifecycle & Data Fetching
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
-
     const fetchProfile = async () => {
       try {
-        const cached = localStorage.getItem("profileData");
-        if (cached) {
-          setUser(prev => ({ ...prev, ...JSON.parse(cached) }));
-          setLoading(false);
-        }
+        setLoading(true);
         const userRes = await profileService.getUserProfile();
-        const userRole = userRes.role;
-        setRole(userRole);
+        setRole(userRes.role);
 
         let specificData = {};
-
-        if (userRole === "COMPANY" || userRole === "ROLE_COMPANY") {
-          try {
-            const compRes = await profileService.getCompanyProfile();
-            specificData = {
-              companyId: compRes.companyId || "",
-              companyName: compRes.companyName || "",
-              companyEmail: compRes.companyEmail || "",
-              companyLocation: compRes.location || "",
-              companyWebsite: compRes.website || "",
-              description: compRes.description || "",
-              logoUrl: compRes.logoUrl || "",
-            };
-
-            // Fetch company jobs
-            if (compRes.companyId) {
-              const jobsRes = await axiosInstance.get(`/job/company/${compRes.companyId}?page=0&size=50`);
-              setCompanyPostedJobs(jobsRes.data.content || []);
-            }
-          } catch (err) {
-            console.log("No company profile yet");
-          }
-        } else {
+        if (userRes.role === "USER" || userRes.role === "ROLE_USER") {
           try {
             const seekerRes = await profileService.getSeekerProfile();
             specificData = {
@@ -88,480 +65,417 @@ const Profile = () => {
               location: seekerRes.location || "",
               resumeUrl: seekerRes.resumeUrl || "",
             };
-          } catch (err) {
-            console.log("No jobseeker profile yet");
-          }
+          } catch (err) { console.log("No seeker profile"); }
         }
 
-        const merged = {
+        setUser({
           fullName: userRes.name || "",
           email: userRes.email || "",
           phone: userRes.mobileNumber || "",
           profilePicture: userRes.profilePicture || "",
           ...specificData,
-        };
-
-        setUser(merged);
-        localStorage.setItem("profileData", JSON.stringify(merged));
-
-        try {
-          const appRes = await jobService.getAppliedJobs({ page: 0, size: 50 });
-          setAppliedJobs(appRes.content || []);
-        } catch (err) {
-          console.error("Error fetching applied jobs", err);
+        });
+        
+        if (userRes.role === "USER" || userRes.role === "ROLE_USER") {
+          jobService.getAppliedJobs({ page: 0, size: 50 }).then(res => setAppliedJobs(res.content || []));
+          jobService.getSavedJobs({ page: 0, size: 50 }).then(res => setSavedJobs(res.content || []));
         }
-
-        try {
-          const savedRes = await jobService.getSavedJobs({ page: 0, size: 50 });
-          setSavedJobs(savedRes.content || []);
-        } catch (err) {
-          console.error("Error fetching saved jobs", err);
-        }
-
       } catch (err) {
-        console.error("Error fetching profile", err);
         if (err.response?.status === 401) logout();
       } finally {
         setLoading(false);
       }
     };
-
-    if (token) fetchProfile();
+    fetchProfile();
   }, [token, logout, navigate]);
 
-  const handleChange = (e) =>
-    setUser(prev => ({ ...prev, [e.target.name]: e.target.value ?? "" }));
+  // 4. Action Handlers
+  const handleChange = (e) => setUser(prev => ({ ...prev, [e.target.name]: e.target.value ?? "" }));
 
   const handleSave = async () => {
     try {
-      await profileService.updateUserProfile({
-        name: user.fullName,
-        mobileNumber: user.phone,
+      await profileService.updateUserProfile({ name: user.fullName, mobileNumber: user.phone });
+      await profileService.updateSeekerProfile({
+        skills: user.skills,
+        experience: user.experience ? parseInt(user.experience) : null,
+        education: user.education,
+        location: user.location,
+        profileSummary: user.careerGoal,
       });
-
-      if (role === "COMPANY" || role === "ROLE_COMPANY") {
-        await profileService.updateCompanyProfile({
-          companyName: user.companyName,
-          companyEmail: user.companyEmail,
-          location: user.companyLocation,
-          website: user.companyWebsite,
-          description: user.description,
-          logoUrl: user.logoUrl,
-        });
-      } else {
-        await profileService.updateSeekerProfile({
-          skills: user.skills,
-          experience: user.experience ? parseInt(user.experience) : null,
-          education: user.education,
-          location: user.location,
-          profileSummary: user.careerGoal,
-        });
-      }
-
-      localStorage.setItem("profileData", JSON.stringify(user));
       setEditing(false);
-      showToast("Profile saved successfully! ✓");
+      showToast("Career profile synchronized!");
     } catch (err) {
-      showToast("Failed to save profile.");
+      showToast("Update failed.", "error");
     }
   };
 
-  const handlePostJobChange = (e) => setPostJobForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-
-  const handlePostJobSubmit = async (e) => {
-    e.preventDefault();
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append("file", file);
+    
     try {
-      const payload = {
-        title: postJobForm.title,
-        description: postJobForm.description,
-        responsibilities: postJobForm.responsibilities,
-        requirements: postJobForm.requirements,
-        salaryMin: parseInt(postJobForm.salaryMin),
-        salaryMax: parseInt(postJobForm.salaryMax),
-        location: postJobForm.location,
-        jobType: postJobForm.jobType,
-        experienceLevel: postJobForm.experienceLevel,
-        applicationDeadline: postJobForm.applicationDeadline ? new Date(postJobForm.applicationDeadline).toISOString() : null,
-      };
-      await jobService.createJob(payload);
-      showToast("Job posted successfully! ✓");
-      setPostJobForm({ title: "", description: "", responsibilities: "", requirements: "", salaryMin: "", salaryMax: "", location: "", jobType: "FULL_TIME", experienceLevel: "ENTRY_LEVEL", applicationDeadline: "" });
-      setActiveTab("manage");
-
-      if (user.companyId) {
-        const jobsRes = await axiosInstance.get(`/job/company/${user.companyId}?page=0&size=50`);
-        setCompanyPostedJobs(jobsRes.data.content || []);
-      }
+      showToast("Uploading professional headshot...", "success");
+      const res = await axiosInstance.post("/users/upload-photo", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      setUser(prev => ({ ...prev, profilePicture: res.data }));
+      showToast("Profile image deployed!");
     } catch (err) {
-      showToast("Failed to post job.");
-      console.error(err);
+      showToast("Upload failed. Ensure file is an image.", "error");
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm("Delete your account? This cannot be undone.")) return;
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
     try {
-      await profileService.deleteAccount();
-      localStorage.removeItem("profileData");
-      logout();
+      showToast("Updating career banner...", "success");
+      const res = await axiosInstance.post("/users/upload-cover", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      setUser(prev => ({ ...prev, coverPhoto: res.data }));
+      showToast("Professional banner deployed!");
     } catch (err) {
-      showToast("Failed to delete account.");
+      showToast("Banner upload failed.", "error");
     }
   };
 
-  const handleViewApplicants = async (job) => {
-    setSelectedJob(job);
-    try {
-      const res = await jobService.getJobApplicants(job.jobId, { page: 0, size: 50 });
-      setApplicants(res.content || []);
-    } catch (err) {
-      showToast("Failed to fetch applicants");
-    }
+  const getProfileImageUrl = (filename) => {
+    if (!filename) return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || "U")}&background=2563eb&color=fff&size=120&bold=true`;
+    if (filename.startsWith("http")) return filename;
+    return `http://localhost:8080/uploads/profiles/${filename}`;
   };
 
-  const handleUpdateStatus = async (appId, status) => {
-    try {
-      await jobService.updateApplicationStatus(appId, status);
-      setApplicants(prev => prev.map(a => a.applicationId === appId ? { ...a, status } : a));
-      showToast("Status updated");
-    } catch (err) {
-      showToast("Failed to update status");
-    }
+  const getCoverImageUrl = (filename) => {
+    if (!filename) return null;
+    if (filename.startsWith("http")) return filename;
+    return `http://localhost:8080/uploads/banners/${filename}`;
   };
 
-  if (loading) return (
-    <div style={S.page}>
-      <div style={S.loading}>
-        <div style={S.spinner} />
-        Loading profile…
+  // 5. Structural Sub-Renderers
+  const renderSidebar = () => (
+    <aside className="dashboard-section" style={{ position: "sticky", top: "100px", padding: "32px", height: "fit-content" }}>
+      <div style={{ textAlign: "center", marginBottom: "32px" }}>
+        <div style={{ position: "relative", display: "inline-block", cursor: "pointer" }} onClick={() => document.getElementById("photo-upload").click()}>
+          <img 
+            src={getProfileImageUrl(user.profilePicture)} 
+            alt="avatar" 
+            style={{ width: "120px", height: "120px", borderRadius: "30px", objectFit: "cover", border: "4px solid white", boxShadow: "var(--card-shadow)", transition: "var(--transition)" }} 
+            className="profile-img-hover"
+          />
+          <div style={{ 
+            position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", 
+            borderRadius: "30px", display: "flex", alignItems: "center", 
+            justifyContent: "center", opacity: 0, transition: "0.3s ease",
+            color: "white"
+          }} className="upload-overlay">
+            <Edit3 size={24} />
+          </div>
+          <input type="file" id="photo-upload" hidden accept="image/*" onChange={handlePhotoUpload} />
+        </div>
+        <h2 style={{ marginTop: "20px", marginBottom: "4px" }}>{user.fullName || "User"}</h2>
+        <div className="comp-badge" style={{ background: "rgba(37,99,235,0.08)", color: "var(--primary)", fontSize: "0.7rem", marginBottom: "16px" }}>
+          {role.replace("ROLE_", "")}
+        </div>
+        
+        <button 
+          className={`admin-btn ${editing ? "danger" : "primary"}`} 
+          onClick={() => { setEditing(!editing); setActiveTab("overview"); }}
+          style={{ width: "100%", justifyContent: "center", padding: "12px", borderRadius: "14px" }}
+        >
+          {editing ? <><Clock size={16} /> Stop Editing</> : <><Edit3 size={16} /> Edit Profile</>}
+        </button>
       </div>
+
+      <div style={{ marginBottom: "32px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "0.8rem", fontWeight: 700 }}>
+          <span>Profile Strength</span>
+          <span>{getProfileProgress()}%</span>
+        </div>
+        <div style={{ height: "6px", background: "var(--bg-accent)", borderRadius: "10px", overflow: "hidden" }}>
+          <div style={{ width: `${getProfileProgress()}%`, height: "100%", background: "var(--primary-gradient)", transition: "width 0.5s ease" }} />
+        </div>
+      </div>
+
+      <nav style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        {[
+          { id: "overview", label: "Overview", icon: <User size={18} /> },
+          { id: "applied", label: "Applications", icon: <FileText size={18} />, count: appliedJobs.length },
+          { id: "saved", label: "Wishlist", icon: <Bookmark size={18} />, count: savedJobs.length },
+        ].map(tab => (
+          <button 
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`admin-btn ${activeTab === tab.id ? "primary" : "edit"}`}
+            style={{ justifyContent: "space-between", width: "100%", border: "none" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>{tab.icon} {tab.label}</div>
+            {tab.count !== undefined && <span style={{ fontSize: "0.7rem", opacity: 0.8 }}>{tab.count}</span>}
+          </button>
+        ))}
+      </nav>
+    </aside>
+  );
+
+  const renderOverview = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+      {/* 1. Hero Profile Banner Section */}
+      <section className="dashboard-section" style={{ padding: 0, overflow: "hidden", border: "none", background: "white", borderRadius: "32px" }}>
+        <div 
+          style={{ 
+            height: "200px", 
+            background: user.coverPhoto ? `url(${getCoverImageUrl(user.coverPhoto)}) center/cover no-repeat` : "var(--primary-gradient)", 
+            position: "relative",
+            cursor: "pointer"
+          }} 
+          onClick={() => document.getElementById("cover-upload").click()}
+        >
+          <div style={{ position: "absolute", inset: 0, opacity: 0.1, backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)", backgroundSize: "24px 24px" }} />
+          <div style={{ 
+            position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)", 
+            display: "flex", alignItems: "center", justifyContent: "center", 
+            opacity: 0, transition: "0.3s ease", color: "white"
+          }} className="upload-overlay">
+            <Edit3 size={32} />
+          </div>
+          <input type="file" id="cover-upload" hidden accept="image/*" onChange={handleCoverUpload} />
+        </div>
+        <div style={{ padding: "0 40px 40px", marginTop: "-40px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+            <div style={{ position: "relative" }}>
+              <img 
+                src={getProfileImageUrl(user.profilePicture)} 
+                alt="avatar" 
+                style={{ width: "100px", height: "100px", borderRadius: "24px", border: "6px solid white", boxShadow: "var(--shadow-lg)", objectFit: "cover" }} 
+              />
+            </div>
+            <button className="admin-btn edit" onClick={() => setEditing(!editing)} style={{ marginBottom: "10px", borderRadius: "12px", background: "var(--bg-accent)", color: "var(--primary)" }}>
+              {editing ? "Cancel Changes" : <><Edit3 size={16} /> Customize Profile</>}
+            </button>
+          </div>
+          
+          <div style={{ marginTop: "24px" }}>
+            <h1 style={{ margin: 0, fontSize: "2rem", letterSpacing: "-1px" }}>{user.fullName || "Elite Professional"}</h1>
+            <p style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 600, color: "var(--primary)", marginTop: "4px" }}>
+              <Globe size={16} /> {user.location || "Global Talent"} • {user.experience || "0"} Years Experience
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Professional Narrative & Contact */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "32px" }}>
+        <section className="dashboard-section" style={{ padding: "40px", flex: 1 }}>
+          <h3 style={{ margin: "0 0 24px", display: "flex", alignItems: "center", gap: "12px" }}>
+            <FileText size={20} color="var(--primary)" /> Professional Summary
+          </h3>
+          {editing ? (
+            <textarea className="comp-input" name="careerGoal" value={user.careerGoal} onChange={handleChange} rows={6} style={{ resize: "none", background: "var(--bg-accent)", border: "none" }} placeholder="Describe your professional journey and aspirations..." />
+          ) : (
+            <p style={{ lineHeight: 1.8, color: "var(--text-muted)", fontSize: "1.05rem" }}>
+              {user.careerGoal || "Establish your career narrative to attract top-tier opportunities and showcase your professional vision."}
+            </p>
+          )}
+        </section>
+
+        <section className="dashboard-section" style={{ padding: "40px" }}>
+          <h3 style={{ margin: "0 0 24px", display: "flex", alignItems: "center", gap: "12px" }}>
+            <Phone size={20} color="var(--primary)" /> Quick Contact
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            {[
+              { icon: <Mail size={16} />, label: "Email Address", value: user.email, name: "email", readonly: true },
+              { icon: <Phone size={16} />, label: "Contact Number", value: user.phone, name: "phone" }
+            ].map((item, idx) => (
+              <div key={idx}>
+                <label style={{ fontSize: "0.7rem", fontWeight: 800, color: "var(--text-light)", textTransform: "uppercase", marginBottom: "6px", display: "block" }}>{item.label}</label>
+                {editing && !item.readonly ? (
+                  <input className="comp-input" name={item.name} value={item.value} onChange={handleChange} style={{ background: "var(--bg-accent)", border: "none" }} />
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", fontWeight: 700 }}>
+                    <span style={{ color: "var(--primary)" }}>{item.icon}</span> {item.value || "Not linked"}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      {/* 3. Skill Repository */}
+      <section className="dashboard-section" style={{ padding: "40px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
+          <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "12px" }}>
+            <Target size={20} color="var(--primary)" /> Core Competencies
+          </h3>
+          <span className="comp-badge" style={{ background: "var(--bg-accent)", color: "var(--primary)" }}>{parseList(user.skills).length} Specialized Skills</span>
+        </div>
+        
+        {editing ? (
+          <input className="comp-input" name="skills" value={user.skills} onChange={handleChange} placeholder="React, Java, Cloud Computing, etc." style={{ background: "var(--bg-accent)", border: "none" }} />
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
+            {parseList(user.skills).length > 0 ? parseList(user.skills).map((skill, i) => (
+              <div key={i} style={{ 
+                background: "white", 
+                border: "1px solid var(--border-color)", 
+                padding: "12px 20px", 
+                borderRadius: "16px", 
+                display: "flex", 
+                alignItems: "center", 
+                gap: "10px",
+                boxShadow: "var(--shadow-sm)",
+                transition: "var(--transition)"
+              }} className="skill-tag-hover">
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--primary)" }} />
+                <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>{skill}</span>
+              </div>
+            )) : <p style={{ color: "var(--text-light)" }}>Add skills to highlight your expertise.</p>}
+          </div>
+        )}
+      </section>
+
+      {/* 4. Timeline Sections */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px" }}>
+        <section className="dashboard-section" style={{ padding: "40px" }}>
+          <h3 style={{ margin: "0 0 32px", display: "flex", alignItems: "center", gap: "12px" }}>
+            <GraduationCap size={20} color="var(--primary)" /> Academic Pedigree
+          </h3>
+          <div style={{ position: "relative", paddingLeft: "24px", borderLeft: "2px dashed var(--border-color)" }}>
+            <div style={{ position: "absolute", left: "-9px", top: 0, width: "16px", height: "16px", borderRadius: "50%", background: "var(--primary)", border: "4px solid white" }} />
+            {editing ? (
+              <textarea className="comp-input" name="education" value={user.education} onChange={handleChange} rows={3} style={{ background: "var(--bg-accent)", border: "none" }} />
+            ) : (
+              <div>
+                <p style={{ fontWeight: 800, fontSize: "1.1rem", margin: "0 0 8px" }}>Academic Qualifications</p>
+                <p style={{ color: "var(--text-muted)", lineHeight: 1.6 }}>{user.education || "Highlight your educational background and certifications."}</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="dashboard-section" style={{ padding: "40px" }}>
+          <h3 style={{ margin: "0 0 32px", display: "flex", alignItems: "center", gap: "12px" }}>
+            <Briefcase size={20} color="var(--primary)" /> Industry Tenure
+          </h3>
+          <div style={{ position: "relative", paddingLeft: "24px", borderLeft: "2px dashed var(--border-color)" }}>
+            <div style={{ position: "absolute", left: "-9px", top: 0, width: "16px", height: "16px", borderRadius: "50%", background: "var(--primary)", border: "4px solid white" }} />
+            {editing ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <input className="comp-input" type="number" name="experience" value={user.experience} onChange={handleChange} style={{ background: "var(--bg-accent)", border: "none", width: "100px" }} />
+                <span style={{ fontWeight: 700 }}>Years of Industry Experience</span>
+              </div>
+            ) : (
+              <div>
+                <p style={{ fontWeight: 800, fontSize: "1.1rem", margin: "0 0 8px" }}>Professional Experience</p>
+                <p style={{ color: "var(--text-muted)", fontSize: "1.05rem", fontWeight: 600 }}>{user.experience ? `${user.experience} Years in the Industry` : "Showcase your professional timeline."}</p>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      {editing && (
+        <button className="admin-btn primary" onClick={handleSave} style={{ padding: "20px", width: "100%", borderRadius: "20px", fontSize: "1.1rem", boxShadow: "0 20px 40px rgba(37, 99, 235, 0.2)" }}>
+          <Check size={24} /> Deploy Profile Updates
+        </button>
+      )}
     </div>
+  );
+
+  const renderApplications = () => (
+    <section className="dashboard-section" style={{ padding: "40px" }}>
+      <h2 style={{ margin: "0 0 32px", display: "flex", alignItems: "center", gap: "12px" }}><FileText size={24} color="var(--primary)" /> Application History</h2>
+      {appliedJobs.length === 0 ? (
+        <div className="comp-empty"><AlertCircle size={40} /><p>No active applications.</p></div>
+      ) : (
+        <div className="data-table-container">
+          <table className="data-table">
+            <thead><tr><th>Job Role</th><th>Company</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody>
+              {appliedJobs.map(app => (
+                <tr key={app.applicationId}>
+                  <td style={{ fontWeight: 700 }}>{app.jobTitle}</td>
+                  <td>{app.companyName}</td>
+                  <td>
+                    <span className="comp-badge" style={{ 
+                      background: app.status === "HIRED" ? "rgba(16,185,129,0.1)" : "rgba(37,99,235,0.1)",
+                      color: app.status === "HIRED" ? "#10b981" : "#2563eb"
+                    }}>{app.status}</span>
+                  </td>
+                  <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+
+  const renderWishlist = () => (
+    <section className="dashboard-section" style={{ padding: "40px" }}>
+      <h2 style={{ margin: "0 0 32px", display: "flex", alignItems: "center", gap: "12px" }}><Bookmark size={24} color="var(--primary)" /> Career Wishlist</h2>
+      {savedJobs.length === 0 ? (
+        <div className="comp-empty"><Star size={40} /><p>No opportunities saved.</p></div>
+      ) : (
+        <div className="data-table-container">
+          <table className="data-table">
+            <thead><tr><th>Title</th><th>Organization</th><th>Location</th><th>Action</th></tr></thead>
+            <tbody>
+              {savedJobs.map(job => (
+                <tr key={job.jobId}>
+                  <td style={{ fontWeight: 700 }}>{job.title}</td>
+                  <td>{job.companyName}</td>
+                  <td><MapPin size={14} /> {job.location || "Remote"}</td>
+                  <td><button className="admin-btn edit" onClick={() => navigate('/jobs')}><ChevronRight size={16} /></button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+
+  // 6. Final Assembly
+  if (loading) return (
+    <div className="comp-empty" style={{ minHeight: "80vh" }}><Clock className="animate-spin" size={40} /><p>Assembling your dashboard...</p></div>
   );
 
   return (
-    <div style={S.page}>
-      <div style={S.wrapper}>
-
-        {/* HERO */}
-        <div style={S.hero}>
-          <div style={S.heroTop}>
-            <div style={{ position: "relative", flexShrink: 0 }}>
-              <img src={avatarUrl(user)} alt="avatar" style={S.avatar} />
-              <div style={S.avatarBadge} />
-            </div>
-            <div style={{ flex: 1, paddingTop: 4 }}>
-              <h1 style={S.heroName}>{role === "COMPANY" || role === "ROLE_COMPANY" ? (user.companyName || user.fullName) : user.fullName || "Your Name"}</h1>
-              <p style={S.heroEmail}>{role === "COMPANY" || role === "ROLE_COMPANY" ? (user.companyEmail || user.email) : user.email}</p>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {[(role === "COMPANY" || role === "ROLE_COMPANY" ? "Company" : "Job Seeker"), (role === "COMPANY" || role === "ROLE_COMPANY" ? "Hiring" : "Open to Work")].map(t => (
-                  <span key={t} style={S.tag}>{t}</span>
-                ))}
-              </div>
-            </div>
-            <div style={S.heroActions}>
-              <button style={S.btnGhost} onClick={() => setEditing(!editing)}>
-                {editing ? "✕ Cancel" : "✏ Edit Profile"}
-              </button>
-              <button style={S.btnDanger} onClick={handleDelete}>Delete</button>
-            </div>
-          </div>
-          <div style={S.statsRow}>
-            {role === "COMPANY" || role === "ROLE_COMPANY" ? [
-              { num: user.companyLocation ? "✓" : "—", label: "Location" },
-              { num: user.companyWebsite ? "✓" : "—", label: "Website" },
-              { num: user.description ? "✓" : "—", label: "Desc" },
-            ].map(({ num, label }) => (
-              <div key={label} style={S.stat}>
-                <div style={S.statNum}>{num}</div>
-                <div style={S.statLabel}>{label}</div>
-              </div>
-            )) : [
-              { num: parseList(user.skills).length, label: "Skills" },
-              { num: user.experience ? "✓" : "—", label: "Experience" },
-              { num: user.education ? "✓" : "—", label: "Education" },
-            ].map(({ num, label }) => (
-              <div key={label} style={S.stat}>
-                <div style={S.statNum}>{num}</div>
-                <div style={S.statLabel}>{label}</div>
-              </div>
-            ))}
-          </div>
+    <div className="admin-main" style={{ padding: "100px 60px 60px", background: "var(--bg-main)", minHeight: "100vh" }}>
+      {toast && (
+        <div className={`comp-toast ${toast.type}`} style={{ zIndex: 1000 }}>
+          <Check size={18} /> {toast.msg}
         </div>
-
-        {/* EDIT BANNER */}
-        {editing && (
-          <div style={S.editBanner}>
-            ✏️ &nbsp; You're in edit mode — make your changes and hit Save below.
-          </div>
-        )}
-
-        {/* TABS */}
-        <div style={S.tabs}>
-          <button style={activeTab === 'profile' ? S.activeTab : S.tab} onClick={() => setActiveTab('profile')}>Profile Details</button>
-          {role === "COMPANY" || role === "ROLE_COMPANY" ? (
-            <>
-              <button style={activeTab === 'manage' ? S.activeTab : S.tab} onClick={() => setActiveTab('manage')}>Manage Jobs</button>
-              <button style={activeTab === 'post' ? S.activeTab : S.tab} onClick={() => setActiveTab('post')}>Post a Job</button>
-            </>
-          ) : (
-            <>
-              <button style={activeTab === 'applied' ? S.activeTab : S.tab} onClick={() => setActiveTab('applied')}>Applied Jobs</button>
-              <button style={activeTab === 'saved' ? S.activeTab : S.tab} onClick={() => setActiveTab('saved')}>Saved Jobs</button>
-            </>
-          )}
+      )}
+      
+      <div className="profile-dashboard-layout" style={{ 
+        display: "grid", 
+        gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", 
+        gap: "32px", 
+        alignItems: "start",
+        maxWidth: "1400px",
+        margin: "0 auto"
+      }}>
+        {/* Force the layout to be 320px 1fr on large screens via a media-query-like approach or just a refined grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 320px) 1fr", gap: "32px", width: "100%", gridColumn: "1 / -1" }}>
+          {renderSidebar()}
+          <main style={{ minWidth: 0 }}>
+            {activeTab === "overview" && renderOverview()}
+            {activeTab === "applied" && renderApplications()}
+            {activeTab === "saved" && renderWishlist()}
+          </main>
         </div>
-
-        {/* PROFILE TAB */}
-        {activeTab === 'profile' && (
-          <div style={S.grid}>
-
-            {/* About / Description */}
-            <div style={{ ...S.card, gridColumn: "1 / -1" }}>
-              <CardHeader title={role === "COMPANY" || role === "ROLE_COMPANY" ? "Company Description" : "About"} icon="💼" />
-              {editing
-                ? <Field><textarea name={role === "COMPANY" || role === "ROLE_COMPANY" ? "description" : "careerGoal"} value={role === "COMPANY" || role === "ROLE_COMPANY" ? user.description : user.careerGoal} onChange={handleChange} rows={3} style={S.input} placeholder={role === "COMPANY" || role === "ROLE_COMPANY" ? "Describe your company..." : "Write about yourself..."} /></Field>
-                : <p style={{ ...S.value, ...((role === "COMPANY" || role === "ROLE_COMPANY" ? user.description : user.careerGoal) ? {} : S.muted) }}>{(role === "COMPANY" || role === "ROLE_COMPANY" ? user.description : user.careerGoal) || "No description added yet."}</p>
-              }
-            </div>
-
-            {role === "COMPANY" || role === "ROLE_COMPANY" ? (
-              <>
-                {/* Company Info */}
-                <div style={S.card}>
-                  <CardHeader title="Company Info" icon="🏢" />
-                  <Field label="Company Name">
-                    {editing ? <input name="companyName" value={user.companyName} onChange={handleChange} style={S.input} /> : <span style={S.value}>{user.companyName || <Muted>Not provided</Muted>}</span>}
-                  </Field>
-                  <Field label="Company Email">
-                    {editing ? <input name="companyEmail" value={user.companyEmail} onChange={handleChange} style={S.input} /> : <span style={S.value}>{user.companyEmail || <Muted>Not provided</Muted>}</span>}
-                  </Field>
-                </div>
-
-                {/* Location & Website */}
-                <div style={S.card}>
-                  <CardHeader title="Details" icon="📍" />
-                  <Field label="Location">
-                    {editing ? <input name="companyLocation" value={user.companyLocation} onChange={handleChange} style={S.input} /> : <span style={S.value}>{user.companyLocation || <Muted>Not provided</Muted>}</span>}
-                  </Field>
-                  <Field label="Website">
-                    {editing ? <input name="companyWebsite" value={user.companyWebsite} onChange={handleChange} style={S.input} /> : <span style={S.value}>{user.companyWebsite || <Muted>Not provided</Muted>}</span>}
-                  </Field>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Contact */}
-                <div style={S.card}>
-                  <CardHeader title="Contact" icon="📞" />
-                  <Field label="Phone">
-                    {editing ? <input name="phone" value={user.phone} onChange={handleChange} style={S.input} placeholder="+91 00000 00000" /> : <span style={S.value}>{user.phone || <Muted>Not provided</Muted>}</span>}
-                  </Field>
-                  <Field label="Email">
-                    <span style={S.value}>{user.email}</span>
-                  </Field>
-                </div>
-
-                {/* Education */}
-                <div style={S.card}>
-                  <CardHeader title="Education" icon="🎓" />
-                  <Field>
-                    {editing ? <input name="education" value={user.education} onChange={handleChange} style={S.input} placeholder="Degree — University, Year" /> : <span style={{ ...S.value, ...(user.education ? {} : S.muted) }}>{user.education || "No education added"}</span>}
-                  </Field>
-                </div>
-
-                {/* Skills */}
-                <div style={{ ...S.card, gridColumn: "1 / -1" }}>
-                  <CardHeader title="Skills" icon="⚡" />
-                  {editing
-                    ? <Field><input name="skills" value={user.skills} onChange={handleChange} style={S.input} placeholder="Java, React, Spring Boot…" /></Field>
-                    : <div style={S.chips}>
-                      {parseList(user.skills).length ? parseList(user.skills).map((sk, i) => <span key={i} style={S.chip}>{sk}</span>) : <span style={S.muted}>No skills added</span>}
-                    </div>
-                  }
-                </div>
-
-                {/* Experience */}
-                <div style={{ ...S.card, gridColumn: "1 / -1" }}>
-                  <CardHeader title="Experience" icon="🏢" />
-                  {editing
-                    ? <Field><textarea name="experience" value={user.experience} onChange={handleChange} rows={3} style={S.input} placeholder="Describe your experience..." /></Field>
-                    : <p style={{ ...S.value, ...(user.experience ? {} : S.muted) }}>{user.experience || "No experience added"}</p>
-                  }
-                </div>
-              </>
-            )}
-
-          </div>
-        )}
-
-        {/* APPLIED JOBS TAB */}
-        {activeTab === 'applied' && (
-          <div style={S.listContainer}>
-            {appliedJobs.length === 0 ? <p style={S.empty}>No applied jobs found.</p> : appliedJobs.map(app => (
-              <div key={app.applicationId} style={S.listItem}>
-                <h4 style={{ margin: "0 0 5px 0", color: "#1e293b", fontSize: "16px" }}>{app.jobTitle} at {app.companyName}</h4>
-                <p style={{ margin: "0 0 5px 0", color: "#64748b", fontSize: "14px" }}>Status: <strong style={{ color: app.status === 'PENDING' ? '#eab308' : '#3b82f6' }}>{app.status}</strong></p>
-                <p style={{ margin: "0", color: "#94a3b8", fontSize: "12px" }}>Applied: {new Date(app.appliedAt).toLocaleDateString()}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* SAVED JOBS TAB */}
-        {activeTab === 'saved' && (
-          <div style={S.listContainer}>
-            {savedJobs.length === 0 ? <p style={S.empty}>No saved jobs found.</p> : savedJobs.map(job => (
-              <div key={job.jobId} style={S.listItem}>
-                <h4 style={{ margin: "0 0 5px 0", color: "#1e293b", fontSize: "16px" }}>{job.title} at {job.companyName}</h4>
-                <p style={{ margin: "0 0 10px 0", color: "#64748b", fontSize: "14px" }}>Location: {job.location}</p>
-                <button onClick={() => navigate('/jobs')} style={S.btnGhostDark}>View Jobs</button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* MANAGE JOBS TAB (COMPANY) */}
-        {activeTab === 'manage' && (
-          <div style={S.listContainer}>
-            {selectedJob ? (
-              <div style={S.card}>
-                <button onClick={() => setSelectedJob(null)} style={S.btnGhostDark}>&larr; Back to Jobs</button>
-                <h3 style={{ marginTop: 15, marginBottom: 10 }}>Applicants for {selectedJob.title}</h3>
-                {applicants.length === 0 ? <p style={S.empty}>No applicants yet.</p> : applicants.map(app => (
-                  <div key={app.applicationId} style={{ ...S.listItem, marginBottom: 10 }}>
-                    <h4 style={{ margin: "0 0 5px 0" }}>{app.jobSeekerName}</h4>
-                    <p style={{ margin: "0 0 5px 0", fontSize: "14px" }}>Applied: {new Date(app.appliedAt).toLocaleDateString()}</p>
-                    <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-                      <select value={app.status} onChange={(e) => handleUpdateStatus(app.applicationId, e.target.value)} style={{ ...S.input, width: "auto", padding: "6px 10px" }}>
-                        <option value="PENDING">Pending</option>
-                        <option value="ACCEPTED">Accept</option>
-                        <option value="REJECTED">Reject</option>
-                      </select>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <>
-                {companyPostedJobs.length === 0 ? <p style={S.empty}>No jobs posted yet.</p> : companyPostedJobs.map(job => (
-                  <div key={job.jobId} style={S.listItem}>
-                    <h4 style={{ margin: "0 0 5px 0", color: "#1e293b", fontSize: "16px" }}>{job.title}</h4>
-                    <p style={{ margin: "0 0 10px 0", color: "#64748b", fontSize: "14px" }}>{job.location} • {job.jobType}</p>
-                    <button onClick={() => handleViewApplicants(job)} style={S.btnGhostDark}>View Applicants</button>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* POST JOB TAB (COMPANY) */}
-        {activeTab === 'post' && (
-          <div style={S.card}>
-            <CardHeader title="Post a New Job" icon="📝" />
-            <form onSubmit={handlePostJobSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <Field label="Job Title"><input required name="title" value={postJobForm.title} onChange={handlePostJobChange} style={S.input} placeholder="e.g. Senior Frontend Engineer" /></Field>
-              <Field label="Description"><textarea required name="description" value={postJobForm.description} onChange={handlePostJobChange} rows={3} style={S.input} placeholder="Job description..." /></Field>
-              <Field label="Responsibilities"><textarea name="responsibilities" value={postJobForm.responsibilities} onChange={handlePostJobChange} rows={3} style={S.input} placeholder="Key responsibilities..." /></Field>
-              <Field label="Requirements"><textarea name="requirements" value={postJobForm.requirements} onChange={handlePostJobChange} rows={3} style={S.input} placeholder="Requirements/Qualifications..." /></Field>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <Field label="Min Salary"><input type="number" required name="salaryMin" value={postJobForm.salaryMin} onChange={handlePostJobChange} style={S.input} placeholder="e.g. 50000" /></Field>
-                <Field label="Max Salary"><input type="number" required name="salaryMax" value={postJobForm.salaryMax} onChange={handlePostJobChange} style={S.input} placeholder="e.g. 80000" /></Field>
-              </div>
-
-              <Field label="Location"><input required name="location" value={postJobForm.location} onChange={handlePostJobChange} style={S.input} placeholder="Remote, New York, etc." /></Field>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <Field label="Job Type">
-                  <select name="jobType" value={postJobForm.jobType} onChange={handlePostJobChange} style={S.input}>
-                    <option value="FULL_TIME">Full Time</option><option value="PART_TIME">Part Time</option><option value="CONTRACT">Contract</option><option value="INTERNSHIP">Internship</option>
-                  </select>
-                </Field>
-                <Field label="Experience Level">
-                  <select name="experienceLevel" value={postJobForm.experienceLevel} onChange={handlePostJobChange} style={S.input}>
-                    <option value="ENTRY_LEVEL">Entry Level</option><option value="MID_LEVEL">Mid Level</option><option value="SENIOR_LEVEL">Senior Level</option><option value="EXECUTIVE">Executive</option>
-                  </select>
-                </Field>
-              </div>
-
-              <Field label="Application Deadline (Optional)"><input type="date" name="applicationDeadline" value={postJobForm.applicationDeadline} onChange={handlePostJobChange} style={S.input} /></Field>
-
-              <button type="submit" style={{ ...S.btnSave, marginTop: 10 }}>Post Job</button>
-            </form>
-          </div>
-        )}
-
-        {/* SAVE */}
-        {editing && (
-          <div style={{ display: "flex", gap: 10 }}>
-            <button style={S.btnSave} onClick={handleSave}>Save Changes</button>
-            <button style={S.btnCancel} onClick={() => setEditing(false)}>Cancel</button>
-          </div>
-        )}
-
-        {/* TOAST */}
-        {toast && <div style={S.toast}>{toast}</div>}
       </div>
     </div>
   );
-};
-
-// ── Sub-components ──
-const CardHeader = ({ title, icon }) => (
-  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-    <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8" }}>{title}</span>
-    <span style={{ width: 32, height: 32, borderRadius: 8, background: "#dbeafe", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>{icon}</span>
-  </div>
-);
-
-const Field = ({ label, children }) => (
-  <div style={{ marginBottom: 14 }}>
-    {label && <div style={{ fontSize: 11, fontWeight: 500, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>{label}</div>}
-    {children}
-  </div>
-);
-
-const Muted = ({ children }) => <span style={{ color: "#94a3b8", fontStyle: "italic" }}>{children}</span>;
-
-// ── Styles ──
-const S = {
-  page: { background: "#f0f4f8", minHeight: "100vh", padding: "36px 20px 60px", display: "flex", justifyContent: "center", fontFamily: "'Poppins', sans-serif" },
-  wrapper: { width: "100%", maxWidth: 860 },
-  loading: { display: "flex", alignItems: "center", justifyContent: "center", minHeight: 300, gap: 10, color: "#94a3b8", fontSize: 15 },
-  spinner: { width: 20, height: 20, border: "2px solid #e2e8f0", borderTopColor: "#2563eb", borderRadius: "50%", animation: "spin 0.7s linear infinite" },
-  hero: { background: "linear-gradient(135deg,#1e3a8a 0%,#2563eb 60%,#3b82f6 100%)", borderRadius: 24, padding: "36px 36px 0", marginBottom: 20, boxShadow: "0 8px 32px rgba(37,99,235,0.15)" },
-  heroTop: { display: "flex", alignItems: "flex-start", gap: 24 },
-  avatar: { width: 88, height: 88, borderRadius: 20, objectFit: "cover", border: "3px solid rgba(255,255,255,0.3)" },
-  avatarBadge: { position: "absolute", bottom: -4, right: -4, width: 22, height: 22, background: "#22c55e", borderRadius: "50%", border: "3px solid #1e3a8a" },
-  heroName: { fontFamily: "'Poppins', sans-serif", fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: -0.5, marginBottom: 4 },
-  heroEmail: { fontSize: 14, color: "rgba(255,255,255,0.65)", marginBottom: 12 },
-  tag: { fontSize: 12, fontWeight: 500, padding: "4px 10px", borderRadius: 20, background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.85)", border: "1px solid rgba(255,255,255,0.15)" },
-  heroActions: { display: "flex", gap: 10, flexShrink: 0 },
-  btnGhost: { fontFamily: "'Poppins', sans-serif", fontSize: 13, fontWeight: 500, padding: "9px 18px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.12)", color: "#fff", cursor: "pointer" },
-  btnDanger: { fontFamily: "'Poppins', sans-serif", fontSize: 13, fontWeight: 500, padding: "9px 18px", borderRadius: 10, border: "1px solid rgba(220,38,38,0.25)", background: "rgba(220,38,38,0.18)", color: "#fca5a5", cursor: "pointer" },
-  statsRow: { display: "flex", marginTop: 28, borderTop: "1px solid rgba(255,255,255,0.1)" },
-  stat: { flex: 1, padding: "16px 0", textAlign: "center", borderRight: "1px solid rgba(255,255,255,0.1)" },
-  statNum: { fontFamily: "'Poppins', sans-serif", fontSize: 22, fontWeight: 800, color: "#fff", lineHeight: 1, marginBottom: 3 },
-  statLabel: { fontSize: 11, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.06em" },
-  grid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 },
-  card: { background: "#fff", borderRadius: 18, padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04)", border: "1px solid #e2e8f0" },
-  editBanner: { display: "flex", alignItems: "center", gap: 10, background: "#dbeafe", border: "1px solid rgba(37,99,235,0.2)", borderRadius: 12, padding: "12px 18px", marginBottom: 16, fontSize: 13, color: "#1d4ed8", fontWeight: 500 },
-  input: { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontFamily: "'Poppins', sans-serif", fontSize: 14, color: "#0f172a", background: "#f8fafc", outline: "none", resize: "vertical" },
-  chips: { display: "flex", flexWrap: "wrap", gap: 8 },
-  chip: { fontSize: 13, fontWeight: 500, padding: "6px 14px", borderRadius: 20, background: "#dbeafe", color: "#1d4ed8", border: "1px solid rgba(37,99,235,0.15)" },
-  value: { fontSize: 15, color: "#0f172a", lineHeight: 1.5 },
-  muted: { color: "#94a3b8", fontStyle: "italic", fontSize: 14 },
-  btnSave: { flex: 1, padding: 14, background: "#16a34a", color: "#fff", fontFamily: "'Poppins', sans-serif", fontSize: 15, fontWeight: 700, border: "none", borderRadius: 14, cursor: "pointer", boxShadow: "0 4px 16px rgba(22,163,74,0.25)" },
-  btnCancel: { padding: "14px 24px", background: "#f8fafc", color: "#475569", fontFamily: "'Poppins', sans-serif", fontSize: 14, border: "1.5px solid #e2e8f0", borderRadius: 14, cursor: "pointer" },
-  toast: { position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)", background: "#0f172a", color: "#fff", padding: "12px 24px", borderRadius: 12, fontSize: 14, fontWeight: 500, zIndex: 9999, boxShadow: "0 8px 24px rgba(0,0,0,0.2)" },
-  tabs: { display: "flex", gap: 10, marginBottom: 20, borderBottom: "1px solid #e2e8f0", paddingBottom: 10 },
-  tab: { background: "transparent", border: "none", fontSize: 15, fontWeight: 600, color: "#94a3b8", cursor: "pointer", padding: "10px 15px" },
-  activeTab: { background: "transparent", border: "none", fontSize: 15, fontWeight: 700, color: "#1d4ed8", cursor: "pointer", padding: "10px 15px", borderBottom: "2px solid #1d4ed8" },
-  listContainer: { display: "flex", flexDirection: "column", gap: 15 },
-  listItem: { background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0" },
-  empty: { textAlign: "center", color: "#94a3b8", marginTop: 40, fontStyle: "italic" },
-  btnGhostDark: { fontFamily: "'Poppins', sans-serif", fontSize: 13, fontWeight: 500, padding: "6px 14px", borderRadius: 8, border: "1px solid #cbd5e1", background: "#f8fafc", color: "#334155", cursor: "pointer", marginTop: 10 },
 };
 
 export default Profile;

@@ -38,8 +38,10 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/public/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/job/all").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/job/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/job/featured").permitAll()

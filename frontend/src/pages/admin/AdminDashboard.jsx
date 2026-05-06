@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../api/axiosConfig";
+import { Briefcase, Users, Building2, ClipboardList, TrendingUp, Activity, CheckCircle, Info } from "lucide-react";
 
 function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -75,23 +76,23 @@ function AdminDashboard() {
   };
 
   const statCards = [
-    { title: "Total Jobs", value: stats.totalJobs, icon: "💼", color: "#6c8fdc" },
-    { title: "Total Users", value: stats.totalUsers, icon: "👥", color: "#7dd3c0" },
-    { title: "Total Companies", value: stats.totalCompanies, icon: "🏢", color: "#f5a962" },
-    { title: "Applications", value: stats.totalApplications, icon: "📝", color: "#e74c3c" },
+    { title: "Active Listings", value: stats.totalJobs, icon: <Briefcase size={24} />, color: "#2563eb" },
+    { title: "Registered Talent", value: stats.totalUsers, icon: <Users size={24} />, color: "#7c3aed" },
+    { title: "Partner Entities", value: stats.totalCompanies, icon: <Building2 size={24} />, color: "#10b981" },
+    { title: "Total Submissions", value: stats.totalApplications, icon: <ClipboardList size={24} />, color: "#f59e0b" },
   ];
 
-  // Build unified recent activities list
   const buildRecentActivities = () => {
     const activities = [];
 
     if (recentActivity.recentApplications) {
       recentActivity.recentApplications.forEach((app) => {
         activities.push({
-          action: "📝 Application submitted",
-          detail: (app.jobSeeker?.user?.name || "Someone") + " applied to " + (app.job?.title || "a job"),
+          icon: <ClipboardList size={14} />,
+          action: "Application Received",
+          detail: (app.jobSeeker?.user?.name || "Candidate") + " applied for " + (app.job?.title || "Listing"),
           time: app.appliedAt,
-          color: "#f5a962",
+          color: "#f59e0b",
         });
       });
     }
@@ -99,10 +100,11 @@ function AdminDashboard() {
     if (recentActivity.recentJobs) {
       recentActivity.recentJobs.forEach((job) => {
         activities.push({
-          action: "💼 New job posted",
+          icon: <Briefcase size={14} />,
+          action: "New Job Published",
           detail: job.title + (job.companyName ? ` at ${job.companyName}` : ""),
           time: job.postedAt,
-          color: "#6c8fdc",
+          color: "#2563eb",
         });
       });
     }
@@ -110,23 +112,24 @@ function AdminDashboard() {
     if (recentActivity.recentUsers) {
       recentActivity.recentUsers.forEach((user) => {
         activities.push({
-          action: "👤 New user registered",
-          detail: user.name + ` (${user.role || "USER"})`,
+          icon: <Users size={14} />,
+          action: "New Registration",
+          detail: user.name + ` signed up as ${user.role || "USER"}`,
           time: user.createdAt,
-          color: "#7dd3c0",
+          color: "#10b981",
         });
       });
     }
 
-    // Sort by time descending
     activities.sort((a, b) => new Date(b.time) - new Date(a.time));
-    return activities.slice(0, 10);
+    return activities.slice(0, 8);
   };
 
   if (loading) {
     return (
-      <div className="admin-dashboard" style={{ textAlign: "center", padding: 80, color: "#94a3b8" }}>
-        Loading dashboard...
+      <div className="admin-dashboard-loading" style={{ textAlign: "center", padding: "100px", color: "var(--text-light)" }}>
+        <Activity className="animate-spin" size={48} style={{ marginBottom: "16px" }} />
+        <p style={{ fontWeight: 700 }}>Synchronizing Control Panel Data...</p>
       </div>
     );
   }
@@ -134,17 +137,16 @@ function AdminDashboard() {
   const allActivities = buildRecentActivities();
 
   return (
-    <div className="admin-dashboard">
-      <div className="dashboard-header">
-        <h1>Admin Dashboard</h1>
-        <p>Welcome back, Admin! Here's your real-time platform overview.</p>
-      </div>
+    <div className="admin-dashboard-content">
+      <header className="dashboard-header">
+        <h1>Master Overview</h1>
+        <p>Real-time platform metrics and ecosystem performance tracking</p>
+      </header>
 
-      {/* Stats Cards */}
       <div className="stats-grid">
         {statCards.map((stat, index) => (
           <div key={index} className="stat-card">
-            <div className="stat-icon" style={{ color: stat.color }}>
+            <div className="stat-icon" style={{ color: stat.color, backgroundColor: `${stat.color}15` }}>
               {stat.icon}
             </div>
             <div className="stat-content">
@@ -155,68 +157,72 @@ function AdminDashboard() {
         ))}
       </div>
 
-      {/* Two-column: Top Jobs + Top Companies */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
-        {/* Top Jobs by Applications */}
+      <div className="dashboard-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "40px" }}>
         <div className="dashboard-section">
-          <h2>🔥 Most Applied Jobs</h2>
+          <h2>
+            <TrendingUp size={22} style={{ color: "var(--primary)" }} />
+            High-Performance Roles
+          </h2>
           {topJobs.length === 0 ? (
-            <p style={{ color: "#64748b", textAlign: "center", padding: 20 }}>No application data yet</p>
+            <div className="comp-empty" style={{ padding: "32px" }}>
+              <p>Insufficient application data</p>
+            </div>
           ) : (
             <div className="activities-list">
               {topJobs.slice(0, 5).map((job, i) => (
                 <div key={i} className="activity-item">
-                  <div className="activity-info" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{
-                      display: "inline-flex", alignItems: "center", justifyContent: "center",
-                      width: 28, height: 28, borderRadius: 8,
-                      background: "rgba(108,143,220,0.15)", color: "#6c8fdc",
-                      fontSize: "0.8rem", fontWeight: 700, flexShrink: 0,
+                  <div className="activity-info" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div style={{
+                      width: "32px", height: "32px", borderRadius: "10px",
+                      background: "var(--bg-white)", color: "var(--primary)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "0.85rem", fontWeight: 900, boxShadow: "var(--shadow-sm)"
                     }}>
                       {i + 1}
-                    </span>
-                    <p className="activity-action" style={{ margin: 0 }}>{job.jobTitle}</p>
+                    </div>
+                    <div>
+                      <p className="activity-action">{job.jobTitle}</p>
+                      <p className="activity-detail">{job.companyName || "Listed Partner"}</p>
+                    </div>
                   </div>
-                  <span style={{
-                    padding: "4px 12px", borderRadius: 16, fontSize: "0.82rem", fontWeight: 600,
-                    background: "rgba(125,211,192,0.12)", color: "#7dd3c0",
-                    border: "1px solid rgba(125,211,192,0.2)", whiteSpace: "nowrap",
-                  }}>
-                    {job.applications}
-                  </span>
+                  <div className="comp-badge shortlisted" style={{ fontSize: "0.75rem" }}>
+                    {job.applications} Apps
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Top Companies */}
         <div className="dashboard-section">
-          <h2>🏢 Top Companies</h2>
+          <h2>
+            <Building2 size={22} style={{ color: "var(--primary)" }} />
+            Elite Partners
+          </h2>
           {topCompanies.length === 0 ? (
-            <p style={{ color: "#64748b", textAlign: "center", padding: 20 }}>No company data yet</p>
+            <div className="comp-empty" style={{ padding: "32px" }}>
+              <p>Insufficent company activity</p>
+            </div>
           ) : (
             <div className="activities-list">
               {topCompanies.slice(0, 5).map((c, i) => (
                 <div key={i} className="activity-item">
-                  <div className="activity-info" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{
-                      display: "inline-flex", alignItems: "center", justifyContent: "center",
-                      width: 28, height: 28, borderRadius: 8,
-                      background: "rgba(245,169,98,0.15)", color: "#f5a962",
-                      fontSize: "0.8rem", fontWeight: 700, flexShrink: 0,
+                  <div className="activity-info" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div style={{
+                      width: "32px", height: "32px", borderRadius: "10px",
+                      background: "var(--bg-white)", color: "var(--primary)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "0.85rem", fontWeight: 900, boxShadow: "var(--shadow-sm)"
                     }}>
                       {i + 1}
-                    </span>
-                    <p className="activity-action" style={{ margin: 0 }}>{c.companyName}</p>
+                    </div>
+                    <div>
+                      <p className="activity-action">{c.companyName}</p>
+                    </div>
                   </div>
-                  <span style={{
-                    padding: "4px 12px", borderRadius: 16, fontSize: "0.82rem", fontWeight: 600,
-                    background: "rgba(245,169,98,0.12)", color: "#f5a962",
-                    border: "1px solid rgba(245,169,98,0.2)", whiteSpace: "nowrap",
-                  }}>
-                    {c.jobsPosted} jobs
-                  </span>
+                  <div className="comp-badge active" style={{ fontSize: "0.75rem", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>
+                    {c.jobsPosted} Listings
+                  </div>
                 </div>
               ))}
             </div>
@@ -224,19 +230,24 @@ function AdminDashboard() {
         </div>
       </div>
 
-      {/* Recent Activities */}
-      <div className="dashboard-section">
-        <h2>⚡ Recent Activities</h2>
+      <section className="dashboard-section">
+        <h2>
+          <Activity size={22} style={{ color: "var(--primary)" }} />
+          System Pulse
+        </h2>
         {allActivities.length === 0 ? (
-          <p style={{ color: "#64748b", textAlign: "center", padding: 30 }}>
-            No recent activities yet.
-          </p>
+          <div className="comp-empty" style={{ padding: "40px" }}>
+            <p>No system logs recorded recently.</p>
+          </div>
         ) : (
           <div className="activities-list">
             {allActivities.map((activity, i) => (
-              <div key={i} className="activity-item" style={{ borderLeftColor: activity.color }}>
+              <div key={i} className="activity-item" style={{ borderLeft: `4px solid ${activity.color}` }}>
                 <div className="activity-info">
-                  <p className="activity-action">{activity.action}</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
+                    <span style={{ color: activity.color }}>{activity.icon}</span>
+                    <p className="activity-action">{activity.action}</p>
+                  </div>
                   <p className="activity-detail">{activity.detail}</p>
                 </div>
                 <span className="activity-time">{timeAgo(activity.time)}</span>
@@ -244,9 +255,11 @@ function AdminDashboard() {
             ))}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
+
+
 
 export default AdminDashboard;

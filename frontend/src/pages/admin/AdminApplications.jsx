@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../api/axiosConfig";
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Search, 
+  Filter, 
+  ClipboardList, 
+  UserCheck, 
+  UserX, 
+  Star, 
+  Check, 
+  X,
+  AlertCircle,
+  Clock
+} from "lucide-react";
 
 const STATUS_OPTIONS = ["APPLIED", "SHORTLISTED", "REJECTED", "HIRED"];
-
-const STATUS_COLORS = {
-  APPLIED:     { bg: "rgba(245,169,98,0.2)",  color: "#f5a962", border: "rgba(245,169,98,0.3)" },
-  SHORTLISTED: { bg: "rgba(108,143,220,0.2)", color: "#6c8fdc", border: "rgba(108,143,220,0.3)" },
-  HIRED:       { bg: "rgba(125,211,192,0.2)", color: "#7dd3c0", border: "rgba(125,211,192,0.3)" },
-  REJECTED:    { bg: "rgba(239,68,68,0.2)",   color: "#ff6b6b", border: "rgba(239,68,68,0.3)" },
-};
 
 function AdminApplications() {
   const [applications, setApplications] = useState([]);
@@ -28,7 +35,7 @@ function AdminApplications() {
   const fetchApplications = async (pageNum = 0, status = "") => {
     try {
       setLoading(true);
-      const params = { page: pageNum, size: 15 };
+      const params = { page: pageNum, size: 10 };
       if (status) params.status = status;
 
       const res = await axiosInstance.get("/application/all", { params });
@@ -36,6 +43,7 @@ function AdminApplications() {
       setTotalPages(res.data.totalPages || 0);
       setTotalElements(res.data.totalElements || 0);
       setPage(res.data.number || 0);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error("Failed to fetch applications", err);
       setApplications([]);
@@ -48,6 +56,36 @@ function AdminApplications() {
     fetchApplications(0, statusFilter);
   }, [statusFilter]);
 
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxVisible = 5;
+    let start = Math.max(0, page - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible);
+
+    if (end - start < maxVisible) {
+      start = Math.max(0, end - maxVisible);
+    }
+
+    for (let i = start; i < end; i++) {
+      buttons.push(
+        <button
+          key={i}
+          onClick={() => fetchApplications(i, statusFilter)}
+          style={{
+            width: "42px", height: "42px", borderRadius: "12px", border: "none",
+            background: i === page ? "var(--primary-gradient)" : "var(--bg-accent)",
+            color: i === page ? "white" : "var(--text-main)",
+            fontWeight: 800, cursor: "pointer", transition: "var(--transition)",
+            boxShadow: i === page ? "0 8px 16px rgba(37,99,235,0.2)" : "none"
+          }}
+        >
+          {i + 1}
+        </button>
+      );
+    }
+    return buttons;
+  };
+
   const handleStatusChange = async (applicationId, newStatus) => {
     setUpdatingId(applicationId);
     try {
@@ -59,10 +97,9 @@ function AdminApplications() {
           app.applicationId === applicationId ? { ...app, status: newStatus } : app
         )
       );
-      showToast(`Status updated to ${newStatus}`);
+      showToast(`Candidate status updated to ${newStatus}`);
     } catch (err) {
-      console.error("Status update failed", err);
-      showToast(err.response?.data?.message || "Failed to update status", "error");
+      showToast(err.response?.data?.message || "Status update failed", "error");
     } finally {
       setUpdatingId(null);
     }
@@ -70,191 +107,186 @@ function AdminApplications() {
 
   const formatDate = (d) => {
     if (!d) return "—";
-    return new Date(d).toLocaleDateString("en-IN", {
+    return new Date(d).toLocaleDateString("en-US", {
       day: "2-digit", month: "short", year: "numeric",
     });
   };
 
-  const statusCounts = applications.reduce((acc, app) => {
-    acc[app.status] = (acc[app.status] || 0) + 1;
-    return acc;
-  }, {});
+  const formatEnum = (str) => {
+    if (!str) return "—";
+    return str
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  };
 
   return (
-    <div className="admin-applications">
-      {/* Toast */}
+    <div className="admin-applications-content">
       {toast && (
-        <div style={{
-          position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)",
-          padding: "12px 24px", borderRadius: 12, zIndex: 99999, fontWeight: 500,
-          background: toast.type === "error" ? "rgba(220,38,38,0.95)" : "rgba(5,150,105,0.95)",
-          color: "#fff", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", fontFamily: "'Poppins',sans-serif",
-          animation: "fadeIn 0.3s ease"
-        }}>
+        <div className={`comp-toast ${toast.type}`}>
+          {toast.type === "success" ? <Check size={18} /> : <AlertCircle size={18} />}
           {toast.msg}
         </div>
       )}
 
-      <div className="section-header">
-        <div>
-          <h1>Application Management</h1>
-          <p style={{ color: "#94a3b8", margin: "6px 0 0", fontSize: "0.95rem" }}>
-            {totalElements} total application{totalElements !== 1 ? "s" : ""} across the platform
-          </p>
-        </div>
-        <div className="filter-actions">
-          <select
-            className="filter-select"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All Status</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-      </div>
+      <header className="dashboard-header">
+        <h1>Master Application Log</h1>
+        <p>Global oversight of all recruitment activity across the platform</p>
+      </header>
 
-      {/* Quick Stats */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
-        {STATUS_OPTIONS.map((s) => {
-          const c = STATUS_COLORS[s];
-          return (
-            <div key={s} onClick={() => setStatusFilter(statusFilter === s ? "" : s)} style={{
-              padding: "10px 20px", borderRadius: 10, cursor: "pointer",
-              background: statusFilter === s ? c.bg : "rgba(255,255,255,0.03)",
-              border: `1px solid ${statusFilter === s ? c.border : "rgba(255,255,255,0.08)"}`,
-              transition: "all 0.3s ease",
-            }}>
-              <div style={{ fontSize: "1.3rem", fontWeight: 700, color: c.color }}>
-                {statusCounts[s] || 0}
-              </div>
-              <div style={{ fontSize: "0.8rem", color: "#94a3b8", textTransform: "capitalize" }}>
-                {s.toLowerCase()}
-              </div>
+      {/* Filter Stats */}
+      <div className="stats-grid" style={{ gridTemplateColumns: "repeat(5, 1fr)", marginBottom: "32px" }}>
+        <div 
+          className={`stat-card ${statusFilter === "" ? "active" : ""}`} 
+          onClick={() => setStatusFilter("")}
+          style={{ cursor: "pointer", border: statusFilter === "" ? "2px solid var(--primary)" : "" }}
+        >
+          <div className="stat-content">
+            <h3>Total Logs</h3>
+            <p className="stat-value" style={{ fontSize: "1.5rem" }}>{totalElements}</p>
+          </div>
+        </div>
+        {STATUS_OPTIONS.map((s) => (
+          <div 
+            key={s} 
+            className={`stat-card ${statusFilter === s ? "active" : ""}`} 
+            onClick={() => setStatusFilter(s)}
+            style={{ cursor: "pointer", border: statusFilter === s ? "2px solid var(--primary)" : "" }}
+          >
+            <div className="stat-content">
+              <h3>{formatEnum(s)}</h3>
+              <p className="stat-value" style={{ fontSize: "1.5rem" }}>—</p>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
-      {loading ? (
-        <p style={{ textAlign: "center", color: "#94a3b8", padding: 40 }}>Loading applications...</p>
-      ) : applications.length === 0 ? (
-        <div style={{
-          textAlign: "center", padding: 60, color: "#64748b",
-          background: "rgba(255,255,255,0.03)", borderRadius: 12,
-          border: "1px solid rgba(255,255,255,0.08)"
-        }}>
-          <p style={{ fontSize: "1.2rem", marginBottom: 8 }}>No applications found</p>
-          <p style={{ fontSize: "0.9rem" }}>
-            {statusFilter ? `No ${statusFilter.toLowerCase()} applications. Try clearing the filter.` : "Applications will appear here when users apply for jobs."}
-          </p>
+      <section className="dashboard-section" style={{ padding: "0 40px 40px" }}>
+        <div className="section-title-wrapper" style={{ padding: "40px 0 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 style={{ margin: 0 }}>
+            <ClipboardList size={22} style={{ color: "var(--primary)", marginRight: "12px" }} />
+            Application Records
+          </h2>
+          <div style={{ display: "flex", gap: "12px" }}>
+             <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{ padding: "8px 16px", borderRadius: "10px", border: "1.5px solid var(--border-color)", fontWeight: 700 }}
+            >
+              <option value="">All Statuses</option>
+              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{formatEnum(s)}</option>)}
+            </select>
+          </div>
         </div>
-      ) : (
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Candidate</th>
-                <th>Job Position</th>
-                <th>Company</th>
-                <th>Status</th>
-                <th>Applied Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {applications.map((app) => {
-                const sc = STATUS_COLORS[app.status] || STATUS_COLORS.APPLIED;
-                return (
-                  <tr key={app.applicationId}>
-                    <td className="title-cell">{app.jobSeekerName || "—"}</td>
-                    <td>{app.jobTitle || "—"}</td>
-                    <td>{app.companyName || "—"}</td>
-                    <td>
-                      <span style={{
-                        display: "inline-block", padding: "6px 14px", borderRadius: 20,
-                        fontSize: "0.82rem", fontWeight: 600, textTransform: "capitalize",
-                        background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`,
-                      }}>
-                        {app.status?.toLowerCase()}
-                      </span>
-                    </td>
-                    <td>{formatDate(app.appliedAt)}</td>
-                    <td className="action-cell">
-                      {app.status !== "SHORTLISTED" && app.status !== "HIRED" && (
-                        <button
-                          className="btn-small edit"
-                          disabled={updatingId === app.applicationId}
-                          onClick={() => handleStatusChange(app.applicationId, "SHORTLISTED")}
-                        >
-                          Shortlist
-                        </button>
-                      )}
-                      {app.status !== "HIRED" && (
-                        <button
-                          className="btn-small view"
-                          disabled={updatingId === app.applicationId}
-                          onClick={() => handleStatusChange(app.applicationId, "HIRED")}
-                        >
-                          Hire
-                        </button>
-                      )}
-                      {app.status !== "REJECTED" && app.status !== "HIRED" && (
-                        <button
-                          className="btn-small delete"
-                          disabled={updatingId === app.applicationId}
-                          onClick={() => handleStatusChange(app.applicationId, "REJECTED")}
-                        >
-                          Reject
-                        </button>
-                      )}
-                      {app.status === "HIRED" && (
-                        <span style={{ color: "#7dd3c0", fontWeight: 600, fontSize: "0.85rem" }}>✓ Hired</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
-          <button
-            disabled={page === 0}
-            onClick={() => fetchApplications(page - 1, statusFilter)}
-            style={{
-              padding: "8px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.05)", color: "#cbd3de", cursor: page === 0 ? "not-allowed" : "pointer",
-              opacity: page === 0 ? 0.4 : 1,
-            }}
-          >
-            ‹ Prev
-          </button>
-          <span style={{ padding: "8px 16px", color: "#94a3b8" }}>
-            Page {page + 1} of {totalPages}
-          </span>
-          <button
-            disabled={page + 1 >= totalPages}
-            onClick={() => fetchApplications(page + 1, statusFilter)}
-            style={{
-              padding: "8px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.05)", color: "#cbd3de",
-              cursor: page + 1 >= totalPages ? "not-allowed" : "pointer",
-              opacity: page + 1 >= totalPages ? 0.4 : 1,
-            }}
-          >
-            Next ›
-          </button>
-        </div>
-      )}
+        {loading ? (
+          <div className="comp-empty" style={{ padding: "60px" }}>
+            <Clock className="animate-spin" size={40} />
+            <p>Synchronizing log records...</p>
+          </div>
+        ) : applications.length === 0 ? (
+          <div className="comp-empty" style={{ padding: "60px" }}>
+            <AlertCircle size={48} style={{ color: "#94a3b8", marginBottom: "16px" }} />
+            <p style={{ fontSize: "1.1rem", fontWeight: 700 }}>No records found</p>
+            <p>No applications match your current filter criteria.</p>
+          </div>
+        ) : (
+          <>
+            <div className="data-table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Candidate</th>
+                    <th>Position</th>
+                    <th>Company</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th style={{ textAlign: "right" }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {applications.map((app) => (
+                    <tr key={app.applicationId}>
+                      <td className="title-cell">
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <div className="home-letter-avatar" style={{ width: "32px", height: "32px", fontSize: "0.85rem" }}>
+                            {app.jobSeekerName?.charAt(0) || "A"}
+                          </div>
+                          {app.jobSeekerName}
+                        </div>
+                      </td>
+                      <td style={{ fontWeight: 700 }}>{app.jobTitle}</td>
+                      <td>{app.companyName}</td>
+                      <td>
+                        <span className={`comp-badge ${app.status?.toLowerCase()}`} style={{
+                          background: app.status === "HIRED" ? "rgba(16,185,129,0.1)" : app.status === "REJECTED" ? "rgba(239,68,68,0.1)" : "rgba(37,99,235,0.1)",
+                          color: app.status === "HIRED" ? "#10b981" : app.status === "REJECTED" ? "#ef4444" : "#2563eb",
+                          padding: "6px 12px", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 800
+                        }}>
+                          {formatEnum(app.status)}
+                        </span>
+                      </td>
+                      <td>{formatDate(app.appliedAt)}</td>
+                      <td>
+                        <div className="actions-cell">
+                          {app.status === "APPLIED" && (
+                            <button className="admin-btn primary" onClick={() => handleStatusChange(app.applicationId, "SHORTLISTED")} title="Shortlist">
+                              <Star size={14} />
+                            </button>
+                          )}
+                          {app.status === "SHORTLISTED" && (
+                            <button className="admin-btn primary" style={{ background: "#10b981" }} onClick={() => handleStatusChange(app.applicationId, "HIRED")} title="Hire">
+                              <UserCheck size={14} />
+                            </button>
+                          )}
+                          {(app.status === "APPLIED" || app.status === "SHORTLISTED") && (
+                            <button className="admin-btn danger" onClick={() => handleStatusChange(app.applicationId, "REJECTED")} title="Reject">
+                              <UserX size={14} />
+                            </button>
+                          )}
+                          {app.status === "HIRED" && <Check size={18} style={{ color: "#10b981" }} />}
+                          {app.status === "REJECTED" && <X size={18} style={{ color: "#ef4444" }} />}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Premium Pagination */}
+            {totalPages > 1 && (
+              <div className="pagination-bar" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "40px" }}>
+                <button
+                  disabled={page === 0}
+                  onClick={() => fetchApplications(page - 1, statusFilter)}
+                  className="admin-btn edit"
+                  style={{ borderRadius: "12px", padding: "12px" }}
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {renderPaginationButtons()}
+                </div>
+
+                <button
+                  disabled={page + 1 >= totalPages}
+                  onClick={() => fetchApplications(page + 1, statusFilter)}
+                  className="admin-btn edit"
+                  style={{ borderRadius: "12px", padding: "12px" }}
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }
 
 export default AdminApplications;
+
+

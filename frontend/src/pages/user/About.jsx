@@ -1,111 +1,142 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 import "../../styles/about.css";
+import axiosInstance from "../../api/axiosConfig";
+import { Target, Shield, Zap, Mail, Award, Users } from "lucide-react";
 
 function About() {
-  const industries =  [
-    {
-      name: "Information Technology",
-      icon: "💻",
-      description: "Connecting developers, engineers, and tech talent with high-growth software teams."
-    },
-    {
-      name: "Healthcare",
-      icon: "🩺",
-      description: "Supporting hospitals, clinics, and care providers with skilled professionals."
-    },
-    {
-      name: "Finance",
-      icon: "💹",
-      description: "Helping financial services hire analysts, advisors, and operations specialists."
-    },
-    {
-      name: "Education",
-      icon: "🎓",
-      description: "Powering academic institutions and edtech companies with mission-driven talent."
-    },
-    {
-      name: "Manufacturing",
-      icon: "🏭",
-      description: "Matching operational experts, engineers, and supply chain talent with modern manufacturers."
-    },
-    {
-      name: "Retail",
-      icon: "🛍️",
-      description: "Helping retail brands scale teams across stores, e-commerce, and customer success."
-    },
-    {
-      name: "Marketing",
-      icon: "📣",
-      description: "Connecting creative marketers, content strategists, and growth teams with top employers."
-    },
-    {
-      name: "Engineering",
-      icon: "🛠️",
-      description: "Supporting infrastructure, product, and systems engineering hires for modern organizations."
-    }
-  ];
+  const [stats, setStats] = useState({ jobs: "...", companies: "...", satisfaction: "98%" });
 
-  const [activeIndustry, setActiveIndustry] = useState(industries[0]);
+  useEffect(() => {
+    axiosInstance.get("/public/stats")
+      .then(res => {
+        setStats({
+          jobs: `${res.data.totalJobs}+`,
+          companies: `${res.data.totalCompanies}+`,
+          satisfaction: "99%"
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="about-page">
-      <section className="about-hero">
-        <div className="about-hero-inner">
-          <span className="about-eyebrow">Built for modern talent and hiring teams</span>
-          <h1 className="about-title">About JobVista</h1>
-          <p className="about-sub text">
-            JobVista connects job seekers with great companies across industries. We focus on meaningful matches using curated job listings, company profiles and a delightful experience.
+      {/* ── Immersive Hero ── */}
+      <section className="about-hero-v2 ">
+        <div className="hero-overlay" style={{background:"rgba(38, 88, 169, 1)"}}></div>
+        <div className="hero-content">
+          <span className="about-badge" style={{backgroundColor:"rgba(0, 0, 0, 0.393)", color:"#2658A9"}}>Established 2024</span>
+          <h1 className="classy-title">Simplifying the search for excellence.</h1>
+          <p className="classy-lead">
+            JobVista is a curated marketplace designed to bring clarity to the world of hiring. 
+            We believe the right match shouldn't be hard to find.
           </p>
-
-          <div className="about-actions">
-            <Link to="/jobs" className="about-btn primary">
-              Browse jobs
-            </Link>
-            <Link to="/login" className="about-btn ghost">
-              Join JobVista
-            </Link>
-          </div>
         </div>
       </section>
 
       <section className="about-content">
-        <div className="about-intro">
-          <h2>Our Mission</h2>
-          <p>
-            Provide an easy-to-use hiring marketplace that helps candidates discover opportunities and employers find the right talent.
-          </p>
+        {/* ── Core Values ── */}
+        <div className="classy-grid">
+          <div className="classy-item-v2">
+            <div className="icon-box"><Target size={28} /></div>
+            <h3>The Vision</h3>
+            <p>To create a space where professional integrity meets opportunity. No noise, just progress.</p>
+          </div>
+          <div className="classy-item-v2">
+            <div className="icon-box"><Zap size={28} /></div>
+            <h3>The Process</h3>
+            <p>We manually vet every company and every listing to ensure your time is spent on real possibilities.</p>
+          </div>
+          <div className="classy-item-v2">
+            <div className="icon-box"><Shield size={28} /></div>
+            <h3>The Promise</h3>
+            <p>Your data remains yours. Secure, encrypted, and only shared when you choose to apply.</p>
+          </div>
         </div>
 
-        <div className="industry-section">
-          <h3 className="section-title">Industries We Serve</h3>
-          <div className="industry-grid">
-            {industries.map((industry) => (
-              <button
-                key={industry.name}
-                type="button"
-                className={`industry-card ${activeIndustry.name === industry.name ? "active" : ""}`}
-                onClick={() => setActiveIndustry(industry)}
-              >
-                <div className="industry-icon">{industry.icon}</div>
+        {/* ── How it Works ── */}
+        <div className="how-it-works-section">
+          <h2 className="section-title-alt">Your journey with JobVista.</h2>
+          <div className="steps-grid">
+            <div className="step-card">
+              <div className="step-num">01</div>
+              <h4>Create your Profile</h4>
+              <p>Build a professional identity with our interactive resume builder and showcase your unique skills.</p>
+            </div>
+            <div className="step-card">
+              <div className="step-num">02</div>
+              <h4>Apply with Clarity</h4>
+              <p>Find vetted opportunities that match your expertise and apply with a single, secure click.</p>
+            </div>
+            <div className="step-card">
+              <div className="step-num">03</div>
+              <h4>Get the Job</h4>
+              <p>Connect directly with decision-makers at top companies and land your dream role.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Trust & Security ── */}
+        <div className="trust-security-row">
+          <div className="trust-content">
+            <h2 className="section-title-alt">Reliability is our priority.</h2>
+            <div className="trust-features">
+              <div className="trust-feature">
+                <Shield className="trust-icon" />
                 <div>
-                  <div className="industry-name">{industry.name}</div>
-                  <p className="industry-tag">Tap to explore</p>
+                  <h4>Advanced Encryption</h4>
+                  <p>All your personal data and resume details are protected with bank-grade encryption.</p>
                 </div>
-              </button>
-            ))}
+              </div>
+              <div className="trust-feature">
+                <Award className="trust-icon" />
+                <div>
+                  <h4>Verified Companies</h4>
+                  <p>We manually verify every company profile to prevent spam and ensure real opportunities.</p>
+                </div>
+              </div>
+              <div className="trust-feature">
+                <Zap className="trust-icon" />
+                <div>
+                  <h4>Real-time Updates</h4>
+                  <p>Get instant notifications on your application status via our integrated WebSocket system.</p>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <div className="active-industry-panel">
-            <h4>{activeIndustry.name}</h4>
-            <p>{activeIndustry.description}</p>
+          <div className="trust-badge-container">
+            <div className="security-badge">
+              <Shield size={48} />
+              <span>Certified Secure</span>
+            </div>
           </div>
         </div>
 
-        <div className="about-footer-cta">
-          <p>
-            Want to list a job or learn more about hiring on JobVista? Reach out to our team and we’ll help you get started.
-          </p>
+        {/* ── Dynamic Stats ──
+        <div className="about-stats-container">
+          <div className="classy-stats-v2">
+            <div className="stat-card">
+              <strong>{stats.jobs}</strong>
+              <span>Active Positions</span>
+            </div>
+            <div className="stat-card">
+              <strong>{stats.companies}</strong>
+              <span>Trusted Partners</span>
+            </div>
+            <div className="stat-card">
+              <strong>{stats.satisfaction}</strong>
+              <span>Community Satisfaction</span>
+            </div>
+          </div>
+        </div> */}
+
+        {/* ── Contact Footer ── */}
+        <div className="classy-footer-v2">
+          <div className="footer-circle"></div>
+          <h3>Let's build the future of work together.</h3>
+          <p>Interested in joining us or listing a position?</p>
+          <a href="mailto:jobvista51@gmail.com" className="contact-pill">
+            <Mail size={18} /> jobvista51@gmail.com
+          </a>
         </div>
       </section>
     </div>

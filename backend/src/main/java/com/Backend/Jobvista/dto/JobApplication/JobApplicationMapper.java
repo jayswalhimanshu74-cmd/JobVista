@@ -23,9 +23,9 @@ public class JobApplicationMapper {
                         ? application.getJob().getTitle()
                         : null)
                 .companyName(companyName)
-                .jobSeekerName(application.getJobSeeker()
-                        .getUser()
-                        .getName())
+                .jobSeekerName(application.getJobSeeker() != null && application.getJobSeeker().getUser() != null
+                        ? application.getJobSeeker().getUser().getName()
+                        : "Unknown")
                 .status(application.getApplicationStatus())
                 .appliedAt(application.getAppliedAt())
                 .build();

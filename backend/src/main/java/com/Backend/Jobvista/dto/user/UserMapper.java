@@ -14,6 +14,8 @@ public class UserMapper {
         user.setPassword(dto.getPassword());
         user.setRole(dto.getRole());
         user.setMobileNumber(dto.getMobileNumber());
+        user.setProfilePicture(dto.getProfilePicture());
+        user.setCoverPhoto(dto.getCoverPhoto());
         return user;
     }
 
@@ -29,6 +31,8 @@ public class UserMapper {
         dto.setEmail(user.getEmail());
         dto.setRole(user.getRole());
         dto.setMobileNumber(user.getMobileNumber());
+        dto.setProfilePicture(user.getProfilePicture());
+        dto.setCoverPhoto(user.getCoverPhoto());
         return dto;
     }
 }

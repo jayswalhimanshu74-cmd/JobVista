@@ -47,6 +47,14 @@ public class JobApplicationController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(job);
     }
 
+    @DeleteMapping("/withdraw/{jobId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> withdrawApplication(@PathVariable UUID jobId) {
+        String email = securityUtil.getCurrentUserEmail();
+        applicationService.withdrawApplication(jobId, email);
+        return ResponseEntity.ok("Application withdrawn successfully");
+    }
+
 
     @GetMapping("/me")
     @PreAuthorize("hasRole('USER')")

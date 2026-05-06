@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../api/axiosConfig";
+import { Briefcase, Users, UserCheck, Clock, ListChecks } from "lucide-react";
 
 function CompanyOverview({ company }) {
   const [jobs, setJobs] = useState([]);
@@ -47,61 +48,88 @@ function CompanyOverview({ company }) {
     return `${Math.floor(diff / 1440)}d ago`;
   };
 
+  const formatEnum = (str) => {
+    if (!str) return "—";
+    return str
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  };
+
   const statCards = [
-    { title: "Total Jobs", value: stats.totalJobs, icon: "💼", color: "#6c8fdc" },
-    { title: "Applications", value: stats.totalApps, icon: "📝", color: "#f5a962" },
-    { title: "Hired", value: stats.hired, icon: "✅", color: "#7dd3c0" },
-    { title: "Pending", value: stats.pending, icon: "⏳", color: "#a855f7" },
+    { title: "Live Jobs", value: stats.totalJobs, icon: <Briefcase size={24} />, color: "#2563eb" },
+    { title: "Applications", value: stats.totalApps, icon: <Users size={24} />, color: "#7c3aed" },
+    { title: "Talent Hired", value: stats.hired, icon: <UserCheck size={24} />, color: "#10b981" },
+    { title: "To Review", value: stats.pending, icon: <Clock size={24} />, color: "#f59e0b" },
   ];
 
   return (
-    <div>
-      <div className="comp-page-header">
-        <h1>Welcome, {company?.companyName || "Company"}!</h1>
-        <p>Here's your hiring overview</p>
-      </div>
+    <div className="company-overview-content">
+      <header className="comp-page-header">
+        <h1>Welcome back, {company?.companyName || "Partner"}</h1>
+        <p>Monitor your hiring pipeline and talent acquisition performance</p>
+      </header>
 
       <div className="comp-stats-grid">
         {statCards.map((s, i) => (
           <div className="comp-stat-card" key={i}>
-            <span className="icon">{s.icon}</span>
+            <div className="icon" style={{ color: s.color, backgroundColor: `${s.color}15` }}>
+              {s.icon}
+            </div>
             <div className="info">
               <h3>{s.title}</h3>
-              <p className="value" style={{ color: s.color }}>{s.value}</p>
+              <p className="value">{s.value}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="comp-section">
-        <h2>📋 Recent Applications</h2>
+      <section className="comp-section">
+        <h2>
+          <ListChecks size={24} className="section-icon" /> 
+          Recent Applications
+        </h2>
         {recentApps.length === 0 ? (
-          <p style={{ color: "#64748b", textAlign: "center", padding: 20 }}>No applications yet. Post jobs to start receiving applications!</p>
+          <div className="comp-empty">
+            <p>No applications received yet.</p>
+            <p>Share your job posts to attract candidates.</p>
+          </div>
         ) : (
-          <table className="comp-table">
-            <thead>
-              <tr><th>Candidate</th><th>Job</th><th>Status</th><th>Applied</th></tr>
-            </thead>
-            <tbody>
-              {recentApps.map((app, i) => (
-                <tr key={i}>
-                  <td className="title-cell">{app.jobSeekerName || "—"}</td>
-                  <td>{app.jobTitle || "—"}</td>
-                  <td>
-                    <span className="comp-badge" style={{
-                      background: app.status === "HIRED" ? "rgba(125,211,192,0.2)" : app.status === "REJECTED" ? "rgba(239,68,68,0.2)" : "rgba(245,169,98,0.2)",
-                      color: app.status === "HIRED" ? "#7dd3c0" : app.status === "REJECTED" ? "#ff6b6b" : "#f5a962",
-                    }}>{app.status?.toLowerCase()}</span>
-                  </td>
-                  <td>{timeAgo(app.appliedAt)}</td>
+          <div className="comp-table-container">
+            <table className="comp-table">
+              <thead>
+                <tr>
+                  <th>Candidate</th>
+                  <th>Job Title</th>
+                  <th>Status</th>
+                  <th>Applied</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recentApps.map((app, i) => (
+                  <tr key={i}>
+                    <td className="title-cell">{app.jobSeekerName || "Anonymous"}</td>
+                    <td>{app.jobTitle}</td>
+                    <td>
+                      <span className={`comp-badge ${app.status?.toLowerCase()}`} style={{
+                        background: app.status === "HIRED" ? "rgba(16,185,129,0.12)" : app.status === "REJECTED" ? "rgba(239,68,68,0.12)" : "rgba(37,99,235,0.12)",
+                        color: app.status === "HIRED" ? "#10b981" : app.status === "REJECTED" ? "#ef4444" : "#2563eb",
+                      }}>
+                        {formatEnum(app.status)}
+                      </span>
+                    </td>
+                    <td>{timeAgo(app.appliedAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
 
 export default CompanyOverview;
+
+

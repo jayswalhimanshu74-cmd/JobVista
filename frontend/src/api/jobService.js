@@ -16,6 +16,11 @@ const applyJob = async (jobId) => {
   return res.data;
 };
 
+const withdrawJob = async (jobId) => {
+  const res = await axiosInstance.delete(`/application/withdraw/${String(jobId).trim()}`);
+  return res.data;
+};
+
 const toggleSaveJob = async (jobId) => {
   const res = await axiosInstance.post(`/saved-jobs/${String(jobId).trim()}/toggle`);
   return res.data;
@@ -46,4 +51,4 @@ const updateApplicationStatus = async (applicationId, status) => {
   return res.data;
 };
 
-export default { getAllJobs, searchJobs, applyJob, toggleSaveJob, getSavedJobs, getAppliedJobs, createJob, getJobApplicants, updateApplicationStatus };
+export default { getAllJobs, searchJobs, applyJob, withdrawJob, toggleSaveJob, getSavedJobs, getAppliedJobs, createJob, getJobApplicants, updateApplicationStatus };

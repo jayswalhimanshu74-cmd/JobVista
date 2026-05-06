@@ -31,4 +31,6 @@ public interface JobApplicationService {
             int size);
 
     Page<JobApplicationResponseDToO> getAllApplications(ApplicationStatus status, int page, int size);
+
+    void withdrawApplication(UUID jobId, String email);
 }

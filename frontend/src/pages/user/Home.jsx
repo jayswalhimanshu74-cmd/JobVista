@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, FileText, Rocket } from "lucide-react";
+import { Search, FileText, Rocket, ShieldCheck, Lock, TrendingUp } from "lucide-react";
 import "../../styles/home.css";
 import axiosInstance from "../../api/axiosConfig";
 import webSocketService from "../../api/webSocketService";
@@ -9,47 +9,74 @@ const categories = [
   {
     id: 1,
     name: "Software Development",
-    image: "https://cdn-icons-png.flaticon.com/512/2721/2721291.png"
+    image: "https://cdn-icons-png.flaticon.com/512/2721/2721291.png",
+    terms: ["software", "developer", "engineer", "fullstack", "backend", "frontend", "web", "coding", "java", "python", "javascript", "react", "node"]
   },
   {
     id: 2,
     name: "Data Science",
-    image: "https://cdn-icons-png.flaticon.com/512/2103/2103832.png"
+    image: "https://cdn-icons-png.flaticon.com/512/2103/2103832.png",
+    terms: ["data", "science", "analyst", "machine learning", "ai", "artificial intelligence", "stats", "sql", "pandas", "numpy"]
   },
   {
     id: 3,
     name: "UI / UX Design",
-    image: "https://cdn-icons-png.flaticon.com/512/1828/1828919.png"
+    image: "https://cdn-icons-png.flaticon.com/512/1828/1828919.png",
+    terms: ["ui", "ux", "design", "figma", "sketch", "adobe", "creative", "interface", "experience", "product design"]
   },
   {
     id: 4,
     name: "Marketing",
-    image: "https://cdn-icons-png.flaticon.com/512/1055/1055687.png"
+    image: "https://cdn-icons-png.flaticon.com/512/1055/1055687.png",
+    terms: ["marketing", "seo", "social media", "content", "branding", "sales", "growth", "digital marketing"]
   },
   {
     id: 5,
     name: "Finance",
-    image: "https://cdn-icons-png.flaticon.com/512/3135/3135706.png"
+    image: "https://cdn-icons-png.flaticon.com/512/3135/3135706.png",
+    terms: ["finance", "accountant", "audit", "banking", "tax", "investment", "financial", "economics"]
   },
   {
     id: 6,
     name: "Internships",
-    image: "https://cdn-icons-png.flaticon.com/512/1995/1995574.png"
+    image: "https://cdn-icons-png.flaticon.com/512/1995/1995574.png",
+    terms: ["intern", "internship", "trainee", "fresher", "apprentice"]
   }
 ];
 function Home() {
   const navigate = useNavigate();
   const scrollRef = useRef(null);
+  const companyScrollRef = useRef(null);
   const [jobs, setJobs] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  const [homeStats, setHomeStats] = useState({ jobs: "...", companies: "...", users: "...", rate: "95%" });
 
   useEffect(() => {
+    // Fetch Jobs
     axiosInstance.get("/job/all", { params: { page: 0, size: 6 } })
       .then(res => setJobs(Array.isArray(res.data.content) ? res.data.content : []))
       .catch(() => setJobs([]))
       .finally(() => setLoading(false));
+
+    // Fetch Companies
+    axiosInstance.get("/company/all", { params: { page: 0, size: 6 } })
+      .then(res => setCompanies(Array.isArray(res.data.content) ? res.data.content : []))
+      .catch(() => setCompanies([]));
+
+    // Fetch Public Stats
+    axiosInstance.get("/public/stats")
+      .then(res => {
+        setHomeStats({
+          jobs: `${res.data.totalJobs || 0}+`,
+          companies: `${res.data.totalCompanies || 0}+`,
+          users: `${res.data.totalUsers || 0}+`,
+          rate: "98%"
+        });
+      })
+      .catch(() => {});
 
     // 🔥 Real-time job updates
     webSocketService.connect(() => {
@@ -101,7 +128,7 @@ function Home() {
       const matchesCategory =
         !category || activeCategory === "All"
           ? true
-          : category.terms.some((term) => content.includes(term));
+          : category.terms?.some((t) => content.includes(t.toLowerCase())) || false;
 
       const matchesSearch =
         !term || content.includes(term) || activeCategory.toLowerCase().includes(term);
@@ -150,15 +177,15 @@ function Home() {
 
           <div className="hero-stats">
             <div>
-              <strong>10K+</strong>
+              <strong>{homeStats.jobs}</strong>
               <span>Jobs</span>
             </div>
             <div>
-              <strong>5K+</strong>
+              <strong>{homeStats.companies}</strong>
               <span>Companies</span>
             </div>
             <div>
-              <strong>95%</strong>
+              <strong>{homeStats.rate}</strong>
               <span>Success Rate</span>
             </div>
           </div>
@@ -182,7 +209,7 @@ function Home() {
                   className={`hero-chip ${activeCategory === category.name ? "selected" : ""}`}
                   onClick={() => setActiveCategory(category.name)}
                 >
-                  {category.icon}
+                  {category.image && <img src={category.image} alt="" className="chip-icon" />}
                   {category.name}
                 </button>
               ))}
@@ -194,65 +221,132 @@ function Home() {
         </div>
       </section>
 
-      <section className="explore-section">
+      {/* ── Latest Opportunities ── */}
+      <section className="jobs-home-section">
         <div className="section-header">
-          <div>
-            <h2 className="section-title">Explore Opportunities</h2>
-            <p className="section-sub">
-              Browse the latest roles from top companies. Use search and category
-              filters to refine the preview.
-            </p>
-          </div>
+          <h2 className="section-title">Latest Opportunities</h2>
+          <Link to="/jobs" className="view-all-link">View all jobs →</Link>
         </div>
-
-        <div className="scroll-wrapper">
-          <button
-            className="scroll-btn left"
-            onClick={() => scrollRef.current?.scrollBy({ left: -380, behavior: "smooth" })}
-            aria-label="Scroll left"
-          >
-            ◀
+        
+        <div className="jobs-home-scroll-wrapper">
+          <button className="scroll-btn left" onClick={() => scrollRef.current?.scrollBy({ left: -400, behavior: "smooth" })}>
+            ←
           </button>
-
-          <div className="scroll-container" ref={scrollRef}>
-            {loading ? (
-              <div className="card-placeholder">Loading jobs...</div>
-            ) : filteredJobs.length ? (
+          
+          <div className="jobs-home-scroll-container" ref={scrollRef}>
+            {filteredJobs.length > 0 ? (
               filteredJobs.map((job) => (
-                <div key={job.id} className="job-card">
-                  <div className="job-card-meta">
-                    <span>{job.location || "Remote"}</span>
-                    <strong>{job.companyName || job.company || "JobVista"}</strong>
+                <div key={job.jobId} className="job-home-card scroll-item">
+                  <div className="job-home-header">
+                    <div className="job-home-logo-box">
+                      {job.companyLogo || job.logoUrl ? (
+                        <img src={job.companyLogo || job.logoUrl} alt="" />
+                      ) : (
+                        <span>{(job.companyName || "J")[0]}</span>
+                      )}
+                    </div>
+                    <span className="job-home-type">{job.employmentType?.replace(/_/g, " ")}</span>
                   </div>
-                  <h3>{job.title || "Open Role"}</h3>
-                  <p>
-                    {job.description
-                      ? `${job.description.slice(0, 100)}...`
-                      : "Explore this job listing from top employers."}
-                  </p>
-                  <Link to="/jobs" className="job-action">
-                    View Opportunities
+
+                  <div className="job-home-info">
+                    <h3>{job.title}</h3>
+                    <p className="job-home-company">{job.companyName}</p>
+                  </div>
+
+                  <div className="job-home-meta">
+                    <div className="job-home-meta-item">
+                      📍 <span>{job.location || "Remote"}</span>
+                    </div>
+                    <div className="job-home-meta-item">
+                      💰 <span>{job.salaryOrStipend || job.salary || "Not Disclosed"}</span>
+                    </div>
+                  </div>
+
+                  <Link to="/jobs" className="contact-pill" style={{marginTop: 'auto', textAlign: 'center', justifyContent: 'center'}}>
+                    View Details
                   </Link>
                 </div>
               ))
             ) : (
               <div className="empty-state">
-                <p>No matching jobs were found.</p>
-                <Link type="button" className="home-btn ghost" to ="/jobs"
-                 onClick={() => setActiveCategory("All")}>View all</Link>
+                <p>
+                  {loading 
+                    ? "Fetching the latest opportunities..." 
+                    : activeCategory !== "All" || searchTerm 
+                      ? `No jobs found matching "${searchTerm || activeCategory}"`
+                      : "No jobs available at the moment."
+                  }
+                </p>
               </div>
             )}
           </div>
 
-          <button
-            className="scroll-btn right"
-            onClick={() => scrollRef.current?.scrollBy({ left: 380, behavior: "smooth" })}
-            aria-label="Scroll right"
-          >
-            ▶
+          <button className="scroll-btn right" onClick={() => scrollRef.current?.scrollBy({ left: 400, behavior: "smooth" })}>
+            →
           </button>
         </div>
       </section>
+
+      {/* ── Reliability Pillars ── */}
+      <section className="reliability-section">
+        <div className="section-header center">
+          <span className="eyebrow">Trust & Security</span>
+          <h2>Why professionals choose JobVista.</h2>
+        </div>
+        <div className="reliability-grid">
+          <div className="rel-card">
+            <div className="rel-icon-wrapper"><ShieldCheck size={32} /></div>
+            <h3>Verified Employers</h3>
+            <p>Every company profile is manually vetted by our team to ensure you only apply to legitimate, high-quality opportunities.</p>
+          </div>
+          <div className="rel-card">
+            <div className="rel-icon-wrapper"><Lock size={32} /></div>
+            <h3>Secure Data Vault</h3>
+            <p>Your personal details and resumes are encrypted using industry-standard protocols. We never share your data without consent.</p>
+          </div>
+          <div className="rel-card">
+            <div className="rel-icon-wrapper"><TrendingUp size={32} /></div>
+            <h3>Career-First Approach</h3>
+            <p>Beyond job listings, we provide tools like our Resume Builder to help you present your best self to the world's top employers.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Top Companies Section ── */}
+      {/* <section className="top-companies-section">
+        <div className="section-header">
+          <h2 className="section-title">Top Hiring Companies</h2>
+          <Link to="/companies" className="view-all-link">View all companies →</Link>
+        </div>
+
+        <div className="jobs-home-scroll-wrapper">
+          <button className="scroll-btn left" onClick={() => companyScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}>
+            ←
+          </button>
+          
+          <div className="jobs-home-scroll-container" ref={companyScrollRef}>
+            {companies.map((company) => (
+              <Link to="/companies" key={company.id || company.companyId} className="company-home-card scroll-item-mini">
+                <div className="company-home-logo-box">
+                  {company.logoUrl ? (
+                    <img src={company.logoUrl} alt={company.companyName} 
+                         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}/>
+                  ) : null}
+                  <span className="modal-letter-avatar" style={{display: company.logoUrl ? 'none' : 'flex', width: '100%', height: '100%'}}>
+                    {(company.companyName || "C")[0]}
+                  </span>
+                </div>
+                <h4>{company.companyName}</h4>
+                <p>{company.industry || "Technology"}</p>
+              </Link>
+            ))}
+          </div>
+
+          <button className="scroll-btn right" onClick={() => companyScrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })}>
+            →
+          </button>
+        </div>
+      </section> */}
 
        <section className="categories">
         <h2 className="section-title">Explore Categories</h2>
@@ -315,19 +409,19 @@ function Home() {
       <section className="stats">
         <div className="stats-grid">
           <div className="stat">
-            <h2>10K+</h2>
+            <h2>{homeStats.jobs}</h2>
             <p>Jobs Available</p>
           </div>
           <div className="stat">
-            <h2>5K+</h2>
+            <h2>{homeStats.companies}</h2>
             <p>Companies</p>
           </div>
           <div className="stat">
-            <h2>25K+</h2>
+            <h2>{homeStats.users}</h2>
             <p>Active Users</p>
           </div>
           <div className="stat">
-            <h2>95%</h2>
+            <h2>{homeStats.rate}</h2>
             <p>Success Rate</p>
           </div>
         </div>

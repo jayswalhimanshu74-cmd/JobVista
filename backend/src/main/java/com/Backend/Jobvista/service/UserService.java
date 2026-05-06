@@ -29,4 +29,8 @@ public interface UserService {
 
 
     UserResponseDTO getUserById(Long id);
+
+    String uploadProfilePicture(String email, org.springframework.web.multipart.MultipartFile file);
+
+    String uploadCoverPhoto(String email, org.springframework.web.multipart.MultipartFile file);
 }
