@@ -1,4 +1,4 @@
-    package com.Backend.Jobvista.entity;
+package com.Backend.Jobvista.entity;
 
     import com.Backend.Jobvista.security.RefreshToken;
     import jakarta.persistence.*;
@@ -8,12 +8,13 @@
     import lombok.*;
     import org.springframework.security.core.GrantedAuthority;
     import org.springframework.security.core.authority.SimpleGrantedAuthority;
-
     import java.time.Instant;
     import java.time.LocalDateTime;
     import java.util.Collection;
     import java.util.List;
     import java.util.UUID;
+    import com.Backend.Jobvista.entity.Role;
+    import com.fasterxml.jackson.annotation.JsonIgnore;
 
     @Entity
     @Getter
@@ -42,6 +43,7 @@
         @Column( nullable = false)
         @NotBlank
         @Size(min = 8)
+        @JsonIgnore
         private String password;
 
         @Column( nullable = false)

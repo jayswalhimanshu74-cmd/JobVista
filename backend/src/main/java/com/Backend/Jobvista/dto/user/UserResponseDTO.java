@@ -22,7 +22,7 @@ public class UserResponseDTO {
     private String  mobileNumber;
     private Role role;
     private LocalDateTime createdAt;
-    private String password;
+    
     private LocalDateTime updatedAt;
     private Status status;
     private String profilePicture;
