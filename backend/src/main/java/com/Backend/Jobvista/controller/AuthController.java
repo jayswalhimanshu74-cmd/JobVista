@@ -102,13 +102,18 @@ public class AuthController {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            Date expiry = jwtService.extractExpiration(token);
-            blackListedTokenService.blacklistToken(token, expiry);
             
-            // Revoke refresh token for the current user
-            String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
-            userService.findByEmail(email); // Ensure user exists
-            refreshTokenService.revokeByUserEmail(email);
+            try {
+                Date expiry = jwtService.extractExpiration(token);
+                blackListedTokenService.blacklistToken(token, expiry);
+                
+                String email = jwtService.extractUsername(token); // Extract directly from token
+                if (email != null) {
+                    refreshTokenService.revokeByUserEmail(email);
+                }
+            } catch (Exception e) {
+                log.warn("Logout cleanup partially failed: {}", e.getMessage());
+            }
         }
 
         return ResponseEntity.ok("Logged out successfully");
