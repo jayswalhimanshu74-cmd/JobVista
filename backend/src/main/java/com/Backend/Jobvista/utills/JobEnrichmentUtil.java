@@ -15,7 +15,13 @@ public class JobEnrichmentUtil {
 
         List<String> commonSkills = List.of(
                 "Java", "Spring", "SQL", "Python", "React",
-                "AWS", "Docker", "Kubernetes", "SEO", "Excel"
+                "AWS", "Docker", "Kubernetes", "SEO", "Excel", "Node.js", 
+                "MongoDB", "MySQL", "Git", "REST API", "HTML", "CSS", 
+                "JavaScript", "TypeScript", "Angular", "Vue.js", "jQuery", 
+                "Bootstrap", "Tailwind CSS", "PostgreSQL", "Redis", "Kafka", 
+                "Microservices", "Agile", "Scrum", "JIRA", "Linux", "Shell",
+                "REST", "GraphQL", "JSON", "XML", "Postman", "IntelliJ", 
+                "VS Code", "Android", "iOS", "Flutter", "React Native"
         );
 
         List<String> found = new ArrayList<>();
@@ -29,17 +35,13 @@ public class JobEnrichmentUtil {
         return found.isEmpty() ? "Not specified" : String.join(", ", found);
     }
     public static String extractExperience(String description) {
-
-        if (description == null) return "Not specified";
-
+        if (description == null) return "0";
         Pattern pattern = Pattern.compile("(\\d+)\\+?\\s?years?", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(description);
-
         if (matcher.find()) {
-            return matcher.group(1).replaceAll("[^0-9]", ""); // Extract just the digits
+            return matcher.group(1).replaceAll("[^0-9]", "");
         }
-
-        return "0"; // Default to 0 years if not found
+        return "0";
     }
 
 

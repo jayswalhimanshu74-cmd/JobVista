@@ -106,7 +106,8 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
                 .toList();
     }
     @Override
-    @PreAuthorize("hasRole('USER')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('USER')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public Page<JobApplicationResponseDToO> getMyApplications( String email ,int page, int size) {
 
         User user = userRepository.findByEmail(email)

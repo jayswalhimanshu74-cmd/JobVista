@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 @RestController
-@RequestMapping("/api/v1/job")
+@RequestMapping("/api/v1/jobs")
 @RequiredArgsConstructor
 public class JobController {
 

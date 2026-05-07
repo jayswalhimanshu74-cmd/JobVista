@@ -43,6 +43,7 @@ public class Company {
     private String logoUrl;
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private java.util.List<Job> jobs;
 
     @PrePersist

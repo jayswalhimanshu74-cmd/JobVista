@@ -37,10 +37,9 @@ public class JobServiceImplementation implements JobService {
 
 
     public Page<JobResponseDTO> getAllJobs(int page, int size, String email) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("postedAt").descending());
+        Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by("postedAt").descending());
         Page<Job> jobPage = jobRepository.findAll(pageable);
 
-        // ✅ If no user, skip saved check
         if (email == null) {
             return jobPage.map(job -> {
                 JobResponseDTO dto = JobMapper.toResponse(job);
@@ -49,8 +48,14 @@ public class JobServiceImplementation implements JobService {
             });
         }
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            return jobPage.map(job -> {
+                JobResponseDTO dto = JobMapper.toResponse(job);
+                dto.setSaved(false);
+                return dto;
+            });
+        }
 
         List<Long> jobIds = jobPage.getContent().stream().map(Job::getId).toList();
         Set<Long> savedJobIds = savedJobRepository.findSavedJobIdsByUser(user, jobIds);

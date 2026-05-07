@@ -1,18 +1,18 @@
 import axiosInstance from "./axiosConfig";
 
 const getAllJobs = async (params = {}) => {
-  const res = await axiosInstance.get("/job/all", { params });
+  const res = await axiosInstance.get("/jobs/all", { params });
   return res.data;
 };
 
 const searchJobs = async (params = {}) => {
-  const res = await axiosInstance.get("/job/search", { params });
+  const res = await axiosInstance.get("/jobs/search", { params });
   return res.data;
 };
 
 const applyJob = async (jobId) => {
   // Ensure jobId is a clean string, no extra encoding
-  const res = await axiosInstance.post(`/application/apply/${String(jobId).trim()}`);
+  const res = await axiosInstance.post(`/application/apply/${String(jobId)}`);
   return res.data;
 };
 
@@ -32,12 +32,12 @@ const getSavedJobs = async (params = {}) => {
 };
 
 const getAppliedJobs = async (params = {}) => {
-  const res = await axiosInstance.get("/application/me", { params });
+  const res = await axiosInstance.get("/jobs/applied", { params });
   return res.data;
 };
 
 const createJob = async (jobData) => {
-  const res = await axiosInstance.post("/job", jobData);
+  const res = await axiosInstance.post("/jobs", jobData);
   return res.data;
 };
 

@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
       const accessToken = localStorage.getItem("accessToken");
       if (!accessToken) return;
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/v1/jobs/applied?page=0&size=200`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://jobvista-psro.onrender.com/api/v1/'}application/me?page=0&size=200`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       const data = await response.json();

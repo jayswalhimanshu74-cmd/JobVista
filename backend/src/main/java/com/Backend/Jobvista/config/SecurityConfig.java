@@ -37,23 +37,20 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/").permitAll()
+                        .requestMatchers("/api/v1/jobs/**").permitAll()
+                        .requestMatchers("/api/v1/company/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/public/**").permitAll()
-                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/job/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/job/search").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/job/featured").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/job/company/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/company/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/company/id/**").permitAll()
                         .requestMatchers("/api/v1/jobSeeker/**").authenticated()
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/notifications/**").authenticated()
                         .anyRequest().authenticated()
-                ).addFilterBefore(jwtFilter,UsernamePasswordAuthenticationFilter.class);
+                )
+                .addFilterBefore(jwtFilter,UsernamePasswordAuthenticationFilter.class);
 
 
         return http.build();
@@ -74,8 +71,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(List.of("*"));
+        configuration.setAllowedOriginPatterns(List.of(
+            "http://localhost:5173",
+            "https://jobvista-pi.vercel.app",
+            "https://*.vercel.app"
+        ));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 

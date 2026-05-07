@@ -12,9 +12,9 @@ public class SecurityUtill {
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new RuntimeException("Unauthenticated user");
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("User is not authenticated");
         }
-        return authentication.getName(); // email from JWT
+        return authentication.getName();
     }
 }

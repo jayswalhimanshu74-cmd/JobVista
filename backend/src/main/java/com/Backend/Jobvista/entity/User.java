@@ -74,15 +74,19 @@ package com.Backend.Jobvista.entity;
             this.status = Status.ACTIVE;
         }
         @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+        @JsonIgnore
         private RefreshToken refreshToken;
 
         @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+        @JsonIgnore
         private JobSeeker jobSeeker;
 
         @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+        @JsonIgnore
         private Company company;
 
         @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+        @JsonIgnore
         private List<SavedJob> savedJobs;
 
 

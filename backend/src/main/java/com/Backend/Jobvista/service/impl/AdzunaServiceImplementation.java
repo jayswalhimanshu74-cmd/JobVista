@@ -25,6 +25,7 @@ public class AdzunaServiceImplementation implements AdzunaService {
     private final JobRepository jobRepository;
 
     @Override
+    @org.springframework.scheduling.annotation.Async
     public void syncJobs(String keyword) {
 
         AdzunaResponse response = adzunaClient.searchJobs(keyword,1);

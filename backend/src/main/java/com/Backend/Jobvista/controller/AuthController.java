@@ -101,14 +101,14 @@ public class AuthController {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-
             String token = authHeader.substring(7);
-
             Date expiry = jwtService.extractExpiration(token);
-
             blackListedTokenService.blacklistToken(token, expiry);
-
-            refreshTokenService.revokeToken(token);
+            
+            // Revoke refresh token for the current user
+            String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+            userService.findByEmail(email); // Ensure user exists
+            refreshTokenService.revokeByUserEmail(email);
         }
 
         return ResponseEntity.ok("Logged out successfully");

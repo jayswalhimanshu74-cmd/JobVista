@@ -56,7 +56,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (blackListedTokenService.isBlacklisted(token)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Token blacklisted");
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Token is blacklisted\", \"status\": 401}");
             return;
         }
 
@@ -92,7 +93,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             System.out.println("⚠️ Token expired: " + e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Token expired\", \"message\": \"Access token has expired\"}");
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Access token has expired\", \"status\": 401, \"code\": \"TOKEN_EXPIRED\"}");
             return; // ✅ stop here, don't continue filter chain
 
         } catch (io.jsonwebtoken.JwtException e) {
@@ -100,7 +101,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             System.out.println("⚠️ Invalid token: " + e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Invalid token\", \"message\": \"" + e.getMessage() + "\"}");
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"" + e.getMessage() + "\", \"status\": 401}");
             return;
         }
         filterChain.doFilter(request, response);

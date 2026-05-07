@@ -56,13 +56,13 @@ function Home() {
 
   useEffect(() => {
     // Fetch Jobs
-    axiosInstance.get("/job/all", { params: { page: 0, size: 6 } })
+    axiosInstance.get("/jobs/all", { params: { page: 0, size: 10} })
       .then(res => setJobs(Array.isArray(res.data.content) ? res.data.content : []))
       .catch(() => setJobs([]))
       .finally(() => setLoading(false));
 
     // Fetch Companies
-    axiosInstance.get("/company/all", { params: { page: 0, size: 6 } })
+    axiosInstance.get("/company/all", { params: { page: 0, size: 10} })
       .then(res => setCompanies(Array.isArray(res.data.content) ? res.data.content : []))
       .catch(() => setCompanies([]));
 
@@ -93,7 +93,7 @@ function Home() {
       webSocketService.unsubscribe("/topic/jobs");
     };
   }, []);
-
+  
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;

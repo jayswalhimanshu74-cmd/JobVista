@@ -87,4 +87,13 @@ public class RefreshTokenService {
         refreshTokenRepository.save(refreshToken);
     }
 
+    @Transactional
+    public void revokeByUserEmail(String email) {
+        refreshTokenRepository.findByUser_Email(email)
+                .ifPresent(token -> {
+                    token.setRevoked(true);
+                    refreshTokenRepository.save(token);
+                });
+    }
+
 }

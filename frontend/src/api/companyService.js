@@ -10,7 +10,7 @@ const getAllCompanies = async (page, size) => {
 }
 
 const getCompanyJobs = async( companyId , page = 0 , size = 10 ) =>{
-   const response = await axiosInstance.get(`/job/company/${companyId}`, {
+   const response = await axiosInstance.get(`/jobs/company/${companyId}`, {
     params: { page, size },
   });
   return response.data;

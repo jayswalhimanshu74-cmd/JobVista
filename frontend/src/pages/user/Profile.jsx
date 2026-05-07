@@ -4,9 +4,9 @@ import jobService from "../../api/jobService";
 import profileService from "../../api/profileService";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { 
-  User, Mail, Phone, MapPin, Briefcase, GraduationCap, 
-  Code, Star, Check, Trash2, Edit3, Clock, 
+import {
+  User, Mail, Phone, MapPin, Briefcase, GraduationCap,
+  Code, Star, Check, Trash2, Edit3, Clock,
   AlertCircle, ChevronRight, ShieldCheck, FileText, Bookmark,
   Award, Globe, Target
 } from "lucide-react";
@@ -17,8 +17,8 @@ const Profile = () => {
 
   // 1. State Management
   const [user, setUser] = useState({
-    fullName: "", email: "", phone: "", skills: "", 
-    experience: "", education: "", careerGoal: "", 
+    fullName: "", email: "", phone: "", skills: "",
+    experience: "", education: "", careerGoal: "",
     profilePicture: "", location: "", resumeUrl: ""
   });
   const [role, setRole] = useState("USER");
@@ -75,7 +75,7 @@ const Profile = () => {
           profilePicture: userRes.profilePicture || "",
           ...specificData,
         });
-        
+
         if (userRes.role === "USER" || userRes.role === "ROLE_USER") {
           jobService.getAppliedJobs({ page: 0, size: 50 }).then(res => setAppliedJobs(res.content || []));
           jobService.getSavedJobs({ page: 0, size: 50 }).then(res => setSavedJobs(res.content || []));
@@ -112,10 +112,10 @@ const Profile = () => {
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     const formData = new FormData();
     formData.append("file", file);
-    
+
     try {
       showToast("Uploading professional headshot...", "success");
       const res = await axiosInstance.post("/users/upload-photo", formData, {
@@ -148,14 +148,14 @@ const Profile = () => {
   const getProfileImageUrl = (filename) => {
     if (!filename) return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || "U")}&background=2563eb&color=fff&size=120&bold=true`;
     if (filename.startsWith("http")) return filename;
-    const baseUrl = import.meta.env.VITE_IMAGE_BASE_URL || "http://localhost:8080";
+    const baseUrl = import.meta.env.VITE_IMAGE_BASE_URL || "https://jobvista-psro.onrender.com";
     return `${baseUrl}/uploads/profiles/${filename}`;
   };
 
   const getCoverImageUrl = (filename) => {
     if (!filename) return null;
     if (filename.startsWith("http")) return filename;
-    const baseUrl = import.meta.env.VITE_IMAGE_BASE_URL || "http://localhost:8080";
+    const baseUrl = import.meta.env.VITE_IMAGE_BASE_URL || "https://jobvista-psro.onrender.com";
     return `${baseUrl}/uploads/banners/${filename}`;
   };
 
@@ -164,15 +164,15 @@ const Profile = () => {
     <aside className="dashboard-section" style={{ position: "sticky", top: "100px", padding: "32px", height: "fit-content" }}>
       <div style={{ textAlign: "center", marginBottom: "32px" }}>
         <div style={{ position: "relative", display: "inline-block", cursor: "pointer" }} onClick={() => document.getElementById("photo-upload").click()}>
-          <img 
-            src={getProfileImageUrl(user.profilePicture)} 
-            alt="avatar" 
-            style={{ width: "120px", height: "120px", borderRadius: "30px", objectFit: "cover", border: "4px solid white", boxShadow: "var(--card-shadow)", transition: "var(--transition)" }} 
+          <img
+            src={getProfileImageUrl(user.profilePicture)}
+            alt="avatar"
+            style={{ width: "120px", height: "120px", borderRadius: "30px", objectFit: "cover", border: "4px solid white", boxShadow: "var(--card-shadow)", transition: "var(--transition)" }}
             className="profile-img-hover"
           />
-          <div style={{ 
-            position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", 
-            borderRadius: "30px", display: "flex", alignItems: "center", 
+          <div style={{
+            position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)",
+            borderRadius: "30px", display: "flex", alignItems: "center",
             justifyContent: "center", opacity: 0, transition: "0.3s ease",
             color: "white"
           }} className="upload-overlay">
@@ -184,9 +184,9 @@ const Profile = () => {
         <div className="comp-badge" style={{ background: "rgba(37,99,235,0.08)", color: "var(--primary)", fontSize: "0.7rem", marginBottom: "16px" }}>
           {role.replace("ROLE_", "")}
         </div>
-        
-        <button 
-          className={`admin-btn ${editing ? "danger" : "primary"}`} 
+
+        <button
+          className={`admin-btn ${editing ? "danger" : "primary"}`}
           onClick={() => { setEditing(!editing); setActiveTab("overview"); }}
           style={{ width: "100%", justifyContent: "center", padding: "12px", borderRadius: "14px" }}
         >
@@ -210,7 +210,7 @@ const Profile = () => {
           { id: "applied", label: "Applications", icon: <FileText size={18} />, count: appliedJobs.length },
           { id: "saved", label: "Wishlist", icon: <Bookmark size={18} />, count: savedJobs.length },
         ].map(tab => (
-          <button 
+          <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`admin-btn ${activeTab === tab.id ? "primary" : "edit"}`}
@@ -228,19 +228,19 @@ const Profile = () => {
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
       {/* 1. Hero Profile Banner Section */}
       <section className="dashboard-section" style={{ padding: 0, overflow: "hidden", border: "none", background: "white", borderRadius: "32px" }}>
-        <div 
-          style={{ 
-            height: "200px", 
-            background: user.coverPhoto ? `url(${getCoverImageUrl(user.coverPhoto)}) center/cover no-repeat` : "var(--primary-gradient)", 
+        <div
+          style={{
+            height: "200px",
+            background: user.coverPhoto ? `url(${getCoverImageUrl(user.coverPhoto)}) center/cover no-repeat` : "var(--primary-gradient)",
             position: "relative",
             cursor: "pointer"
-          }} 
+          }}
           onClick={() => document.getElementById("cover-upload").click()}
         >
           <div style={{ position: "absolute", inset: 0, opacity: 0.1, backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)", backgroundSize: "24px 24px" }} />
-          <div style={{ 
-            position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)", 
-            display: "flex", alignItems: "center", justifyContent: "center", 
+          <div style={{
+            position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)",
+            display: "flex", alignItems: "center", justifyContent: "center",
             opacity: 0, transition: "0.3s ease", color: "white"
           }} className="upload-overlay">
             <Edit3 size={32} />
@@ -250,17 +250,17 @@ const Profile = () => {
         <div style={{ padding: "0 40px 40px", marginTop: "-40px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
             <div style={{ position: "relative" }}>
-              <img 
-                src={getProfileImageUrl(user.profilePicture)} 
-                alt="avatar" 
-                style={{ width: "100px", height: "100px", borderRadius: "24px", border: "6px solid white", boxShadow: "var(--shadow-lg)", objectFit: "cover" }} 
+              <img
+                src={getProfileImageUrl(user.profilePicture)}
+                alt="avatar"
+                style={{ width: "100px", height: "100px", borderRadius: "24px", border: "6px solid white", boxShadow: "var(--shadow-lg)", objectFit: "cover" }}
               />
             </div>
             <button className="admin-btn edit" onClick={() => setEditing(!editing)} style={{ marginBottom: "10px", borderRadius: "12px", background: "var(--bg-accent)", color: "var(--primary)" }}>
               {editing ? "Cancel Changes" : <><Edit3 size={16} /> Customize Profile</>}
             </button>
           </div>
-          
+
           <div style={{ marginTop: "24px" }}>
             <h1 style={{ margin: 0, fontSize: "2rem", letterSpacing: "-1px" }}>{user.fullName || "Elite Professional"}</h1>
             <p style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 600, color: "var(--primary)", marginTop: "4px" }}>
@@ -317,19 +317,19 @@ const Profile = () => {
           </h3>
           <span className="comp-badge" style={{ background: "var(--bg-accent)", color: "var(--primary)" }}>{parseList(user.skills).length} Specialized Skills</span>
         </div>
-        
+
         {editing ? (
           <input className="comp-input" name="skills" value={user.skills} onChange={handleChange} placeholder="React, Java, Cloud Computing, etc." style={{ background: "var(--bg-accent)", border: "none" }} />
         ) : (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
             {parseList(user.skills).length > 0 ? parseList(user.skills).map((skill, i) => (
-              <div key={i} style={{ 
-                background: "white", 
-                border: "1px solid var(--border-color)", 
-                padding: "12px 20px", 
-                borderRadius: "16px", 
-                display: "flex", 
-                alignItems: "center", 
+              <div key={i} style={{
+                background: "white",
+                border: "1px solid var(--border-color)",
+                padding: "12px 20px",
+                borderRadius: "16px",
+                display: "flex",
+                alignItems: "center",
                 gap: "10px",
                 boxShadow: "var(--shadow-sm)",
                 transition: "var(--transition)"
@@ -405,7 +405,7 @@ const Profile = () => {
                   <td style={{ fontWeight: 700 }}>{app.jobTitle}</td>
                   <td>{app.companyName}</td>
                   <td>
-                    <span className="comp-badge" style={{ 
+                    <span className="comp-badge" style={{
                       background: app.status === "HIRED" ? "rgba(16,185,129,0.1)" : "rgba(37,99,235,0.1)",
                       color: app.status === "HIRED" ? "#10b981" : "#2563eb"
                     }}>{app.status}</span>
@@ -457,11 +457,11 @@ const Profile = () => {
           <Check size={18} /> {toast.msg}
         </div>
       )}
-      
-      <div className="profile-dashboard-layout" style={{ 
-        display: "grid", 
-        gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", 
-        gap: "32px", 
+
+      <div className="profile-dashboard-layout" style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+        gap: "32px",
         alignItems: "start",
         maxWidth: "1400px",
         margin: "0 auto"

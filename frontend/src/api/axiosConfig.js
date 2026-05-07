@@ -18,12 +18,28 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
-// 🔥 AUTO REFRESH LOGIC
+// 🔥 AUTO REFRESH & RETRY LOGIC
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
+    // 1. Retry Logic for transient server errors (cold starts, etc.)
+    if (
+      error.response &&
+      [502, 503, 504].includes(error.response.status) &&
+      !originalRequest._retryCount
+    ) {
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      if (originalRequest._retryCount <= 3) {
+        console.warn(`Retrying request (${originalRequest._retryCount}/3) due to ${error.response.status}`);
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, originalRequest._retryCount * 1000));
+        return axiosInstance(originalRequest);
+      }
+    }
+
+    // 2. Token Refresh Logic
     if (
       error.response?.status === 401 &&
       !originalRequest._retry
@@ -51,12 +67,11 @@ axiosInstance.interceptors.response.use(
         localStorage.removeItem("accessToken");
         localStorage.removeItem("user");
 
-        // If admin, redirect to /admin (which shows admin login)
-        // If regular user, redirect to /login
+        // If admin, redirect to /admin
         const currentPath = window.location.pathname;
         if (currentPath === "/admin") {
           localStorage.removeItem("adminLoggedIn");
-          window.location.reload(); // Re-render ProtectedAdmin → shows AdminLogin
+          window.location.reload(); 
         } else if (currentPath !== "/login") {
           window.location.href = "/login";
         }

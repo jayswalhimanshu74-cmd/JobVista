@@ -37,6 +37,7 @@ public class JobSeeker {
     private String profileSummary;
 
     @OneToMany(mappedBy = "jobSeeker", cascade = CascadeType.ALL)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private java.util.List<JobApplication> applications;
 
     @PrePersist
