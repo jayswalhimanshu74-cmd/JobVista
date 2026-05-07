@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/").permitAll()
                         .requestMatchers("/api/v1/job/**", "/api/v1/jobs/**").permitAll()
                         .requestMatchers("/api/v1/company/**").permitAll()
+                        .requestMatchers("/api/v1/application/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/public/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()

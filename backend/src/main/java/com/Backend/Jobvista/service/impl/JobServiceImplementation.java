@@ -23,6 +23,7 @@ import java.util.*;
 
 @Service
 @AllArgsConstructor
+@Transactional(readOnly = true)
 public class JobServiceImplementation implements JobService {
 
 
