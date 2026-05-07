@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 @RestController
-@RequestMapping("/api/v1/jobs")
+@RequestMapping({"/api/v1/job", "/api/v1/jobs"})
 @RequiredArgsConstructor
 public class JobController {
 
@@ -123,7 +123,7 @@ public class JobController {
                 jobService.getRecentJobs(email)
         );
     }
-    @GetMapping("/company/{companyId}")
+    @GetMapping({"/company/{companyId}", "/jobs/company/{companyId}"})
     public ResponseEntity<Page<JobResponseDTO>> getJobsByCompany(
             @PathVariable UUID companyId,
             @RequestParam(defaultValue = "0") int page,

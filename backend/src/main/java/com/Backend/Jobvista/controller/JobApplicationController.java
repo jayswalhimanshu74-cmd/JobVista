@@ -56,11 +56,11 @@ public class JobApplicationController {
     }
 
 
-    @GetMapping("/me")
+    @GetMapping({"/me", "/applied"})
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Page<JobApplicationResponseDToO>> getMyApplications(
-            @RequestParam int page,
-            @RequestParam int size) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
         String email = securityUtil.getCurrentUserEmail();
 
