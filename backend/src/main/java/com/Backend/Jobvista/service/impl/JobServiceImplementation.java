@@ -35,6 +35,7 @@ public class JobServiceImplementation implements JobService {
     private final RecentlyViewedRepository recentlyViewedRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
     private final com.Backend.Jobvista.service.UserActivityService userActivityService;
+    private final com.Backend.Jobvista.service.JobApplicationService jobApplicationService;
 
 
     public Page<JobResponseDTO> getAllJobs(int page, int size, String email) {
@@ -487,4 +488,8 @@ public class JobServiceImplementation implements JobService {
         });
     }
 
+    @Override
+    public Page<?> getAppliedJobs(String email, int page, int size) {
+        return jobApplicationService.getMyApplications(email, page, size);
+    }
 }

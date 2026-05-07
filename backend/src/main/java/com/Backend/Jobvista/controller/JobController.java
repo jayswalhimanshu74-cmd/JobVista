@@ -103,6 +103,16 @@ public class JobController {
 
         return ResponseEntity.ok(updatedJob);
     }
+    @GetMapping("/applied")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Page<?>> getAppliedJobs(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        String email = securityUtill.getCurrentUserEmail();
+        // Delegate to ApplicationService
+        return ResponseEntity.ok(jobService.getAppliedJobs(email, page, size));
+    }
+
     @GetMapping("/{jobId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<JobResponseDTO> getJobById(@PathVariable UUID jobId) {

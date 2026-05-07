@@ -51,4 +51,5 @@ public interface JobService {
     List<JobResponseDTO> getRecentJobs(String email);
 
     Page<JobResponseDTO> searchJobsPublic(String keyword, int page, int size, String email);
+    Page<?> getAppliedJobs(String email, int page, int size);
 }
