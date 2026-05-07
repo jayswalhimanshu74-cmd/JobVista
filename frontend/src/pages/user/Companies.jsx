@@ -20,8 +20,11 @@ const Companies = () => {
 
   useEffect(() => {
     fetchCompanies();
-    fetchAppliedJobs();
   }, [page]);
+
+  useEffect(() => {
+    fetchAppliedJobs();
+  }, []);
 
   const fetchCompanies = async () => {
     try {

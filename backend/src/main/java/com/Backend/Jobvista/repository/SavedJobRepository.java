@@ -24,4 +24,7 @@ public interface SavedJobRepository  extends JpaRepository<SavedJob, Long> {
     Optional<SavedJob> findByUserIdAndJobId(Long userId, Long jobId);
 
     boolean existsByJobAndUser(Job job, User user);
+
+    @org.springframework.data.jpa.repository.Query("SELECT s.job.id FROM SavedJob s WHERE s.user = :user AND s.job.id IN :jobIds")
+    java.util.Set<Long> findSavedJobIdsByUser(User user, java.util.List<Long> jobIds);
 }

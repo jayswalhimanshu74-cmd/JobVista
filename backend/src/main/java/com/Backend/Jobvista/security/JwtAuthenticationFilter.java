@@ -64,10 +64,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String email = jwtUtil.extractUsername(token);
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // ✅ OPTIMIZATION: Trust the token and extract role directly from claims
+                // This avoids a database call (loadUserByUsername) on EVERY single request.
+                String role = jwtUtil.extractRole(token);
 
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-
-                if (jwtUtil.isTokenValid(token, userDetails)) {
+                if (role != null) {
+                    UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+                            email,
+                            "", // Password not needed for authenticated context
+                            java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role))
+                    );
 
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
@@ -75,13 +81,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             userDetails.getAuthorities());
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
                     SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                    System.out.println(" AUTH SET for: " + email);
-                    System.out.println("Authorities: " + userDetails.getAuthorities());
-                } else {
-                    System.out.println(" Token invalid for user");
+                    System.out.println("✅ AUTH SET FROM JWT (No DB hit): " + email);
                 }
             }
         } catch (io.jsonwebtoken.ExpiredJwtException e) {

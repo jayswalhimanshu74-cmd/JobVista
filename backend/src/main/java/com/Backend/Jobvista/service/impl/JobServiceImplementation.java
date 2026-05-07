@@ -33,6 +33,7 @@ public class JobServiceImplementation implements JobService {
     private final SavedJobRepository savedJobRepository;
     private final RecentlyViewedRepository recentlyViewedRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final com.Backend.Jobvista.service.UserActivityService userActivityService;
 
 
     public Page<JobResponseDTO> getAllJobs(int page, int size, String email) {
@@ -51,9 +52,12 @@ public class JobServiceImplementation implements JobService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        List<Long> jobIds = jobPage.getContent().stream().map(Job::getId).toList();
+        Set<Long> savedJobIds = savedJobRepository.findSavedJobIdsByUser(user, jobIds);
+
         return jobPage.map(job -> {
             JobResponseDTO dto = JobMapper.toResponse(job);
-            dto.setSaved(savedJobRepository.existsByJobAndUser(job, user));
+            dto.setSaved(savedJobIds.contains(job.getId()));
             return dto;
         });
     }
@@ -134,8 +138,8 @@ public class JobServiceImplementation implements JobService {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // 🔥 TRACK VIEW
-            trackJobView(user, job);
+            // 🔥 TRACK VIEW ASYNC
+            userActivityService.trackJobView(user, job);
 
             return JobMapper.toResponse(job);
 
@@ -429,27 +433,6 @@ public class JobServiceImplementation implements JobService {
         return response;
     }
 
-    private void trackJobView(User user, Job job) {
-
-        Optional<RecentlyViewedJob> existing =
-                recentlyViewedRepository.findByUserAndJob(user, job);
-
-        if (existing.isPresent()) {
-            // ✅ Update timestamp (NO duplicate)
-            RecentlyViewedJob viewed = existing.get();
-            viewed.setViewedAt(LocalDateTime.now());
-            recentlyViewedRepository.save(viewed);
-        } else {
-            // ✅ Create new entry
-            RecentlyViewedJob newView = RecentlyViewedJob.builder()
-                    .user(user)
-                    .job(job)
-                    .viewedAt(LocalDateTime.now())
-                    .build();
-
-            recentlyViewedRepository.save(newView);
-        }
-    }
 
     @Override
     public List<JobResponseDTO> getRecentJobs(String email) {
@@ -487,9 +470,12 @@ public class JobServiceImplementation implements JobService {
             });
         }
 
+        List<Long> jobIds = jobPage.getContent().stream().map(Job::getId).toList();
+        Set<Long> savedJobIds = savedJobRepository.findSavedJobIdsByUser(user, jobIds);
+
         return jobPage.map(job -> {
             JobResponseDTO dto = JobMapper.toResponse(job);
-            dto.setSaved(savedJobRepository.existsByJobAndUser(job, user));
+            dto.setSaved(savedJobIds.contains(job.getId()));
             return dto;
         });
     }
