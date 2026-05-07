@@ -1,7 +1,6 @@
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/login.css";
-
 import authService from "../../api/authService";
 import { AuthContext } from "../../context/AuthContext";
 
@@ -15,6 +14,7 @@ function Login() {
   });
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -26,6 +26,7 @@ function Login() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+    setError("");
   };
 
   const handleSubmit = async (e) => {
@@ -49,9 +50,10 @@ function Login() {
         login(data.accessToken, { email: formData.email });
         navigate("/");
       }
-    } catch (error) {
-      console.error("Login failed", error);
-      const msg = error.response?.data?.message || "Login failed. Please check your credentials.";
+    } catch (err) {
+      console.error("Login failed", err);
+      const msg = err.response?.data?.message || "Login failed. Please check your credentials.";
+      setError(msg);
       showToast(msg, "error");
     } finally {
       setLoading(false);
@@ -73,6 +75,8 @@ function Login() {
       <div className="login-card">
         <h2>Welcome Back</h2>
         <p className="login-subtitle">Login to your account</p>
+        
+        {error && <div className="error-message" style={{ color: "red", marginBottom: "1rem", fontSize: "0.9rem" }}>{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <input

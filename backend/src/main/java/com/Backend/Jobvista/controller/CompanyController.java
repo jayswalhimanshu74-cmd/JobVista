@@ -27,7 +27,7 @@ public class CompanyController {
             @RequestBody CompanyRequestDTO company
     ) {
         return ResponseEntity.ok(companyService.updateCompany(id, company));
-    }
+    }  
 
     @PostMapping
     @PreAuthorize("hasAnyRole('USER','COMPANY')")

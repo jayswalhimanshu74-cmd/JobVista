@@ -8,7 +8,7 @@ class WebSocketService {
     }
 
     connect(onConnected, onError) {
-        const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080/ws';
+        const WS_URL = import.meta.env.VITE_WS_URL || 'https://jobvista-psro.onrender.com/ws';
         const socket = new SockJS(WS_URL);
         this.stompClient = Stomp.over(socket);
         this.stompClient.debug = null; // Disable logging for production-ready quality
