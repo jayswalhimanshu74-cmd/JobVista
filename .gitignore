@@ -1,0 +1,24 @@
+# Environment
+.env
+
+# ZIP
+*.zip
+
+# Videos
+*.mp4
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Backend
+backend/target/
+backend/uploads/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
