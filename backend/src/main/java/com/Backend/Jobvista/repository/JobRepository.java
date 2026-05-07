@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,15 +20,19 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     Optional<Job> findByJobId(UUID jobId);
     boolean existsByExternalId(String externalId);
     // Filter by company
+    @EntityGraph(attributePaths = {"company"})
     Page<Job> findByCompany_CompanyId(UUID companyId, Pageable pageable);
 
     // Filter by location (case-insensitive)
+    @EntityGraph(attributePaths = {"company"})
     Page<Job> findByLocationIgnoreCase(String location, Pageable pageable);
 
     // Filter by job type
+    @EntityGraph(attributePaths = {"company"})
     Page<Job> findByJobType(JobType jobType, Pageable pageable);
 
     // Filter by location AND job type
+    @EntityGraph(attributePaths = {"company"})
     Page<Job> findByLocationIgnoreCaseAndJobType(String location, JobType jobType, Pageable pageable);
 
     // Keyword search (title, skills, description, company name)
@@ -41,6 +46,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
            OR LOWER(j.companyName) LIKE LOWER(CONCAT('%', :keyword, '%'))
            OR LOWER(c.companyName) LIKE LOWER(CONCAT('%', :keyword, '%'))
     """)
+    @EntityGraph(attributePaths = {"company"})
     Page<Job> searchJobs(@Param("keyword") String keyword, Pageable pageable);
 
     // Optional: keyword + company
@@ -82,8 +88,10 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     AND LOWER(j.location) LIKE LOWER(CONCAT('%', :location, '%'))
     AND j.experienceRequired <= :experience
 """)
-    List<Job> findRelevantJobs(String location, String skill, int experience );
+    @EntityGraph(attributePaths = {"company"})
+    List<Job> findRelevantJobs(@Param("skill") String skill, @Param("location") String location, @Param("experience") int experience );
 
+    @EntityGraph(attributePaths = {"company"})
     Page<Job> findAll(Specification<Job> spec, Pageable pageable);
 
     @Query("""

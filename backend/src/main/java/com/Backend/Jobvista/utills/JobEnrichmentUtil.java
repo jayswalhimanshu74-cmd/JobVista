@@ -32,14 +32,14 @@ public class JobEnrichmentUtil {
 
         if (description == null) return "Not specified";
 
-        Pattern pattern = Pattern.compile("(\\d+\\+?\\s?years?)", Pattern.CASE_INSENSITIVE);
+        Pattern pattern = Pattern.compile("(\\d+)\\+?\\s?years?", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(description);
 
         if (matcher.find()) {
-            return matcher.group();
+            return matcher.group(1).replaceAll("[^0-9]", ""); // Extract just the digits
         }
 
-        return "Not specified";
+        return "0"; // Default to 0 years if not found
     }
 
 

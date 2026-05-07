@@ -248,6 +248,7 @@ public class JobServiceImplementation implements JobService {
     }
 
     @Override
+    @Cacheable(value = "recommended_jobs", key = "#email + '-' + #page")
     public List<JobResponseDTO> getRecommendedJobs(String email, int page, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));

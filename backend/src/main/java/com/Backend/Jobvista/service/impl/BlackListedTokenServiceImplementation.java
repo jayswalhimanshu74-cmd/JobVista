@@ -19,6 +19,7 @@ public class BlackListedTokenServiceImplementation implements BlackListedTokenSe
     private final BlackListedTokenRepository repository;
 
     @Override
+    @org.springframework.cache.annotation.CacheEvict(value = "blacklist", key = "#token")
     public void blacklistToken(String token, Date expiryDate) {
         BlackListedToken bt = new BlackListedToken();
         bt.setToken(token);
@@ -29,6 +30,7 @@ public class BlackListedTokenServiceImplementation implements BlackListedTokenSe
     }
 
     @Override
+    @org.springframework.cache.annotation.Cacheable(value = "blacklist", key = "#token")
     public boolean isBlacklisted(String token) {
         return repository.existsByToken(token);
     }
@@ -36,6 +38,7 @@ public class BlackListedTokenServiceImplementation implements BlackListedTokenSe
     @Override
     @Transactional
     @Scheduled(cron = "0 0 * * * *") // runs every hour
+    @org.springframework.cache.annotation.CacheEvict(value = "blacklist", allEntries = true)
     public void cleanExpiredTokens() {
         repository.deleteByExpiryDateBefore(LocalDateTime.now());
         System.out.println("Expired tokens cleaned");

@@ -44,7 +44,7 @@ public class AdzunaServiceImplementation implements AdzunaService {
                     .jobType(JobEnrichmentUtil.detectJobType(ext.getTitle()))
                     .employmentType(JobEnrichmentUtil.detectEmploymentType(ext.getDescription()))
                     .requiredSkills(extractSkills(ext.getDescription()))
-                    .experienceRequired(Integer.valueOf(JobEnrichmentUtil.extractExperience(ext.getDescription())))
+                    .experienceRequired(Integer.parseInt(JobEnrichmentUtil.extractExperience(ext.getDescription())))
                     .source("EXTERNAL")
                     .redirectUrl(ext.getRedirectUrl())
                     .postedAt(LocalDateTime.now())
