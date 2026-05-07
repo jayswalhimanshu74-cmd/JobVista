@@ -7,7 +7,7 @@ import com.Backend.Jobvista.entity.*;
 import com.Backend.Jobvista.repository.*;
 import com.Backend.Jobvista.service.JobService;
 import com.Backend.Jobvista.specification.JobSpecification;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;

@@ -7,7 +7,7 @@ import com.Backend.Jobvista.event.ApplicationEvent;
 import com.Backend.Jobvista.repository.*;
 import com.Backend.Jobvista.service.JobApplicationService;
 import org.springframework.context.ApplicationEventPublisher;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
