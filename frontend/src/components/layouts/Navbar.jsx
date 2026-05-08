@@ -105,8 +105,8 @@ function Navbar() {
           </>
         ) : (
           <>
-            <Link to="/login" className="btn btn-outline">Login</Link>
-            <Link to="/signup" className="btn btn-primary">Signup</Link>
+            <Link to="/login" className="btn btn-outline hover:text-black transition-all duration-300 ease-in-out cursor-pointer hover:bg-white">Login</Link>
+            <Link to="/signup" className="btn btn-primary hover:text-white transition-all duration-300 ease-in-out cursor-pointer hover:bg-primary">Signup</Link>
           </>
         )}
       </div>
