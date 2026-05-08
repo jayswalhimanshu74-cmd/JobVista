@@ -15,32 +15,40 @@ export const AuthProvider = ({ children }) => {
     setLoggedIn(isAuth);
     
     if (isAuth) {
-      fetchUserProfile();
-      fetchAppliedJobs();
+      fetchUserProfile().then(role => {
+        if (role === "USER" || role === "ROLE_USER") {
+          fetchAppliedJobs();
+        }
+      });
     }
   }, []);
 
   const fetchUserProfile = async () => {
     try {
-      // Use the centralized axios instance
       const res = await axiosInstance.get("/users/me");
-      setUser(res.data);
-      localStorage.setItem("user", JSON.stringify(res.data));
+      const userData = res.data;
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+      return userData.role; // Return role for chaining
     } catch (err) {
       console.error("Failed to fetch user profile", err);
-      // If unauthorized, logout
       if (err.response?.status === 401) logout();
+      return null;
     }
   };
 
   const fetchAppliedJobs = async () => {
+    // Extra guard: only for candidates
+    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const role = user?.role || storedUser.role;
+    
+    if (role !== "USER" && role !== "ROLE_USER") return;
+
     try {
       const res = await axiosInstance.get("/application/me", { params: { page: 0, size: 200 } });
-      if (res?.data?.content) {
-        const ids = new Set(res.data.content.map(app => app.jobId));
-        setAppliedJobs(ids);
-      } else if (res?.content) {
-        const ids = new Set(res.content.map(app => app.jobId));
+      const content = res?.data?.content || res?.content;
+      if (content) {
+        const ids = new Set(content.map(app => app.jobId));
         setAppliedJobs(ids);
       }
     } catch (err) {
@@ -53,8 +61,12 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("user", JSON.stringify(userData));
     setLoggedIn(true);
     setUser(userData);
-    fetchUserProfile(); // Get full profile
-    fetchAppliedJobs(); // Fetch after login
+    
+    fetchUserProfile().then(role => {
+       if (role === "USER" || role === "ROLE_USER") {
+         fetchAppliedJobs();
+       }
+    });
   };
 
   const logout = async () => {

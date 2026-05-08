@@ -28,11 +28,12 @@ const Jobs = () => {
   };
 
   useEffect(() => {
-    // Pre-fetch applied jobs so we can show "Applied" state
-    if (isAuthenticated()) {
+    // Pre-fetch applied jobs so we can show "Applied" state — only for job seekers
+    const isCandidate = user?.role === "USER" || user?.role === "ROLE_USER";
+    if (isAuthenticated() && isCandidate) {
       fetchAppliedJobIds();
     }
-  }, []);
+  }, [user]);
 
   const fetchAppliedJobIds = async () => {
     try {

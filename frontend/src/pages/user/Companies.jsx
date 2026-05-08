@@ -4,6 +4,8 @@ import companyService from "../../api/companyService";
 import jobService from "../../api/jobService";
 import { isAuthenticated } from "../../utills/auth";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
+import { useContext } from "react";
 
 const Companies = () => {
   const navigate = useNavigate();
@@ -16,6 +18,7 @@ const Companies = () => {
   const [error, setError] = useState(null);
   const [appliedJobs, setAppliedJobs] = useState(new Set());
   const [applyingId, setApplyingId] = useState(null);
+  const { user } = useContext(AuthContext);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -23,8 +26,11 @@ const Companies = () => {
   }, [page]);
 
   useEffect(() => {
-    fetchAppliedJobs();
-  }, []);
+    const isCandidate = user?.role === "USER" || user?.role === "ROLE_USER";
+    if (isAuthenticated() && isCandidate) {
+        fetchAppliedJobs();
+    }
+  }, [user]);
 
   const fetchCompanies = async () => {
     try {
@@ -43,11 +49,14 @@ const Companies = () => {
 
   const fetchAppliedJobs = async () => {
     if (!isAuthenticated()) return;
+    const isCandidate = user?.role === "USER" || user?.role === "ROLE_USER";
+    if (!isCandidate) return;
+
     try {
       const data = await jobService.getAppliedJobs({ page: 0, size: 200 });
       const ids = new Set((data.content || []).map((a) => a.jobId));
       setAppliedJobs(ids);
-    } catch (e) { /* not logged in */ }
+    } catch (e) { /* silent fail */ }
   };
 
   const showToast = (msg, type = "success") => {
