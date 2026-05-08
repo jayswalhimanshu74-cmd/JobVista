@@ -88,22 +88,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            // ✅ Return 401 → frontend axios interceptor catches this
-            // → calls /auth/refresh → gets new token → retries original request
             System.out.println("⚠️ Token expired: " + e.getMessage());
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Access token has expired\", \"status\": 401, \"code\": \"TOKEN_EXPIRED\"}");
-            return; // ✅ stop here, don't continue filter chain
-
+            // We don't return 401 here anymore. We let the request continue as anonymous.
+            // Spring Security will return 403 if the endpoint is protected.
+            // If the endpoint is public (like Home), it will now work.
         } catch (io.jsonwebtoken.JwtException e) {
-            // ✅ Invalid/malformed token → also 401
             System.out.println("⚠️ Invalid token: " + e.getMessage());
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"" + e.getMessage() + "\", \"status\": 401}");
-            return;
         }
         filterChain.doFilter(request, response);
     }
 }
+

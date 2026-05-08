@@ -17,7 +17,11 @@ import java.util.UUID;
 
 public interface JobRepository extends JpaRepository<Job, Long> {
 
+    @EntityGraph(attributePaths = {"company"})
     Optional<Job> findByJobId(UUID jobId);
+    
+    @EntityGraph(attributePaths = {"company"})
+    Page<Job> findAll(Pageable pageable);
     boolean existsByExternalId(String externalId);
     // Filter by company
     @EntityGraph(attributePaths = {"company"})
@@ -57,6 +61,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
            OR LOWER(j.requiredSkills) LIKE LOWER(CONCAT('%', :keyword, '%'))
            OR LOWER(j.description) LIKE LOWER(CONCAT('%', :keyword, '%')))
     """)
+    @EntityGraph(attributePaths = {"company"})
     Page<Job> searchByCompanyAndKeyword(@Param("companyId") UUID companyId,
                                         @Param("keyword") String keyword,
                                         Pageable pageable);

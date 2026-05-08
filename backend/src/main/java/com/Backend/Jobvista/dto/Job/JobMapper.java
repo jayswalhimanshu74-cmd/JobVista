@@ -27,14 +27,14 @@ public class JobMapper {
                 .jobId(job.getJobId())
                 .title(job.getTitle())
                 .description(job.getDescription())
-                .jobType(job.getJobType())
-                .employmentType(job.getEmploymentType())
+                .jobType(job.getJobType() != null ? job.getJobType() : null)
+                .employmentType(job.getEmploymentType() != null ? job.getEmploymentType() : null)
                 .location(job.getLocation())
                 .salaryOrStipend(job.getSalaryOrStipend())
                 .requiredSkills(job.getRequiredSkills())
                 .experienceRequired(job.getExperienceRequired())
                 .companyName(
-                        job.getCompany() != null ? job.getCompany().getCompanyName() : "Unknown"
+                        job.getCompany() != null ? job.getCompany().getCompanyName() : (job.getCompanyName() != null ? job.getCompanyName() : "Unknown")
                 )
                 .postedAt(job.getPostedAt())
                 .lastDate(job.getLastDate())
