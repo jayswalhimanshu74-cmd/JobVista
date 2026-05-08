@@ -1,171 +1,124 @@
+import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import Stomp from 'stompjs';
 
 class WebSocketService {
     constructor() {
-        this.stompClient = null;
+        this.client = null;
         this.subscriptions = new Map();
-        this.connected = false;
-        this.pendingSubscriptions = [];
+        this.onConnectedCallbacks = new Set();
+        this.isConnected = false;
     }
 
-    connect(onConnected, onError) {
-
-        // Prevent duplicate connections
-        if (this.connected) {
+    connect(onConnected) {
+        if (this.client && this.client.active) {
+            if (onConnected) onConnected();
             return;
+        }
+
+        if (onConnected) {
+            this.onConnectedCallbacks.add(onConnected);
         }
 
         const WS_URL =
             import.meta.env.VITE_WS_URL ||
             'https://jobvista-psro.onrender.com/ws';
 
-        const socket = new SockJS(WS_URL);
-
-        this.stompClient = Stomp.over(socket);
-
-        // Disable logs
-        this.stompClient.debug = null;
-
-        // Auto reconnect delay
-        this.stompClient.reconnect_delay = 5000;
-
-        const headers = {};
-
-        const token = localStorage.getItem('accessToken');
-
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        this.stompClient.connect(
-            headers,
-
-            () => {
-                console.log('WebSocket Connected');
-
-                this.connected = true;
-
-                // Subscribe pending topics
-                this.pendingSubscriptions.forEach(sub => {
-                    this.subscribe(sub.topic, sub.callback);
-                });
-
-                this.pendingSubscriptions = [];
-
-                if (onConnected) {
-                    onConnected();
-                }
+        this.client = new Client({
+            brokerURL: WS_URL.startsWith('https') 
+                ? WS_URL.replace('https', 'wss') 
+                : WS_URL.replace('http', 'ws'),
+            
+            // Fallback to SockJS if WebSocket is not available
+            webSocketFactory: () => new SockJS(WS_URL),
+            
+            connectHeaders: {
+                Authorization: `Bearer ${localStorage.getItem('accessToken')}`
             },
+            
+            debug: (str) => {
+                // Enable this for troubleshooting in development
+                // console.log('STOMP: ' + str);
+            },
+            
+            reconnectDelay: 5000,
+            heartbeatIncoming: 10000,
+            heartbeatOutgoing: 10000,
+        });
 
-            (error) => {
+        this.client.onConnect = (frame) => {
+            console.log('WebSocket Connected');
+            this.isConnected = true;
+            
+            // Execute all pending connection callbacks
+            this.onConnectedCallbacks.forEach(cb => cb());
+            this.onConnectedCallbacks.clear();
 
-                console.error('WebSocket Error:', error);
+            // Re-subscribe to all topics in case of reconnect
+            this.subscriptions.forEach((sub, topic) => {
+                // The old subscription object is invalid, we need to re-subscribe
+                this._subscribeToTopic(topic, sub.callback);
+            });
+        };
 
-                this.connected = false;
+        this.client.onStompError = (frame) => {
+            console.error('STOMP Error:', frame.headers['message']);
+            console.error('Details:', frame.body);
+        };
 
-                if (onError) {
-                    onError(error);
-                }
-            }
-        );
+        this.client.onWebSocketClose = () => {
+            this.isConnected = false;
+            console.warn('WebSocket Connection Closed');
+        };
+
+        this.client.activate();
     }
 
     subscribe(topic, callback) {
-        // Queue subscription if socket not ready OR STOMP not connected
-        if (!this.stompClient || !this.stompClient.connected) {
-            console.warn('WebSocket STOMP not ready. Queuing subscription:', topic);
-            this.pendingSubscriptions.push({ topic, callback });
-            return;
+        // Store the intent to subscribe
+        this.subscriptions.set(topic, { callback, stompSubscription: null });
+
+        if (this.isConnected) {
+            this._subscribeToTopic(topic, callback);
+        }
+    }
+
+    _subscribeToTopic(topic, callback) {
+        const entry = this.subscriptions.get(topic);
+        if (entry && entry.stompSubscription) {
+            entry.stompSubscription.unsubscribe();
         }
 
-        // Prevent duplicate subscriptions
-        if (this.subscriptions.has(topic)) {
-            return;
-        }
-
-        const subscription = this.stompClient.subscribe(
-            topic,
-            (message) => {
-
-                try {
-
-                    const body = message.body;
-
-                    const parsed =
-                        body &&
-                        (body.startsWith('{') ||
-                         body.startsWith('['))
-                            ? JSON.parse(body)
-                            : body;
-
-                    callback(parsed);
-
-                } catch (e) {
-
-                    console.warn(
-                        'WebSocket parsing error:',
-                        e
-                    );
-
-                    callback(message.body);
-                }
+        const stompSubscription = this.client.subscribe(topic, (message) => {
+            try {
+                const parsed = JSON.parse(message.body);
+                callback(parsed);
+            } catch (e) {
+                callback(message.body);
             }
-        );
+        });
 
-        this.subscriptions.set(topic, subscription);
+        this.subscriptions.set(topic, { callback, stompSubscription });
     }
 
     unsubscribe(topic) {
-
-        const subscription =
-            this.subscriptions.get(topic);
-
-        if (subscription) {
-
-            subscription.unsubscribe();
-
-            this.subscriptions.delete(topic);
+        const entry = this.subscriptions.get(topic);
+        if (entry && entry.stompSubscription) {
+            entry.stompSubscription.unsubscribe();
         }
+        this.subscriptions.delete(topic);
     }
 
     disconnect() {
-
-        try {
-
-            this.subscriptions.forEach(sub => {
-                sub.unsubscribe();
-            });
-
+        if (this.client) {
+            this.client.deactivate();
+            this.client = null;
+            this.isConnected = false;
             this.subscriptions.clear();
-
-            this.pendingSubscriptions = [];
-
-            if (
-                this.stompClient &&
-                this.connected
-            ) {
-
-                this.stompClient.disconnect(() => {
-                    console.log('WebSocket Disconnected');
-                });
-            }
-
-        } catch (e) {
-
-            console.warn(
-                'Disconnect Error:',
-                e
-            );
-
-        } finally {
-
-            this.connected = false;
-            this.stompClient = null;
+            this.onConnectedCallbacks.clear();
+            console.log('WebSocket Disconnected');
         }
     }
 }
 
 const webSocketService = new WebSocketService();
-
 export default webSocketService;
