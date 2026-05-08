@@ -86,8 +86,12 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponseDTO> refresh(
-            @CookieValue(name = "refreshToken") String refreshToken,
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
             HttpServletResponse response) {
+
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         return ResponseEntity.ok(
                 authService.refreshToken(refreshToken, response)

@@ -53,12 +53,11 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Logout error:", error);
     }
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    localStorage.removeItem("profileData")
+    localStorage.clear();
     setLoggedIn(false);
     setUser(null);
     setAppliedJobs(new Set());
+    window.location.href = "/login";
   };
 
   return (

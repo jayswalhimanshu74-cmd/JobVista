@@ -111,12 +111,41 @@ function Resume() {
 
   const downloadPDF = async () => {
     const element = document.getElementById("resumePreview");
-    const canvas = await html2canvas(element, { scale: 3, useCORS: true });
+    if (!element) return;
+
+    element.classList.add("exporting");
+
+    // Use higher scale for better quality
+    const canvas = await html2canvas(element, { 
+      scale: 2, 
+      useCORS: true,
+      backgroundColor: "#ffffff"
+    });
+
+    element.classList.remove("exporting");
+
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    
+    const imgWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    // First page
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    // Subsequent pages
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight; // This moves the image "up" for the next slice
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
     pdf.save(`${form.name.replace(/\s+/g, "_")}_Resume.pdf`);
   };
 

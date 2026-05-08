@@ -1,5 +1,5 @@
 import axiosInstance from "../../api/axiosConfig";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../styles/navbar.css";
 import { isAuthenticated } from "../../utills/auth";
@@ -7,31 +7,30 @@ import { Bell } from "lucide-react";
 import webSocketService from "../../api/webSocketService";
 import notificationService from "../../api/notificationService";
 import NotificationDropdown from "../ui/NotificationDropdown";
+import { AuthContext } from "../../context/AuthContext";
 
 function Navbar() {
   const navigate = useNavigate();
-  const loggedIn = isAuthenticated();
-  const [user, setUser] = useState(null);
+  const { loggedIn, user: contextUser, logout } = useContext(AuthContext);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // Load from localStorage first (instant render, no flicker)
-  useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) setUser(JSON.parse(stored));
-  }, []);
+  // Sync context user with local state if needed (or just use contextUser)
+  const user = contextUser;
 
-  // Fetch from API only if not in localStorage
+  // Fetch from API only if not in localStorage and we have a token
   useEffect(() => {
-    if (!user && loggedIn) {
+    const token = localStorage.getItem("accessToken");
+    if (!user && loggedIn && token) {
       axiosInstance.get("/users/me")
         .then((res) => {
-          setUser(res.data);
           localStorage.setItem("user", JSON.stringify(res.data));
+          // Note: Ideally AuthContext should update here to trigger re-renders
         })
         .catch(() => {
-          setUser(null);
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("user");
         });
     }
   }, [loggedIn, user]);
@@ -67,18 +66,8 @@ function Navbar() {
     setUnreadCount(prev => Math.max(0, prev - 1));
   };
 
-  const handleLogout = async () => {
-    try {
-      await axiosInstance.post("/auth/logout");
-    } catch (err) {
-      console.log("Logout API failed, continuing...");
-    }
-
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    setUser(null);
-    webSocketService.disconnect();
-    navigate("/login");
+  const handleLogout = () => {
+    logout();
   };
 
   const isCompany = user?.role === "COMPANY";
