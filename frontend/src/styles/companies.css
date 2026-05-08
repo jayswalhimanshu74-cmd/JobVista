@@ -1,6 +1,6 @@
 .companies-container {
   min-height: 100vh;
-  padding: 80px 40px;
+  padding: var(--space-4xl) var(--space-xl);
   background: radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.1), transparent 40%),
               linear-gradient(180deg, var(--bg-accent) 0%, var(--bg-white) 100%);
   color: var(--text-main);
@@ -8,19 +8,19 @@
 
 .companies-header {
   text-align: center;
-  margin-bottom: 60px;
+  margin-bottom: var(--space-3xl);
 }
 
 .companies-header h1 {
   font-size: clamp(2.5rem, 5vw, 3.5rem);
   font-weight: 800;
-  margin-bottom: 1.2rem;
+  margin-bottom: var(--space-md);
   color: var(--text-main);
-  letter-spacing: -1.5px;
+  letter-spacing: -0.04em;
 }
 
 .companies-header p {
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
   color: var(--text-muted);
   max-width: 600px;
   margin: 0 auto;
@@ -37,9 +37,9 @@
 .company-card {
   background: white;
   border: 1px solid var(--border-color);
-  border-radius: 24px;
-  padding: 30px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-xl);
+  transition: var(--transition);
   box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
@@ -113,14 +113,14 @@
 
 .view-jobs-btn {
   width: 100%;
-  padding: 12px;
+  padding: 0.8rem;
   background: var(--bg-accent);
   color: var(--primary);
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: var(--transition);
 }
 
 .view-jobs-btn:hover {
@@ -298,14 +298,14 @@
 }
 
 .modal-action-btn {
-  padding: 12px 30px;
+  padding: 0.8rem 2rem;
   background: white;
   color: var(--text-main);
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: var(--transition);
 }
 
 .modal-action-btn:hover { border-color: var(--primary); color: var(--primary); }

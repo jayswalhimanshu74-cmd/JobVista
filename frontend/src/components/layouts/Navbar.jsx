@@ -91,22 +91,22 @@ function Navbar() {
             )}
 
             {isCompany ? (
-              <Link to="/company-dashboard" className="btn profile-btn">
+              <Link to="/company-dashboard" className="btn btn-secondary">
                 🏢 {user?.name || "Dashboard"}
               </Link>
             ) : (
-              <Link to="/profile" className="btn profile-btn">
+              <Link to="/profile" className="btn btn-secondary">
                 {user?.fullName || user?.name || "Profile"}
               </Link>
             )}
-            <button onClick={handleLogout} className="btn logout-btn">
+            <button onClick={handleLogout} className="btn btn-danger">
               Logout
             </button>
           </>
         ) : (
           <>
-            <Link to="/login" className="btn login-btn">Login</Link>
-            <Link to="/signup" className="btn signup-btn">Signup</Link>
+            <Link to="/login" className="btn btn-outline">Login</Link>
+            <Link to="/signup" className="btn btn-primary">Signup</Link>
           </>
         )}
       </div>
