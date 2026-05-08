@@ -125,6 +125,7 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @PreAuthorize("hasRole('COMPANY')")
     public Page<JobApplicationResponseDToO> getApplicationsByJob(
             UUID jobId,
@@ -133,7 +134,8 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
           , int size) {
 
         Job job = jobRepository.findByJobId(jobId)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Job not found"));
         Pageable pageable = PageRequest.of(page, size, Sort.by("appliedAt").descending());
 
         Page<JobApplication> applications;
@@ -200,9 +202,11 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public Page<JobApplicationResponseDToO> getApplicationsByJobSeeker(UUID jobSeekerId, int page, int size) {
         JobSeeker jobSeeker = jobSeekerRepository.findByJobSeekerId(jobSeekerId)
-                .orElseThrow(() -> new RuntimeException("Job seeker not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Job seeker not found"));
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("appliedAt").descending());
 
@@ -246,6 +250,7 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
     public Page<JobApplicationResponseDToO> getAllApplications(ApplicationStatus status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("appliedAt").descending());

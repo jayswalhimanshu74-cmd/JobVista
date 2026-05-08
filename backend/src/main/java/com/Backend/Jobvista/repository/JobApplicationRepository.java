@@ -6,6 +6,7 @@ import com.Backend.Jobvista.entity.JobApplication;
 import com.Backend.Jobvista.entity.JobSeeker;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface JobApplicationRepository extends JpaRepository<JobApplication,Long>, JpaSpecificationExecutor<Job> {
+public interface JobApplicationRepository extends JpaRepository<JobApplication,Long>, JpaSpecificationExecutor<JobApplication> {
 
     boolean existsByJobAndJobSeeker(Job job, JobSeeker jobSeeker);
 
@@ -26,11 +27,15 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication,L
 
     Optional<JobApplication> findByJobApplicationId(UUID jobApplicationId);
 
+    @EntityGraph(attributePaths = {"job", "job.company", "jobSeeker", "jobSeeker.user"})
     Page<JobApplication> findByJobSeeker(JobSeeker jobSeeker, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"job", "job.company", "jobSeeker", "jobSeeker.user"})
     Page<JobApplication> findByJob(Job job, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"job", "job.company", "jobSeeker", "jobSeeker.user"})
     Page<JobApplication> findByJobAndApplicationStatus(Job job, ApplicationStatus status, Pageable pageable);
+
 
     @Query("""
     SELECT j.title, COUNT(a)
