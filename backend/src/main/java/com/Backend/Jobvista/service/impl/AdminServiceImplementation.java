@@ -1,6 +1,9 @@
 package com.Backend.Jobvista.service.impl;
 
 import com.Backend.Jobvista.dto.admin.AdminStatsDTO;
+import com.Backend.Jobvista.dto.Job.JobMapper;
+import com.Backend.Jobvista.dto.JobApplication.JobApplicationMapper;
+import com.Backend.Jobvista.dto.user.UserMapper;
 import com.Backend.Jobvista.repository.CompanyRepository;
 import com.Backend.Jobvista.repository.JobApplicationRepository;
 import com.Backend.Jobvista.repository.JobRepository;
@@ -8,6 +11,7 @@ import com.Backend.Jobvista.repository.UserRepository;
 import com.Backend.Jobvista.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -60,17 +64,27 @@ public class AdminServiceImplementation implements AdminService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<String, Object> getRecentActivity() {
         Map<String, Object> activity = new HashMap<>();
 
         activity.put("recentJobs",
-                jobRepository.findTop5ByOrderByPostedAtDesc());
+                jobRepository.findTop5ByOrderByPostedAtDesc()
+                        .stream()
+                        .map(job -> JobMapper.toResponse(job))
+                        .toList());
 
         activity.put("recentApplications",
-                applicationRepository.findTop5ByOrderByAppliedAtDesc());
+                applicationRepository.findTop5ByOrderByAppliedAtDesc()
+                        .stream()
+                        .map(application -> JobApplicationMapper.toResponse(application))
+                        .toList());
 
         activity.put("recentUsers",
-                userRepository.findTop5ByOrderByCreatedAtDesc());
+                userRepository.findTop5ByOrderByCreatedAtDesc()
+                        .stream()
+                        .map(UserMapper::toResponse)
+                        .toList());
 
         return activity;
     }
