@@ -16,24 +16,8 @@ function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // Sync context user with local state if needed (or just use contextUser)
+  // Sync context user with local state
   const user = contextUser;
-
-  // Fetch from API only if not in localStorage and we have a token
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!user && loggedIn && token) {
-      axiosInstance.get("/users/me")
-        .then((res) => {
-          localStorage.setItem("user", JSON.stringify(res.data));
-          // Note: Ideally AuthContext should update here to trigger re-renders
-        })
-        .catch(() => {
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("user");
-        });
-    }
-  }, [loggedIn, user]);
 
   // 🔥 WebSocket and Notifications Logic
   useEffect(() => {

@@ -17,6 +17,7 @@ public class EmailService {
     private  EmailTemplate  templateService;
     private JavaMailSender javaMailSender;
 
+    @org.springframework.scheduling.annotation.Async
     public void sendMail(
             String to,
             EmailType type,
@@ -31,7 +32,7 @@ public class EmailService {
         message.setTo(to);
         message.setSubject(subject);
         message.setText(body);
-        message.setFrom("jayswalhimanshu74@gmail.com");
+        message.setFrom("jobvista51@gmail.com");
 
         javaMailSender.send(message);
     }

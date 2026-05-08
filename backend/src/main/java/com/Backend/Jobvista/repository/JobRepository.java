@@ -109,6 +109,7 @@ ORDER BY COUNT(j) DESC
     List<Object[]> getTopCompanies();
 
 
+    @EntityGraph(attributePaths = {"company"})
     List<Job> findTop5ByOrderByPostedAtDesc();
 }
 
