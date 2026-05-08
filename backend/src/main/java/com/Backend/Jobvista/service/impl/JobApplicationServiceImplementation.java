@@ -102,7 +102,7 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
 
         return applicationRepository.findByJobSeeker(jobSeeker)
                 .stream()
-                .map(JobApplicationMapper::toResponse)
+                .map(application -> JobApplicationMapper.toResponse(application))
                 .toList();
     }
     @Override
@@ -121,7 +121,7 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
         Pageable pageable = PageRequest.of(page, size, Sort.by("appliedAt").descending());
 
         return applicationRepository.findByJobSeeker(jobSeekerOpt.get(), pageable)
-                .map(JobApplicationMapper::toResponse);
+                .map(application -> JobApplicationMapper.toResponse(application));
     }
 
     @Override
@@ -148,7 +148,7 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
                     .findByJob(job, pageable);
         }
 
-        return applications.map(JobApplicationMapper::toResponse);
+        return applications.map(application -> JobApplicationMapper.toResponse(application));
     }
 
     @Override
@@ -211,7 +211,7 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
         Pageable pageable = PageRequest.of(page, size, Sort.by("appliedAt").descending());
 
         return applicationRepository.findByJobSeeker(jobSeeker, pageable)
-                .map(JobApplicationMapper::toResponse);
+                .map(application -> JobApplicationMapper.toResponse(application));
     }
 
     private void validateStatusTransition(
@@ -262,7 +262,7 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
             applications = applicationRepository.findAll(pageable);
         }
 
-        return applications.map(JobApplicationMapper::toResponse);
+        return applications.map(application -> JobApplicationMapper.toResponse(application));
     }
 
     @Override
