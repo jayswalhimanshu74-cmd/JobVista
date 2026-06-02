@@ -12,12 +12,6 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Seeds a default ADMIN user on application startup if one does not already
- * exist.
- * This is necessary because the registration endpoint blocks ADMIN role
- * signups.
- */
 @Component
 @AllArgsConstructor
 public class AdminSeeder implements CommandLineRunner {
@@ -27,25 +21,32 @@ public class AdminSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        seedAdmin();
+    }
+
+    private void seedAdmin() {
         String adminEmail = "admin@jobvista.com";
 
-        if (userRepository.findByEmail(adminEmail).isEmpty()) {
-            User admin = User.builder()
-                    .userId(UUID.randomUUID())
-                    .name("Admin")
-                    .email(adminEmail)
-                    .password(passwordEncoder.encode("admin123"))
-                    .mobileNumber("0000000000")
-                    .role(Role.ADMIN)
-                    .status(Status.ACTIVE)
-                    .createdAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
-                    .build();
-
-            userRepository.save(admin);
-            System.out.println("✅ Default ADMIN user created: " + adminEmail);
-        } else {
-            System.out.println("ℹ️ ADMIN user already exists: " + adminEmail);
+        if (userRepository.findByEmail(adminEmail).isPresent()) {
+            System.out.println("ℹ️ Admin already exists, skipping seed.");
+            return;
         }
+
+        String adminPassword = System.getProperty("ADMIN_PASSWORD", "ChangeMe@1234");
+
+        User admin = User.builder()
+                .userId(UUID.randomUUID())
+                .name("Admin")
+                .email(adminEmail)
+                .password(passwordEncoder.encode(adminPassword))
+                .mobileNumber("0000000000")
+                .role(Role.ADMIN)
+                .status(Status.ACTIVE)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        userRepository.save(admin);
+        System.out.println("✅ Admin user created: " + adminEmail);
     }
 }
