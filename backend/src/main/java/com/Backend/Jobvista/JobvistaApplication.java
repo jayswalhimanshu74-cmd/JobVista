@@ -14,13 +14,17 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class JobvistaApplication {
 
 	public static void main(String[] args) {
-		Dotenv dotenv = Dotenv.configure()
-                .ignoreIfMissing()  // won't crash on Render where .env doesn't exist
-                .load();
+		 if (System.getenv("RENDER") == null) {
+            Dotenv dotenv = Dotenv.configure()
+                    .ignoreIfMissing()
+                    .load();
 
-        dotenv.entries().forEach(entry ->
-                System.setProperty(entry.getKey(), entry.getValue())
-        );
+            dotenv.entries().forEach(entry -> {
+                if (System.getProperty(entry.getKey()) == null) {
+                    System.setProperty(entry.getKey(), entry.getValue());
+                }
+            });
+        }
 		
 		SpringApplication.run(JobvistaApplication.class, args);
 	}
