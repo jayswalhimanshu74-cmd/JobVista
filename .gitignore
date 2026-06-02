@@ -3,7 +3,7 @@
 .env.local
 
 # ZIP
-*.zip
+.github.zip
 
 # Videos
 *.mp4
