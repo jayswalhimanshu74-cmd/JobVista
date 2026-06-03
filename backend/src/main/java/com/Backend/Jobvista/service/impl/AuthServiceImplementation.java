@@ -13,7 +13,7 @@ import com.Backend.Jobvista.service.AuthService;
 import com.Backend.Jobvista.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,20 +23,20 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+import org.springframework.beans.factory.annotation.Value;
+
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class AuthServiceImplementation  implements AuthService {
 
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
 
-
-    private AuthenticationManager authenticationManager;
-    private UserRepository userRepository;
-    private JwtService jwtService;
-
-    private RefreshTokenService refreshTokenService;
-
-
-    private UserService userService;
+    private final AuthenticationManager authenticationManager;
+    private final UserRepository userRepository;
+    private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
+    private final UserService userService;
 
     @Override
     public UserResponseDTO regiser(UserRequestDTO requestDTO) {
@@ -64,14 +64,14 @@ public class AuthServiceImplementation  implements AuthService {
         String accessToken = jwtService.generateAccessToken(user);
         RefreshToken refreshToken = refreshTokenService.createOrUpdate(
                 user,
-                Instant.now().plus(7, ChronoUnit.DAYS)
-        );
+                 Instant.now().plusMillis(refreshExpiration)
+           );
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken.getToken())
                 .httpOnly(true)
                 .secure(false)   // false if testing locally without https
                 .path("/")
                 .sameSite("Lax")
-                .maxAge(7 * 24 * 60 * 60)
+                .maxAge(refreshExpiration / 1000)
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());

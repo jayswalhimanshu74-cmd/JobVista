@@ -1,6 +1,5 @@
 package com.Backend.Jobvista.controller;
 
-
 import com.Backend.Jobvista.dto.TokenResponseDTO;
 import com.Backend.Jobvista.dto.user.UserRequestDTO;
 import com.Backend.Jobvista.dto.user.UserResponseDTO;
@@ -43,46 +42,40 @@ public class AuthController {
     private BlackListedTokenService blackListedTokenService;
     private RefreshTokenService refreshTokenService;
 
-    private  final Logger log = LoggerFactory.getILoggerFactory().getLogger("log");
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> register( @Valid  @RequestBody  UserRequestDTO requestDTO){
+    public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody UserRequestDTO requestDTO) {
         UserResponseDTO user = authService.regiser(requestDTO);
-        try{
+        try {
             emailService.sendMail(
                     user.getEmail(),
                     EmailType.USER_REGISTERED,
-                    Map.of("name", user.getName())
-            );
-        }catch (Exception e){
+                    Map.of("name", user.getName()));
+        } catch (Exception e) {
             log.warn("Email failed: {}", e.getMessage());
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
-
-
     @PostMapping("/login")
     public ResponseEntity<TokenResponseDTO> login(@RequestBody LoginRequestDTO requestDTO,
-                                                  HttpServletResponse response){
+            HttpServletResponse response) {
 
-         TokenResponseDTO tokenResponseDTO = authService.login(requestDTO,response);
+        TokenResponseDTO tokenResponseDTO = authService.login(requestDTO, response);
 
-         try{
-             UserResponseDTO user  = userService.findByEmail(requestDTO.getEmail());
+        try {
+            UserResponseDTO user = userService.findByEmail(requestDTO.getEmail());
             emailService.sendMail(
                     requestDTO.getEmail(),
                     EmailType.LOGIN_ALERT,
-                    Map.of("name",user.getName())
-            );
-             }
-             catch (Exception e) {
-                 log.warn("Email failed: {}", e.getMessage());
-             }
-        return  ResponseEntity.ok(tokenResponseDTO);
+                    Map.of("name", user.getName()));
+        } catch (Exception e) {
+            log.warn("Email failed: {}", e.getMessage());
+        }
+        return ResponseEntity.ok(tokenResponseDTO);
     }
-
 
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponseDTO> refresh(
@@ -94,8 +87,7 @@ public class AuthController {
         }
 
         return ResponseEntity.ok(
-                authService.refreshToken(refreshToken, response)
-        );
+                authService.refreshToken(refreshToken, response));
     }
 
     @PostMapping("/logout")
@@ -106,11 +98,11 @@ public class AuthController {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            
+
             try {
                 Date expiry = jwtService.extractExpiration(token);
                 blackListedTokenService.blacklistToken(token, expiry);
-                
+
                 String email = jwtService.extractUsername(token); // Extract directly from token
                 if (email != null) {
                     refreshTokenService.revokeByUserEmail(email);

@@ -28,10 +28,10 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private  final JwtAuthenticationFilter jwtFilter;
+    private final JwtAuthenticationFilter jwtFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws  Exception{
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
@@ -39,30 +39,31 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/").permitAll()
-                        .requestMatchers("/api/v1/job/**", "/api/v1/jobs/**").permitAll()
-                        .requestMatchers("/api/v1/company/**").permitAll()
-                        .requestMatchers("/api/v1/application/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/public/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        // Public job browsing
+                        .requestMatchers(HttpMethod.GET, "/api/v1/job/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/jobs/**").permitAll()
+                        // Public company browsing
+                        .requestMatchers(HttpMethod.GET, "/api/v1/company/**").permitAll()
+                        // Everything else requires authentication
+                        .requestMatchers("/api/v1/application/**").authenticated()
                         .requestMatchers("/api/v1/jobSeeker/**").authenticated()
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/notifications/**").authenticated()
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtFilter,UsernamePasswordAuthenticationFilter.class);
-
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config) throws Exception {

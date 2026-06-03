@@ -10,11 +10,15 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
 
 
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
+
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
 
     private final RefreshTokenRepository refreshTokenRepository;
 
@@ -71,7 +75,7 @@ public class RefreshTokenService {
 
         // Rotate token (important for security)
         refreshToken.setToken(UUID.randomUUID().toString());
-        refreshToken.setExpiryDate(Instant.now().plus(7, ChronoUnit.DAYS));
+        refreshToken.setExpiryDate(Instant.now().plusMillis(refreshExpiration));
 
         return refreshTokenRepository.save(refreshToken);
     }
