@@ -27,7 +27,6 @@ public class JobController {
     private final JobService jobService;
     private final AdzunaService adzunaService;
     private final SecurityUtill securityUtill;
-    private final PageUtils pageUtils;
 
     // ✅ Anyone logged in
     @GetMapping("/all")

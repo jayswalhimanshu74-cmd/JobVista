@@ -22,10 +22,7 @@ import java.util.UUID;
 public class JobApplicationController {
 
     private final JobApplicationService applicationService;
-
     private final SecurityUtill securityUtil;
-
-    private final PageUtils pageUtils;
 
     @PostMapping("/apply/{jobId}")
     @PreAuthorize("hasRole('USER')")
