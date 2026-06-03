@@ -34,7 +34,6 @@ public class JobApplicationController {
 
         JobApplicationResponseDToO job = applicationService.applyToJob(jobId, email);
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(job);
     }

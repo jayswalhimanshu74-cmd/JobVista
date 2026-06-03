@@ -2,6 +2,8 @@ package com.Backend.Jobvista.config;
 
 import com.Backend.Jobvista.security.JwtAuthenticationFilter;
 import lombok.AllArgsConstructor;
+
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -29,6 +31,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+    private final RateLimitFilter rateLimitFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -54,7 +57,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/notifications/**").authenticated()
                         .anyRequest().authenticated())
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                  .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                  .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -76,7 +80,6 @@ public class SecurityConfig {
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:5173",
-                "http://localhost:3000",
                 "https://jobvista-pi.vercel.app",
                 "https://jobvista-8qk6b12ls-jayswalhimanshu74-4107s-projects.vercel.app"
         ));

@@ -223,5 +223,4 @@ public class UserServiceImplementation implements UserService {
             throw new RuntimeException("Cover photo upload failed", e);
         }
     }
-
 }
