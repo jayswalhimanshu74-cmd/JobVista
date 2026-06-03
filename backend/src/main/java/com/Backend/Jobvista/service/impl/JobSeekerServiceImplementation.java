@@ -59,6 +59,7 @@ public class JobSeekerServiceImplementation  implements JobSeekerService {
         return JobSeekerMapper.toResponse(saved,user);
     }
 
+
     @Override
     @Transactional
     public String uploadResume(String email, MultipartFile file) {
@@ -190,30 +191,31 @@ public class JobSeekerServiceImplementation  implements JobSeekerService {
         return JobSeekerMapper.toResponse(updated, user);
     }
 
-    private void validateResume(MultipartFile file) {
+   private void validateResume(MultipartFile file) {
+    if (file.isEmpty()) throw new RuntimeException("File is empty");
+    if (file.getSize() > 5 * 1024 * 1024) throw new RuntimeException("File too large. Max 5MB allowed");
 
-        if (file.isEmpty()) {
-            throw new RuntimeException("File is empty");
-        }
+    String contentType = file.getContentType();
+    if (!"application/pdf".equals(contentType)) throw new RuntimeException("Only PDF allowed");
 
-        if (file.getSize() > 5 * 1024 * 1024) { // 5MB
-            throw new RuntimeException("File too large");
-        }
-
-        String contentType = file.getContentType();
-
-        if (!"application/pdf".equals(contentType)) {
-            throw new RuntimeException("Only PDF allowed");
-        }
+    String originalFilename = file.getOriginalFilename();
+    if (originalFilename == null || !originalFilename.toLowerCase().endsWith(".pdf")) {
+        throw new RuntimeException("Only PDF files are allowed");
     }
-    private void deleteOldResume(String path) {
-        try {
-            Files.deleteIfExists(Paths.get(path));
-        } catch (IOException e) {
-            // just log, don’t break flow
-            System.out.println("Failed to delete old resume: " + path);
-        }
+
+}
+
+   private void deleteOldResume(String fileName) {
+    try {
+        Path basePath = Paths.get("uploads/resumes/").toAbsolutePath().normalize();
+        Path filePath = basePath.resolve(fileName).normalize();
+        // Security check — prevent path traversal
+        if (!filePath.startsWith(basePath)) return;
+        Files.deleteIfExists(filePath);
+    } catch (IOException e) {
+        System.out.println("Failed to delete old resume: " + fileName);
     }
+}
 
     @Override
     public void deleteJobSeeker(String email) {

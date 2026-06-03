@@ -115,42 +115,61 @@ public class UserServiceImplementation implements UserService {
         userRepository.delete(user);
     }
 
+
     @Override
     @Transactional
     public String uploadProfilePicture(String email, org.springframework.web.multipart.MultipartFile file) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+    
+    User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
-        try {
-            // Validate file
-            if (file.isEmpty()) throw new RuntimeException("File is empty");
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                throw new RuntimeException("Only image files are allowed");
-            }
+    try {
+        // Validate file
+        if (file.isEmpty()) throw new RuntimeException("File is empty");
+        if (file.getSize() > 5 * 1024 * 1024) throw new RuntimeException("File too large. Max 5MB allowed");
 
-            // Delete old picture if exists and not a default one
-            if (user.getProfilePicture() != null) {
-                try {
-                    java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get("uploads/profiles/").resolve(user.getProfilePicture()));
-                } catch (Exception e) { /* ignore */ }
-            }
-
-            String fileName = user.getUserId() + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads/profiles/").toAbsolutePath().normalize();
-            java.nio.file.Files.createDirectories(uploadPath);
-
-            java.nio.file.Path filePath = uploadPath.resolve(fileName);
-            java.nio.file.Files.write(filePath, file.getBytes());
-
-            user.setProfilePicture(fileName);
-            userRepository.save(user);
-
-            return fileName;
-        } catch (java.io.IOException e) {
-            throw new RuntimeException("Profile picture upload failed", e);
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new RuntimeException("Only image files are allowed");
         }
+
+        // Whitelist extensions
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) throw new RuntimeException("Invalid filename");
+        String extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
+        if (!java.util.List.of(".jpg", ".jpeg", ".png", ".webp").contains(extension)) {
+            throw new RuntimeException("Only JPG, PNG and WEBP images are allowed");
+        }
+
+        // Delete old picture if exists
+        if (user.getProfilePicture() != null) {
+            try {
+                java.nio.file.Path basePath = java.nio.file.Paths.get("uploads/profiles/").toAbsolutePath().normalize();
+                java.nio.file.Path oldFile = basePath.resolve(user.getProfilePicture()).normalize();
+                if (oldFile.startsWith(basePath)) {
+                    java.nio.file.Files.deleteIfExists(oldFile);
+                }
+            } catch (Exception e) { /* ignore */ }
+        }
+
+        // Safe filename — never use original filename directly
+        String fileName = user.getUserId() + "_" + System.currentTimeMillis() + extension;
+        java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads/profiles/").toAbsolutePath().normalize();
+        java.nio.file.Files.createDirectories(uploadPath);
+
+        java.nio.file.Path filePath = uploadPath.resolve(fileName);
+        java.nio.file.Files.write(filePath, file.getBytes());
+
+        user.setProfilePicture(fileName);
+        userRepository.save(user);
+
+        return fileName;
+
+    } catch (java.io.IOException e) {
+        throw new RuntimeException("Profile picture upload failed", e);
     }
+ }
+
 
     @Override
     @Transactional
@@ -159,19 +178,36 @@ public class UserServiceImplementation implements UserService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
         try {
+            // Validate file
             if (file.isEmpty()) throw new RuntimeException("File is empty");
+            if (file.getSize() > 5 * 1024 * 1024) throw new RuntimeException("File too large. Max 5MB allowed");
+
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 throw new RuntimeException("Only image files are allowed");
             }
 
+            // Whitelist extensions
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null) throw new RuntimeException("Invalid filename");
+            String extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
+            if (!java.util.List.of(".jpg", ".jpeg", ".png", ".webp").contains(extension)) {
+                throw new RuntimeException("Only JPG, PNG and WEBP images are allowed");
+            }
+
+            // Delete old cover photo if exists
             if (user.getCoverPhoto() != null) {
                 try {
-                    java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get("uploads/banners/").resolve(user.getCoverPhoto()));
+                    java.nio.file.Path basePath = java.nio.file.Paths.get("uploads/banners/").toAbsolutePath().normalize();
+                    java.nio.file.Path oldFile = basePath.resolve(user.getCoverPhoto()).normalize();
+                    if (oldFile.startsWith(basePath)) {
+                        java.nio.file.Files.deleteIfExists(oldFile);
+                    }
                 } catch (Exception e) { /* ignore */ }
             }
 
-            String fileName = "banner_" + user.getUserId() + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            // Safe filename — never use original filename directly
+            String fileName = "banner_" + user.getUserId() + "_" + System.currentTimeMillis() + extension;
             java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads/banners/").toAbsolutePath().normalize();
             java.nio.file.Files.createDirectories(uploadPath);
 
@@ -182,9 +218,10 @@ public class UserServiceImplementation implements UserService {
             userRepository.save(user);
 
             return fileName;
+
         } catch (java.io.IOException e) {
             throw new RuntimeException("Cover photo upload failed", e);
         }
     }
-}
 
+}
