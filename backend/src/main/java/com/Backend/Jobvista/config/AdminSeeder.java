@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -18,6 +20,7 @@ public class AdminSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private static final Logger log = LoggerFactory.getLogger(AdminSeeder.class);
 
     @Override
     public void run(String... args) {
@@ -28,7 +31,7 @@ public class AdminSeeder implements CommandLineRunner {
         String adminEmail = "admin@jobvista.com";
 
         if (userRepository.findByEmail(adminEmail).isPresent()) {
-            System.out.println("ℹ️ Admin already exists, skipping seed.");
+            log.info("Admin already exists, skipping seed.");
             return;
         }
 
@@ -47,6 +50,6 @@ public class AdminSeeder implements CommandLineRunner {
                 .build();
 
         userRepository.save(admin);
-        System.out.println("✅ Admin user created: " + adminEmail);
+        log.info("✅ Admin user created: {}", adminEmail);
     }
 }

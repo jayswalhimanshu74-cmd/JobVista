@@ -7,6 +7,8 @@ import com.Backend.Jobvista.dto.user.UserResponseDTO;
 import com.Backend.Jobvista.exception.UserNotFoundException;
 import com.Backend.Jobvista.service.UserService;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -22,6 +24,7 @@ public class UserController {
 
     private final UserService userService;
     private final SecurityUtill securityUtil;
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
 
     @GetMapping("/me")
@@ -32,7 +35,7 @@ public class UserController {
         Authentication auth =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        System.out.println("AUTH: " + auth);
+        log.debug("AUTH: {}", auth);
 
         String email = securityUtil.getCurrentUserEmail();
         return ResponseEntity.ok(userService.getUserByEmail(email));

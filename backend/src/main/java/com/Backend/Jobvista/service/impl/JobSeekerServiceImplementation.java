@@ -9,6 +9,8 @@ import com.Backend.Jobvista.entity.Role;
 import com.Backend.Jobvista.entity.User;
 import com.Backend.Jobvista.repository.JobSeekersRepository;
 import com.Backend.Jobvista.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.Backend.Jobvista.service.JobSeekerService;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -36,6 +38,7 @@ public class JobSeekerServiceImplementation  implements JobSeekerService {
 
     private final  UserRepository userRepository;
     private final JobSeekersRepository jobSeekerRepository;
+    private static final Logger log = LoggerFactory.getLogger(JobSeekerServiceImplementation.class);
 
     @Override
     public JobSeekersResponseDTO createJobSeeker( String email ,JobSeekerRequestDTO dto) {
@@ -213,7 +216,7 @@ public class JobSeekerServiceImplementation  implements JobSeekerService {
         if (!filePath.startsWith(basePath)) return;
         Files.deleteIfExists(filePath);
     } catch (IOException e) {
-        System.out.println("Failed to delete old resume: " + fileName);
+       log.warn("Failed to delete old resume: {}", fileName);
     }
 }
 

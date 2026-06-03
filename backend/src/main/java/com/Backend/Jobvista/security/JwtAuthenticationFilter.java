@@ -6,7 +6,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,6 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtUtil;
     private final CustomUserDetailsService userDetailsService;
     private final BlackListedTokenService blackListedTokenService;
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -84,16 +86,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                    System.out.println("✅ AUTH SET FROM JWT (No DB hit): " + email);
+                    log.debug("Auth set from JWT for user: {}", email);
                 }
             }
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            System.out.println("⚠️ Token expired: " + e.getMessage());
-            // We don't return 401 here anymore. We let the request continue as anonymous.
+            log.warn("Token expired: {}", e.getMessage());            // We don't return 401 here anymore. We let the request continue as anonymous.
             // Spring Security will return 403 if the endpoint is protected.
             // If the endpoint is public (like Home), it will now work.
         } catch (io.jsonwebtoken.JwtException e) {
-            System.out.println("⚠️ Invalid token: " + e.getMessage());
+            log.error("Invalid token: {}", e.getMessage());
         }
         filterChain.doFilter(request, response);
     }

@@ -11,12 +11,15 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @AllArgsConstructor
 public class BlackListedTokenServiceImplementation implements BlackListedTokenService {
 
     private final BlackListedTokenRepository repository;
+    private static final Logger log = LoggerFactory.getLogger(BlackListedTokenServiceImplementation.class);
 
     @Override
     @org.springframework.cache.annotation.CacheEvict(value = "blacklist", key = "#token")
@@ -41,6 +44,6 @@ public class BlackListedTokenServiceImplementation implements BlackListedTokenSe
     @org.springframework.cache.annotation.CacheEvict(value = "blacklist", allEntries = true)
     public void cleanExpiredTokens() {
         repository.deleteByExpiryDateBefore(LocalDateTime.now());
-        System.out.println("Expired tokens cleaned");
+        log.info("Expired tokens cleaned");
     }
 }

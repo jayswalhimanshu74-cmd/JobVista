@@ -18,6 +18,8 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @Service
@@ -31,6 +33,7 @@ public class JwtService {
 
     @Value("${jwt.refresh-expiration}")
     private long refreshExpiration;
+    private static final Logger log = LoggerFactory.getLogger(JwtService.class);
 
     private Key getSignKey() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
@@ -69,7 +72,7 @@ public class JwtService {
             Jwts.parser().setSigningKey(getSignKey()).build().parseClaimsJws(token);
             return true;
         } catch (JwtException e) {
-            System.out.println("JWT Error: " + e.getMessage());
+           log.warn("JWT validation error: {}", e.getMessage());
             return false;
         }
     }
