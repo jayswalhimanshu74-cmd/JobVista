@@ -9,6 +9,7 @@ package com.Backend.Jobvista.entity;
     import org.springframework.security.core.GrantedAuthority;
     import org.springframework.security.core.authority.SimpleGrantedAuthority;
     import java.time.Instant;
+    import lombok.Builder;
     import java.time.LocalDateTime;
     import java.util.Collection;
     import java.util.List;
@@ -55,7 +56,10 @@ package com.Backend.Jobvista.entity;
         @Enumerated(EnumType.STRING)
         private Status status;
 
+        
+        @Builder.Default
         private LocalDateTime createdAt= LocalDateTime.now();
+        @Builder.Default
         private LocalDateTime updatedAt = LocalDateTime.now();
 
         private String profilePicture;

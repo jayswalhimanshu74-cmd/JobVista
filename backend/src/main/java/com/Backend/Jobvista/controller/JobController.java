@@ -26,6 +26,7 @@ public class JobController {
     private final JobService jobService;
     private final AdzunaService adzunaService;
     private final SecurityUtill securityUtill;
+    private final PageUtills pageUtils;
 
     // ✅ Anyone logged in
     @GetMapping("/all")
@@ -33,6 +34,8 @@ public class JobController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
+        size = PageUtils.sanitize(size);
+        page = PageUtils.sanitizePage(page);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = (auth != null && auth.isAuthenticated()
                 && !"anonymousUser".equals(auth.getPrincipal()))
@@ -47,6 +50,8 @@ public class JobController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
+        size = PageUtils.sanitize(size);
+        page = PageUtils.sanitizePage(page);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = (auth != null && auth.isAuthenticated()
                 && !"anonymousUser".equals(auth.getPrincipal()))

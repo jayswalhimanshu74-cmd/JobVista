@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
     if (role !== "USER" && role !== "ROLE_USER") return;
 
     try {
-      const res = await axiosInstance.get("/application/me", { params: { page: 0, size: 200 } });
+      const res = await axiosInstance.get("/application/me", { params: { page: 0, size: 50 } });
       const content = res?.data?.content || res?.content;
       if (content) {
         const ids = new Set(content.map(app => app.jobId));

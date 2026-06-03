@@ -2,7 +2,7 @@ package com.Backend.Jobvista.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
+import lombok.Builder;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -33,7 +33,8 @@ public class RecentlyViewedJob {
     @JoinColumn(name = "job_id")
     private Job job;
 
-    private LocalDateTime viewedAt;
+    @Builder.Default
+    private LocalDateTime viewedAt= LocalDateTime.now();
 
     @PrePersist
     public void onView() {

@@ -24,6 +24,8 @@ public class JobApplicationController {
 
     private final SecurityUtill securityUtil;
 
+    private final PageUtills pageUtils;
+
     @PostMapping("/apply/{jobId}")
     @PreAuthorize("hasRole('USER')")
 
@@ -52,6 +54,8 @@ public class JobApplicationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
+        size = PageUtils.sanitize(size);
+        page = PageUtils.sanitizePage(page);
         String email = securityUtil.getCurrentUserEmail();
 
         return ResponseEntity.ok(
@@ -67,6 +71,8 @@ public class JobApplicationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
+        size = PageUtils.sanitize(size);
+        page = PageUtils.sanitizePage(page);
         return applicationService.getApplicationsByJob(jobId, status, page, size);
     }
 
@@ -89,6 +95,8 @@ public class JobApplicationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
+       size = PageUtils.sanitize(size);
+        page = PageUtils.sanitizePage(page);
         return ResponseEntity.ok(
                 applicationService.getAllApplications(status, page, size));
     }

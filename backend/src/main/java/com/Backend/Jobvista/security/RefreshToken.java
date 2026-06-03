@@ -3,9 +3,8 @@ package com.Backend.Jobvista.security;
 import com.Backend.Jobvista.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
-
+import lombok.Builder;
 import java.time.Instant;
-
 
 @Getter
 @Setter
@@ -27,6 +26,7 @@ public class RefreshToken {
     private User user;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean revoked = false;
 
     @Column(nullable = false)

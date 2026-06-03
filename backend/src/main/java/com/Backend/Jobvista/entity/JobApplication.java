@@ -2,9 +2,9 @@ package com.Backend.Jobvista.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 
 @Entity
 @Getter
@@ -35,7 +35,8 @@ public class JobApplication {
     @Enumerated(EnumType.STRING)
     private ApplicationStatus applicationStatus;
 
-    private LocalDateTime appliedAt;
+    @Builder.Default
+    private LocalDateTime appliedAt= LocalDateTime.now();
 
     @PrePersist
     public void onApply() {
