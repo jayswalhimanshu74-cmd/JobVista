@@ -9,69 +9,31 @@ class WebSocketService {
         this.isConnected = false;
     }
 
-    connect(onConnected) {
-        if (this.client && this.client.active) {
-            if (onConnected) onConnected();
-            return;
-        }
-
-        if (onConnected) {
-            this.onConnectedCallbacks.add(onConnected);
-        }
-
-        const WS_URL =
-            import.meta.env.VITE_WS_URL ||
-            'https://jobvista-psro.onrender.com/ws';
-
-        this.client = new Client({
-            brokerURL: WS_URL.startsWith('https') 
-                ? WS_URL.replace('https', 'wss') 
-                : WS_URL.replace('http', 'ws'),
-            
-            // Fallback to SockJS if WebSocket is not available
-            webSocketFactory: () => new SockJS(WS_URL),
-            
-            connectHeaders: {
-                Authorization: `Bearer ${localStorage.getItem('accessToken')}`
-            },
-            
-            debug: (str) => {
-                // Enable this for troubleshooting in development
-                // console.log('STOMP: ' + str);
-            },
-            
-            reconnectDelay: 5000,
-            heartbeatIncoming: 10000,
-            heartbeatOutgoing: 10000,
-        });
-
-        this.client.onConnect = (frame) => {
-            console.log('WebSocket Connected');
-            this.isConnected = true;
-            
-            // Execute all pending connection callbacks
-            this.onConnectedCallbacks.forEach(cb => cb());
-            this.onConnectedCallbacks.clear();
-
-            // Re-subscribe to all topics in case of reconnect
-            this.subscriptions.forEach((sub, topic) => {
-                // The old subscription object is invalid, we need to re-subscribe
-                this._subscribeToTopic(topic, sub.callback);
-            });
-        };
-
-        this.client.onStompError = (frame) => {
-            console.error('STOMP Error:', frame.headers['message']);
-            console.error('Details:', frame.body);
-        };
-
-        this.client.onWebSocketClose = () => {
-            this.isConnected = false;
-            console.warn('WebSocket Connection Closed');
-        };
-
-        this.client.activate();
+ connect(onConnected) {
+  const token = localStorage.getItem("accessToken");
+  
+  const socket = new SockJS(`${WS_BASE_URL}/ws`);
+  this.client = new Client({
+    webSocketFactory: () => socket,
+    connectHeaders: token ? {
+      Authorization: `Bearer ${token}`  // ✅ send JWT on connect
+    } : {},
+    heartbeatIncoming: 10000,
+    heartbeatOutgoing: 10000,
+    onConnect: () => {
+      this.connected = true;
+      if (onConnected) onConnected();
+    },
+    onDisconnect: () => {
+      this.connected = false;
+    },
+    onStompError: (frame) => {
+      console.error("STOMP error:", frame);
     }
+  });
+
+  this.client.activate();
+}
 
     subscribe(topic, callback) {
         // Store the intent to subscribe

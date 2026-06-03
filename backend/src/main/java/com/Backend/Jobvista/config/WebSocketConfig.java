@@ -1,16 +1,32 @@
 package com.Backend.Jobvista.config;
 
+import com.Backend.Jobvista.security.JwtService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.messaging.simp.stomp.StompCommand;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final JwtService jwtService;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -25,10 +41,56 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns(
                     "http://localhost:5173",
+                    "http://localhost:3000",
+                    "https://jobvista.com",
+                    "https://www.jobvista.com",
                     "https://jobvista-pi.vercel.app",
-                    "https://*.vercel.app"
+                    "https://jobvista-git-main-jayswalhimanshu74-4107s-projects.vercel.app"
                 )
                 .withSockJS();
+    }
+
+    // ✅ STOMP-level JWT authentication
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(new ChannelInterceptor() {
+            @Override
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                StompHeaderAccessor accessor =
+                        MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+
+                if (accessor == null) return message;
+
+                // Only check on CONNECT frame
+                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    String authHeader = accessor.getFirstNativeHeader("Authorization");
+
+                    // Allow unauthenticated for public topics
+                    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                        return message; // guest — allowed for /topic/jobs
+                    }
+
+                    try {
+                        String token = authHeader.substring(7);
+                        String email = jwtService.extractUsername(token);
+
+                        if (email != null && jwtService.isTokenValid(token)) {
+                            UsernamePasswordAuthenticationToken auth =
+                                    new UsernamePasswordAuthenticationToken(
+                                            email,
+                                            null,
+                                            List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                                    );
+                            accessor.setUser(auth);
+                        }
+                    } catch (Exception e) {
+                        // Invalid token — still allow as guest
+                    }
+                }
+
+                return message;
+            }
+        });
     }
 
     @Bean
@@ -39,4 +101,3 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         return scheduler;
     }
 }
-
