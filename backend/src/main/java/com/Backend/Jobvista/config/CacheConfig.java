@@ -1,4 +1,4 @@
-package main.java.com.Backend.Jobvista.config;
+package com.Backend.Jobvista.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.CacheManager;

@@ -1,4 +1,4 @@
- package main.java.com.Backend.Jobvista.config;
+package com.Backend.Jobvista.config;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
