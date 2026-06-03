@@ -8,6 +8,10 @@
 # Videos
 *.mp4
 
+del
+git
+main
+
 # Frontend
 frontend/node_modules/
 frontend/dist/
