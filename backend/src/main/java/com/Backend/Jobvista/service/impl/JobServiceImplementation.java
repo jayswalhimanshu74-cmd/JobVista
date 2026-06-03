@@ -179,7 +179,7 @@ public class JobServiceImplementation implements JobService {
                 .experienceRequired(job.getExperienceRequired())
                 .postedAt(job.getPostedAt())
                 .lastDate(job.getLastDate())
-                .companyName(job.getCompany().getCompanyName())
+                .companyName(job.getCompanyName() != null ? job.getCompanyName() : "Unknown")
                 .isSaved(false)
                 .build());
     }
@@ -237,7 +237,7 @@ public class JobServiceImplementation implements JobService {
                         .id(job.getId())
                         .isSaved(false)
                         .title(job.getTitle())
-                        .companyName(job.getCompany().getCompanyName())
+                        .companyName(job.getCompanyName() != null ? job.getCompanyName() : "Unknown")
                         .location(job.getLocation())
                         .build())
                 .toList();
@@ -429,6 +429,7 @@ public class JobServiceImplementation implements JobService {
                 .orElseThrow(() -> new RuntimeException("Company not found"));
 
         Job job = JobMapper.toEntity(dto, company);
+        job.setCompanyName(company.getCompanyName());
         Job savedJob = jobRepository.save(job);
         JobResponseDTO response = JobMapper.toResponse(savedJob);
 

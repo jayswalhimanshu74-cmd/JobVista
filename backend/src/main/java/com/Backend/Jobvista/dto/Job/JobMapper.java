@@ -34,7 +34,7 @@ public class JobMapper {
                 .requiredSkills(job.getRequiredSkills())
                 .experienceRequired(job.getExperienceRequired())
                 .companyName(
-                        job.getCompany() != null ? job.getCompany().getCompanyName() : (job.getCompanyName() != null ? job.getCompanyName() : "Unknown")
+                       job.getCompanyName() != null ? job.getCompanyName() : "Unknown"
                 )
                 .postedAt(job.getPostedAt())
                 .lastDate(job.getLastDate())
