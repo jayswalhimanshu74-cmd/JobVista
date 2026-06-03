@@ -22,31 +22,64 @@ function App() {
 
       <div className="app-main">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={
+            <ErrorBoundary>
+              <Home />
+            </ErrorBoundary>} />
 
           <Route
             path="/login"
-            element={
-              <Login />
-            } />
+            element={<ErrorBoundary><Login /></ErrorBoundary>} />
 
           <Route
-            path="/signup" element={
-              <Signup />
-            } />
+            path="/signup" element={<ErrorBoundary><Signup /></ErrorBoundary>} />
 
 
-          <Route path="/jobs" element={<Jobs />} />
+          <Route path="/jobs" element={<ErrorBoundary><Jobs /></ErrorBoundary>} />
 
-          <Route path="/companies" element={<Companies />} />
+          <Route path="/companies" element={<ErrorBoundary><Companies /></ErrorBoundary>} />
 
 
-          <Route path="/about" element={<About />} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/resume" element={<ProtectedRoute><Resume /></ProtectedRoute>} />
+          <Route path="/about" element={<ErrorBoundary><About /></ErrorBoundary>} />
+          <Route path="/profile" element={<ProtectedRoute>
+            <ErrorBoundary>
+              <Profile />
+            </ErrorBoundary></ProtectedRoute>} />
+          <Route path="/resume" element={<ProtectedRoute>
+            <ErrorBoundary>
+              <Resume />
+            </ErrorBoundary></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedAdmin AdminComponent={Admin} />} />
-          <Route path="/company-dashboard" element={<ProtectedRoute><CompanyDashboard /></ProtectedRoute>} />
-          <Route path="/job/:jobId" element={<ProtectedRoute><JobDetails /></ProtectedRoute>} />
+          <Route path="/company-dashboard" element={<ProtectedRoute>
+            <ErrorBoundary>
+              <CompanyDashboard />
+            </ErrorBoundary></ProtectedRoute>} />
+          <Route path="/job/:jobId" element={<ProtectedRoute>
+            <ErrorBoundary>
+              <JobDetails />
+            </ErrorBoundary></ProtectedRoute>} />
+
+          <Route path="*" element={
+            <div style={{
+              display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center",
+              minHeight: "60vh", textAlign: "center"
+              }}>
+                <h2 style={{ fontSize: "1.5rem", color: "#111", marginBottom: "1rem" }}>
+                  404 — Page Not Found
+                </h2>
+                <p style={{ color: "#6b7280", marginBottom: "1.5rem" }}>
+                  The page you're looking for doesn't exist.
+                </p>
+                <a href="/" style={{
+                  padding: "10px 24px", borderRadius: "8px",
+                  background: "#2563eb", color: "#fff",
+                  textDecoration: "none", fontWeight: 600
+                }}>
+                  Go Home
+                </a>
+              </div>
+            } />
         </Routes>
       </div>
     </Router>
