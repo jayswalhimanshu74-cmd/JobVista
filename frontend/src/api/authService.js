@@ -12,19 +12,20 @@ const login = async (credentials) => {
     localStorage.setItem("accessToken", response.data.accessToken);
   }
 
-  // some backends include the user object along with the token
-  if (response.data.user) {
-     localStorage.setItem("role", response.data.role);
+  if (response.data.role) {
+    localStorage.setItem("role", response.data.role);
   }
 
   return response.data;
 };
 
 const logout = async () => {
-  try{
-  await axiosInstance.post("/auth/logout");
-  }catch(error){}
-  
+  try {
+    await axiosInstance.post("/auth/logout");
+  } catch (error) {
+    console.warn("Logout request failed:", error);
+  }
+
   localStorage.clear();
   window.location.href = "/login";
 };

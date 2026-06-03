@@ -12,7 +12,6 @@ import lombok.*;
 public class TokenResponseDTO {
 
     private String accessToken;
-    private String refreshToken; // ✅ add this
     private Role role;
 
 }

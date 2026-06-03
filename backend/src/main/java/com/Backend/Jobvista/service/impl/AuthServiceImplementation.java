@@ -76,7 +76,7 @@ public class AuthServiceImplementation  implements AuthService {
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        return new TokenResponseDTO(accessToken,refreshToken.getToken(),user.getRole());
+        return new TokenResponseDTO(accessToken,user.getRole());
     }
 
     @Override
@@ -100,7 +100,7 @@ public class AuthServiceImplementation  implements AuthService {
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return new TokenResponseDTO(newAccessToken,refreshToken.getToken(),user.getRole());
+        return new TokenResponseDTO(newAccessToken,user.getRole());
 
     }
 
