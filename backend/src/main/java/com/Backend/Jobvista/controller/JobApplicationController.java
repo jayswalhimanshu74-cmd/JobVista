@@ -4,6 +4,7 @@ import com.Backend.Jobvista.config.SecurityUtill;
 import com.Backend.Jobvista.dto.JobApplication.JobApplicationResponseDToO;
 import com.Backend.Jobvista.entity.ApplicationStatus;
 import com.Backend.Jobvista.service.JobApplicationService;
+import com.Backend.Jobvista.utills.PageUtils;
 
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,7 +25,7 @@ public class JobApplicationController {
 
     private final SecurityUtill securityUtil;
 
-    private final PageUtills pageUtils;
+    private final PageUtils pageUtils;
 
     @PostMapping("/apply/{jobId}")
     @PreAuthorize("hasRole('USER')")

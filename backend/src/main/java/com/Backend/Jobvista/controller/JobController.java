@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import com.Backend.Jobvista.utills.PageUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,7 +27,7 @@ public class JobController {
     private final JobService jobService;
     private final AdzunaService adzunaService;
     private final SecurityUtill securityUtill;
-    private final PageUtills pageUtils;
+    private final PageUtils pageUtils;
 
     // ✅ Anyone logged in
     @GetMapping("/all")
