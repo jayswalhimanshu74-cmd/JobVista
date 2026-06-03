@@ -75,9 +75,10 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedOriginPatterns(List.of(
-            "http://localhost:5173",
-            "https://jobvista-pi.vercel.app",
-            "https://*.vercel.app"
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "https://jobvista-pi.vercel.app",
+                "https://jobvista-8qk6b12ls-jayswalhimanshu74-4107s-projects.vercel.app"
         ));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
