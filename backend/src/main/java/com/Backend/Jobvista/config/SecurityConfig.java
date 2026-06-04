@@ -2,7 +2,7 @@ package com.Backend.Jobvista.config;
 
 import com.Backend.Jobvista.security.JwtAuthenticationFilter;
 import lombok.AllArgsConstructor;
-import main.java.com.Backend.Jobvista.config.RateLimitFilter;
+import com.Backend.Jobvista.config.RateLimitFilter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
