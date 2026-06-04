@@ -28,3 +28,4 @@ backend/uploads/
 # OS
 .DS_Store*.zip
 "*.zip" 
+*.zip
