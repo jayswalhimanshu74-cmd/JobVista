@@ -19,6 +19,7 @@ public class CacheConfig {
                 "jobs",
                 "recommended_jobs",
                 "companies",
+                "blacklist",
                 "featuredJobs"
         );
 
