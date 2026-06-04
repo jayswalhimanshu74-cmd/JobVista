@@ -18,7 +18,7 @@ public class Job {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, updatable = false)
+    @Column(nullable = false)
     private UUID jobId;
 
     @Column(nullable = false)

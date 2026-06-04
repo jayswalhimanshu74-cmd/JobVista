@@ -2,7 +2,7 @@ package com.Backend.Jobvista.config;
 
 import com.Backend.Jobvista.security.JwtAuthenticationFilter;
 import lombok.AllArgsConstructor;
-
+import main.java.com.Backend.Jobvista.config.RateLimitFilter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -78,11 +78,15 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedMethods(List.of("*"));
-        configuration.setAllowedOriginPatterns(List.of(
+       configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:5173",
+                "http://localhost:3000",
+                "https://jobvista.com",
+                "https://www.jobvista.com",
                 "https://jobvista-pi.vercel.app",
+                "https://jobvista-git-main-jayswalhimanshu74-4107s-projects.vercel.app",
                 "https://jobvista-8qk6b12ls-jayswalhimanshu74-4107s-projects.vercel.app"
-        ));
+            ));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
