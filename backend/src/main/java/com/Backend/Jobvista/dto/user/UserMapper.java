@@ -32,6 +32,7 @@ public class UserMapper {
         dto.setMobileNumber(user.getMobileNumber());
         dto.setProfilePicture(user.getProfilePicture());
         dto.setCoverPhoto(user.getCoverPhoto());
+        dto.setVerificationToken(user.getVerificationToken());
         return dto;
     }
 }

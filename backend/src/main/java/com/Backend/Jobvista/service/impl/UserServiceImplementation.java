@@ -43,6 +43,7 @@ public class UserServiceImplementation implements UserService {
         }
         User user = UserMapper.toEntity(dto);
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setVerificationToken(java.util.UUID.randomUUID().toString());
         User savedUser = userRepository.save(user);
         return UserMapper.toResponse(savedUser);
     }

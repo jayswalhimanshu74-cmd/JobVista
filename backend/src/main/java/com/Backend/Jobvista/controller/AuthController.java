@@ -48,12 +48,18 @@ public class AuthController {
     public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody UserRequestDTO requestDTO) {
         UserResponseDTO user = authService.regiser(requestDTO);
         try {
+            String baseUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+            String verificationLink = baseUrl + "/api/v1/auth/verify?token=" + user.getVerificationToken();
+            
             emailService.sendMail(
                     user.getEmail(),
-                    EmailType.USER_REGISTERED,
-                    Map.of("name", user.getName()));
+                    EmailType.EMAIL_VERIFICATION,
+                    Map.of(
+                        "name", user.getName(),
+                        "verificationLink", verificationLink
+                    ));
         } catch (Exception e) {
-            log.warn("Email failed: {}", e.getMessage());
+            log.warn("Verification email failed: {}", e.getMessage());
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
@@ -113,6 +119,26 @@ public class AuthController {
         }
 
         return ResponseEntity.ok("Logged out successfully");
+    }
+
+    @GetMapping("/verify")
+    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+        boolean verified = authService.verifyEmail(token);
+        if (verified) {
+            return ResponseEntity.ok()
+                    .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                    .body("<div style='text-align:center; margin-top: 100px; font-family: sans-serif;'>" +
+                            "<h1 style='color: #10b981;'>✅ Email Verified Successfully!</h1>" +
+                            "<p style='color: #4b5563; font-size: 18px;'>Your JobVista account is now active. You can close this page and log in.</p>" +
+                            "</div>");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                    .body("<div style='text-align:center; margin-top: 100px; font-family: sans-serif;'>" +
+                            "<h1 style='color: #ef4444;'>❌ Verification Failed</h1>" +
+                            "<p style='color: #4b5563; font-size: 18px;'>The verification link is invalid, expired, or has already been used.</p>" +
+                            "</div>");
+        }
     }
 
 }

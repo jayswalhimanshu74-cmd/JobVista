@@ -22,8 +22,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 @AllArgsConstructor
+@Transactional(readOnly = true)
 public class SavedJobServiceImplementation implements SavedJobService {
 
     private final UserRepository userRepository;
@@ -32,6 +35,7 @@ public class SavedJobServiceImplementation implements SavedJobService {
 
     @PreAuthorize("hasRole('USER')")
     @Override
+    @Transactional
     public void saveJob(UUID jobId, String email) {
         User user = userRepository.findByEmail(email).orElseThrow(()->new RuntimeException("User Not Found :"));
 
@@ -52,6 +56,7 @@ public class SavedJobServiceImplementation implements SavedJobService {
 
     @PreAuthorize("hasRole('USER')")
     @Override
+    @Transactional
     public void removeSavedJob(UUID jobId, String email) {
         User user = userRepository.findByEmail(email).orElseThrow(()->new RuntimeException("User Not Found :"));
 
@@ -75,6 +80,7 @@ public class SavedJobServiceImplementation implements SavedJobService {
 
     @Override
     @PreAuthorize("hasRole('USER')")
+    @Transactional
     public boolean toggleSave(UUID jobId, String email) {
 
         User user = userRepository.findByEmail(email)

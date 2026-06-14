@@ -5,6 +5,7 @@ import { isAuthenticated } from "../../utills/auth";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import webSocketService from "../../api/webSocketService";
+import { setAccessToken } from "../../utills/tokenStore";
 
 const Jobs = () => {
   const navigate = useNavigate();
@@ -60,8 +61,8 @@ const Jobs = () => {
 
       if (response?.content && Array.isArray(response.content)) {
         setJobs(response.content);
-        setTotalPages(response.totalPages);
-        setPage(response.number);
+        setTotalPages(response.totalPages || (response.content.length > 0 ? 1 : 0));
+        setPage(response.number || 0);
       } else {
         setJobs([]);
       }
@@ -138,7 +139,7 @@ const Jobs = () => {
         showToast("Server error. Please try again in a moment.", "error");
       } else if (status === 401) {
         showToast("Session expired. Please log in again.", "error");
-        localStorage.removeItem("accessToken");
+        setAccessToken(null);
         setTimeout(() => navigate("/login"), 1500);
       } else if (status === 403) {
         showToast("Permission denied. Only job seekers can apply.", "error");
@@ -431,7 +432,7 @@ const Jobs = () => {
         })}
       </div>
 
-      {totalPages > 1 && (
+      {totalPages > 0 && (
         <div className="pagination-container">
           <button className="pagination-nav" disabled={page === 0} onClick={() => fetchJobs(page - 1, searchKeyword)}>‹</button>
           {getPaginationNumbers().map((num, index) =>

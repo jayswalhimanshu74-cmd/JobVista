@@ -27,6 +27,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
+                user.getStatus() == com.Backend.Jobvista.entity.Status.ACTIVE,
+                true,
+                true,
+                user.getStatus() != com.Backend.Jobvista.entity.Status.BLOCKED,
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
         );
     }

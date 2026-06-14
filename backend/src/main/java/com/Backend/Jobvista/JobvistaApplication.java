@@ -3,19 +3,19 @@ package com.Backend.Jobvista;
 import org.springframework.boot.SpringApplication;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-@EnableCaching
-@EnableScheduling
-@EnableAsync
 public class JobvistaApplication {
 
-	public static void main(String[] args) {
-		 if (System.getenv("RENDER") == null) {
+    public static void main(String[] args) {
+        if (System.getenv("RENDER") == null) {
+            String directory = ".";
+            if (!new java.io.File(".env").exists()
+                    && new java.io.File("../.env").exists()) {
+                directory = "..";
+            }
             Dotenv dotenv = Dotenv.configure()
+                    .directory(directory)
                     .ignoreIfMissing()
                     .load();
 
@@ -25,8 +25,8 @@ public class JobvistaApplication {
                 }
             });
         }
-		
-		SpringApplication.run(JobvistaApplication.class, args);
-	}
+
+        SpringApplication.run(JobvistaApplication.class, args);
+    }
 
 }

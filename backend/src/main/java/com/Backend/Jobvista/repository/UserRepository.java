@@ -20,5 +20,7 @@ public interface UserRepository extends JpaRepository<User,Long> {
 
     List<User> findTop5ByOrderByCreatedAtDesc();
 
+    Optional<User> findByVerificationToken(String verificationToken);
+
     void deleteByEmail(String email);
 }

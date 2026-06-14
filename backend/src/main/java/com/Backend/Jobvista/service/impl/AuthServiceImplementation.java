@@ -109,4 +109,20 @@ public class AuthServiceImplementation  implements AuthService {
         refreshTokenService.revokeToken(refreshTokenValue);
     }
 
+    @Override
+    @Transactional
+    public boolean verifyEmail(String token) {
+        if (token == null || token.isEmpty()) {
+            return false;
+        }
+        User user = userRepository.findByVerificationToken(token)
+                .orElse(null);
+        if (user == null) {
+            return false;
+        }
+        user.setStatus(com.Backend.Jobvista.entity.Status.ACTIVE);
+        user.setVerificationToken(null);
+        userRepository.save(user);
+        return true;
+    }
 }

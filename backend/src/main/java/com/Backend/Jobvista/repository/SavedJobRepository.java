@@ -13,7 +13,11 @@ import java.util.Optional;
 @Repository
 public interface SavedJobRepository  extends JpaRepository<SavedJob, Long> {
 
-    Page<SavedJob> findByUser(User user, Pageable pageable);
+    @org.springframework.data.jpa.repository.Query(
+        value = "SELECT s FROM SavedJob s JOIN FETCH s.job WHERE s.user = :user",
+        countQuery = "SELECT count(s) FROM SavedJob s WHERE s.user = :user"
+    )
+    Page<SavedJob> findByUser(@org.springframework.data.repository.query.Param("user") User user, Pageable pageable);
 
     Optional<SavedJob> findByUserAndJob(User user, Job job);
 

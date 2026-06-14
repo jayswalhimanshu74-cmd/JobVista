@@ -12,6 +12,7 @@ import com.Backend.Jobvista.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.Backend.Jobvista.service.JobSeekerService;
+import com.Backend.Jobvista.service.FileStorageService;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import jakarta.transaction.Transactional;
@@ -38,6 +39,7 @@ public class JobSeekerServiceImplementation  implements JobSeekerService {
 
     private final  UserRepository userRepository;
     private final JobSeekersRepository jobSeekerRepository;
+    private final FileStorageService fileStorageService;
     private static final Logger log = LoggerFactory.getLogger(JobSeekerServiceImplementation.class);
 
     @Override
@@ -80,33 +82,19 @@ public class JobSeekerServiceImplementation  implements JobSeekerService {
                 .orElseThrow(() ->
                         new RuntimeException("Please create JobSeeker profile first"));
 
-        try {
-            // 4. Delete old resume if exists
-            if (jobSeeker.getResumeUrl() != null) {
-                deleteOldResume(jobSeeker.getResumeUrl());
-            }
-
-            // 5. Generate unique file name
-            String fileName = user.getUserId() + "_" + System.currentTimeMillis()
-                    + "_" + file.getOriginalFilename();
-
-            Path uploadPath = Paths.get("uploads/resumes/").toAbsolutePath().normalize();
-            Files.createDirectories(uploadPath);
-
-            Path filePath = uploadPath.resolve(fileName);
-
-            // 6. Save file
-            Files.write(filePath, file.getBytes());
-
-            // 7. Store ONLY filename (not full path)
-            jobSeeker.setResumeUrl(fileName);
-            jobSeekerRepository.save(jobSeeker);
-
-            return fileName;
-
-        } catch (IOException e) {
-            throw new RuntimeException("Resume upload failed", e);
+        // 4. Delete old resume if exists and is local
+        if (jobSeeker.getResumeUrl() != null && !jobSeeker.getResumeUrl().startsWith("http")) {
+            deleteOldResume(jobSeeker.getResumeUrl());
         }
+
+        // 5. Store file (S3 or Local fallback)
+        String storedPath = fileStorageService.storeFile(file, "resumes");
+
+        // 6. Store path/url in DB
+        jobSeeker.setResumeUrl(storedPath);
+        jobSeekerRepository.save(jobSeeker);
+
+        return storedPath;
     }
 
     @Override
@@ -120,6 +108,13 @@ public class JobSeekerServiceImplementation  implements JobSeekerService {
 
         if (jobSeeker.getResumeUrl() == null) {
             throw new RuntimeException("Resume not uploaded");
+        }
+
+        if (jobSeeker.getResumeUrl().startsWith("http")) {
+            // Redirect to S3 URL
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(java.net.URI.create(jobSeeker.getResumeUrl()))
+                    .build();
         }
 
         try {
@@ -209,6 +204,7 @@ public class JobSeekerServiceImplementation  implements JobSeekerService {
 }
 
    private void deleteOldResume(String fileName) {
+    if (fileName.startsWith("http")) return;
     try {
         Path basePath = Paths.get("uploads/resumes/").toAbsolutePath().normalize();
         Path filePath = basePath.resolve(fileName).normalize();

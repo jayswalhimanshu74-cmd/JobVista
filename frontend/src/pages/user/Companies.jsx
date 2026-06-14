@@ -12,7 +12,7 @@ const Companies = () => {
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [page, setPage] = useState(0);
-  const [size] = useState(6);
+  const [size] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -37,8 +37,8 @@ const Companies = () => {
       setLoading(true);
       setError(null);
       const data = await companyService.getAllCompanies(page, size);
-      setCompanies(data.content);
-      setTotalPages(data.totalPages);
+      setCompanies(data.content || []);
+      setTotalPages(data.totalPages || (data.content?.length > 0 ? 1 : 0));
     } catch (err) {
       setError("Failed to load companies");
       console.error(err);
@@ -178,13 +178,15 @@ const Companies = () => {
       </div>
 
       {/* Pagination */}
-      <div className="pagination-container">
-        <button className="page-btn" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>‹</button>
-        {[...Array(totalPages)].map((_, i) => (
-          <button key={i} className={`page-number ${page === i ? "active" : ""}`} onClick={() => setPage(i)}>{i + 1}</button>
-        ))}
-        <button className="page-btn" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>›</button>
-      </div>
+      {totalPages > 0 && (
+        <div className="pagination-container">
+          <button className="page-btn" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>‹</button>
+          {[...Array(totalPages)].map((_, i) => (
+            <button key={i} className={`page-number ${page === i ? "active" : ""}`} onClick={() => setPage(i)}>{i + 1}</button>
+          ))}
+          <button className="page-btn" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>›</button>
+        </div>
+      )}
 
       {/* Company Jobs Modal */}
       {selectedCompany && (

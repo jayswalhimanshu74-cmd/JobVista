@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect } from "react";
 import { isAuthenticated, getUser } from "../utills/auth";
 import authService from "../api/authService";
 import axiosInstance from "../api/axiosConfig";
+import { getAccessToken, setAccessToken } from "../utills/tokenStore";
 
 export const AuthContext = createContext();
 
@@ -10,17 +11,29 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [appliedJobs, setAppliedJobs] = useState(new Set());
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const isAuth = isAuthenticated();
-    setLoggedIn(isAuth);
-    
-    if (isAuth) {
-      fetchUserProfile().then(role => {
+    const initAuth = async () => {
+      try {
+        const res = await axiosInstance.post("/auth/refresh", {});
+        const token = res.data.accessToken;
+        setAccessToken(token);
+        setLoggedIn(true);
+        
+        const role = await fetchUserProfile();
         if (role === "USER" || role === "ROLE_USER") {
-          fetchAppliedJobs();
+          await fetchAppliedJobs();
         }
-      });
-    }
+      } catch (err) {
+        console.log("No active session or silent refresh failed.");
+        setLoggedIn(false);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    initAuth();
   }, []);
 
   const fetchUserProfile = async () => {
@@ -57,7 +70,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = (accessToken, userData) => {
-    localStorage.setItem("accessToken", accessToken);
+    setAccessToken(accessToken);
     localStorage.setItem("user", JSON.stringify(userData));
     setLoggedIn(true);
     setUser(userData);
@@ -75,12 +88,27 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Logout error:", error);
     }
+    setAccessToken(null);
     localStorage.clear();
     setLoggedIn(false);
     setUser(null);
     setAppliedJobs(new Set());
     window.location.href = "/login";
   };
+
+  if (loading) {
+    return (
+      <div style={{
+        display: "flex", justifyContent: "center", alignItems: "center",
+        minHeight: "100vh", fontFamily: "sans-serif", background: "#f9fafb"
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <h2 style={{ color: "#2563eb", marginBottom: "8px" }}>JobVista</h2>
+          <p style={{ color: "#6b7280" }}>Loading your session...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ loggedIn, setLoggedIn, user, setUser, login, logout, appliedJobs, setAppliedJobs }}>

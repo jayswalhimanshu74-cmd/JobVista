@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axiosInstance from "../../api/axiosConfig";
 import "../../styles/admin-login.css";
+import { setAccessToken } from "../../utills/tokenStore";
 
 function AdminLogin({ onLoginSuccess }) {
   const [credentials, setCredentials] = useState({
@@ -35,12 +36,12 @@ function AdminLogin({ onLoginSuccess }) {
 
       if (role !== "ADMIN") {
         setError("Access denied. You are not an admin.");
-        localStorage.removeItem("accessToken");
+        setAccessToken(null);
         return;
       }
 
       // Store the JWT so axiosInstance attaches it to every request
-      localStorage.setItem("accessToken", accessToken);
+      setAccessToken(accessToken);
       localStorage.setItem("adminLoggedIn", "true");
 
       onLoginSuccess();

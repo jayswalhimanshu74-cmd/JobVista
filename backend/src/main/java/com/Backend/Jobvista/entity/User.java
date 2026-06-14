@@ -56,6 +56,8 @@ package com.Backend.Jobvista.entity;
         @Enumerated(EnumType.STRING)
         private Status status;
 
+        private String verificationToken;
+
         
         @Builder.Default
         private LocalDateTime createdAt= LocalDateTime.now();
@@ -75,7 +77,9 @@ package com.Backend.Jobvista.entity;
                 userId = UUID.randomUUID();
             }
 
-            this.status = Status.ACTIVE;
+            if (this.status == null) {
+                this.status = Status.PENDING;
+            }
         }
         @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
         @JsonIgnore

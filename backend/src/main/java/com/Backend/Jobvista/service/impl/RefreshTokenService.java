@@ -5,10 +5,11 @@ import com.Backend.Jobvista.repository.RefreshTokenRepository;
 import com.Backend.Jobvista.security.RefreshToken;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -40,37 +41,20 @@ public class RefreshTokenService {
 
         return refreshTokenRepository.save(refreshToken);
     }
-    // 7 days (adjust if needed)
-//    private static final long REFRESH_TOKEN_VALIDITY = 7 * 24 * 60 * 60;
-//
-//    public RefreshToken createRefreshToken(User user) {
-//
-//        RefreshToken refreshToken = RefreshToken.builder()
-//                .user(user)
-//                .token(UUID.randomUUID().toString())
-//                .expiryDate(Instant.now().plusSeconds(REFRESH_TOKEN_VALIDITY))
-//                .revoked(false)
-//                .build();
-//
-//        return refreshTokenRepository.save(refreshToken);
-//    }
 
-//    public void revokeAllUserTokens(User user) {
-//        refreshTokenRepository.revokeAllByUser(user);
-//    }
     @Transactional
     public RefreshToken verifyAndRotate(String tokenValue) {
 
         RefreshToken refreshToken = refreshTokenRepository
                 .findByToken(tokenValue)
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
 
         if (refreshToken.isRevoked()) {
-            throw new RuntimeException("Refresh token revoked");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token revoked");
         }
 
         if (refreshToken.getExpiryDate().isBefore(Instant.now())) {
-            throw new RuntimeException("Refresh token expired");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token expired");
         }
 
         // Rotate token (important for security)
@@ -85,7 +69,7 @@ public class RefreshTokenService {
 
         RefreshToken refreshToken = refreshTokenRepository
                 .findByToken(tokenValue)
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
 
         refreshToken.setRevoked(true);
         refreshTokenRepository.save(refreshToken);

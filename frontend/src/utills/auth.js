@@ -1,5 +1,7 @@
+import { getAccessToken } from "./tokenStore";
+
 export const isAuthenticated = () => {
-  return !!localStorage.getItem("accessToken");
+  return !!getAccessToken();
 };
 
 export const getUser = () => {

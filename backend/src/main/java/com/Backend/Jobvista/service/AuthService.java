@@ -15,5 +15,6 @@ public interface AuthService {
      TokenResponseDTO login(LoginRequestDTO request, HttpServletResponse response);
     TokenResponseDTO refreshToken(String refreshToken,HttpServletResponse response);
     void logout(String refreshTokenValue);
+    boolean verifyEmail(String token);
 }
 

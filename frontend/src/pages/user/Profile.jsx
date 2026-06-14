@@ -11,6 +11,8 @@ import {
   Award, Globe, Target
 } from "lucide-react";
 
+import { getAccessToken } from "../../utills/tokenStore";
+
 const Profile = () => {
   const { logout } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -28,7 +30,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [savedJobs, setSavedJobs] = useState([]);
-  const token = localStorage.getItem("accessToken");
+  const token = getAccessToken();
 
   // 2. Utility Functions
   const showToast = (msg, type = "success") => {

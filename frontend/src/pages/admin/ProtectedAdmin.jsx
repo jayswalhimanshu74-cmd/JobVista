@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import AdminLogin from "./AdminLogin";
 import axiosInstance from "../../api/axiosConfig";
+import { getAccessToken, setAccessToken } from "../../utills/tokenStore";
 
 // ProtectedAdmin persists admin authentication via localStorage + JWT.
 // On refresh it checks whether a valid admin token still exists.
@@ -14,7 +15,7 @@ function ProtectedAdmin({ AdminComponent }) {
   }, []);
 
   const verifyAdminSession = async () => {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     const adminFlag = localStorage.getItem("adminLoggedIn");
 
     if (!token || adminFlag !== "true") {
@@ -40,7 +41,7 @@ function ProtectedAdmin({ AdminComponent }) {
       if (status === 401 || status === 403) {
         // Token is truly invalid/expired and refresh also failed
         localStorage.removeItem("adminLoggedIn");
-        localStorage.removeItem("accessToken");
+        setAccessToken(null);
         setIsAuthenticated(false);
       } else {
         // Network error or server issue — if we have a valid-looking token
@@ -59,7 +60,7 @@ function ProtectedAdmin({ AdminComponent }) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
+    setAccessToken(null);
     localStorage.removeItem("adminLoggedIn");
     localStorage.removeItem("user");
     setIsAuthenticated(false);

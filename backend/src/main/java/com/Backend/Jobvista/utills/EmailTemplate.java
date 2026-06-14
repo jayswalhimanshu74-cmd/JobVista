@@ -15,6 +15,7 @@ public class EmailTemplate {
             case LOGIN_ALERT -> "Login Alert";
             case APPLICATION_SUBMITTED -> "Application Submitted Successfully";
             case APPLICATION_STATUS_UPDATED -> "Application Status Updated";
+            case EMAIL_VERIFICATION -> "Verify your email - JobVista";
         };
     }
 
@@ -32,6 +33,10 @@ public class EmailTemplate {
 
             case APPLICATION_STATUS_UPDATED ->
                     "Your application status is now: " + data.get("status");
+
+            case EMAIL_VERIFICATION ->
+                    "Hi " + data.get("name") + ",\n\nPlease verify your email address by clicking the link below:\n" +
+                            data.get("verificationLink") + "\n\nIf you did not request this, you can ignore this email.";
         };
     }
 }

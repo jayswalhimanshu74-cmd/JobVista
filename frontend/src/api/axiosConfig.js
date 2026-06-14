@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAccessToken, setAccessToken } from "../utills/tokenStore";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://jobvista-psro.onrender.com/api/v1";
 
@@ -9,7 +10,7 @@ const axiosInstance = axios.create({
 
 // Attach access token & Guard protected routes
 axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
+  const token = getAccessToken();
 
   // Define protected prefixes that require a token
   const protectedPrefixes = [
@@ -69,7 +70,7 @@ axiosInstance.interceptors.response.use(
       error.response?.status === 401 &&
       !originalRequest._retry
     ) {
-      const token = localStorage.getItem("accessToken");
+      const token = getAccessToken();
       
       // If no token exists, don't try to refresh (guest mode or already logged out)
       if (!token) {
@@ -86,7 +87,7 @@ axiosInstance.interceptors.response.use(
         );
 
         const newAccessToken = res.data.accessToken;
-        localStorage.setItem("accessToken", newAccessToken);
+        setAccessToken(newAccessToken);
 
         // Retry original request
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -95,7 +96,7 @@ axiosInstance.interceptors.response.use(
       } catch (err) {
         // ❌ Refresh failed or no refresh token → full logout
         console.error("Auth refresh failed, logging out...");
-        localStorage.removeItem("accessToken");
+        setAccessToken(null);
         localStorage.removeItem("user");
 
         // Redirect to login if not already on a public page

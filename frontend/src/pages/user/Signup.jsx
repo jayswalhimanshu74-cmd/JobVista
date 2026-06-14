@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import authService from "../../api/authService";
 import axiosInstance from "../../api/axiosConfig";
 import { AuthContext } from "../../context/AuthContext";
+import { setAccessToken } from "../../utills/tokenStore";
 import "../../styles/signup.css";
 
 function Signup() {
@@ -85,7 +86,7 @@ function Signup() {
           });
 
           // Set the token so axiosInstance can use it
-          localStorage.setItem("accessToken", tokenData.accessToken);
+          setAccessToken(tokenData.accessToken);
 
           // Create company profile
           await axiosInstance.post("/company", {

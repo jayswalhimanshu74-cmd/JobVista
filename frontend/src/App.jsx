@@ -14,6 +14,7 @@ import Resume from "./pages/user/Resume";
 import Signup from "./pages/user/Signup";
 import ProtectedRoute from "./pages/user/ProtectedRoute";
 import CompanyDashboard from "./pages/company/CompanyDashboard";
+import ErrorBoundary from "./components/ui/ErrorBoundary";
 
 function App() {
   return (
@@ -54,10 +55,7 @@ function App() {
             <ErrorBoundary>
               <CompanyDashboard />
             </ErrorBoundary></ProtectedRoute>} />
-          <Route path="/job/:jobId" element={<ProtectedRoute>
-            <ErrorBoundary>
-              <JobDetails />
-            </ErrorBoundary></ProtectedRoute>} />
+          
 
           <Route path="*" element={
             <div style={{

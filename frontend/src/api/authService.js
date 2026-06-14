@@ -1,4 +1,5 @@
 import axiosInstance from "./axiosConfig";
+import { setAccessToken } from "../utills/tokenStore";
 
 const register = async (userData) => {
   const response = await axiosInstance.post("/auth/register", userData);
@@ -9,7 +10,7 @@ const login = async (credentials) => {
   const response = await axiosInstance.post("/auth/login", credentials);
 
   if (response.data.accessToken) {
-    localStorage.setItem("accessToken", response.data.accessToken);
+    setAccessToken(response.data.accessToken);
   }
 
   if (response.data.role) {
@@ -26,6 +27,7 @@ const logout = async () => {
     console.warn("Logout request failed:", error);
   }
 
+  setAccessToken(null);
   localStorage.clear();
   window.location.href = "/login";
 };

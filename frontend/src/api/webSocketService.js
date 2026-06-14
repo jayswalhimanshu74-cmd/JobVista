@@ -1,5 +1,7 @@
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { getAccessToken } from '../utills/tokenStore';
+
 
 class WebSocketService {
     constructor() {
@@ -10,9 +12,10 @@ class WebSocketService {
     }
 
  connect(onConnected) {
-  const token = localStorage.getItem("accessToken");
-  
-  const socket = new SockJS(`${WS_BASE_URL}/ws`);
+  const token = getAccessToken();
+  const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080';
+
+  const socket = new SockJS(WS_URL.endsWith('/ws') ? WS_URL : `${WS_URL}/ws`);
   this.client = new Client({
     webSocketFactory: () => socket,
     connectHeaders: token ? {
