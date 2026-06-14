@@ -13,7 +13,10 @@ class WebSocketService {
 
  connect(onConnected) {
   const token = getAccessToken();
-  const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080';
+  let WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080';
+  if (window.location.protocol === 'https:' && WS_URL.startsWith('http://') && !WS_URL.includes('localhost') && !WS_URL.includes('127.0.0.1')) {
+      WS_URL = WS_URL.replace('http://', 'https://');
+  }
 
   const socket = new SockJS(WS_URL.endsWith('/ws') ? WS_URL : `${WS_URL}/ws`);
   this.client = new Client({
