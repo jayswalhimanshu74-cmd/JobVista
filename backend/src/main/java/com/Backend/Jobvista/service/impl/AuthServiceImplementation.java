@@ -66,13 +66,7 @@ public class AuthServiceImplementation  implements AuthService {
                 user,
                  Instant.now().plusMillis(refreshExpiration)
            );
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken.getToken())
-                .httpOnly(true)
-                .secure(false)   // false if testing locally without https
-                .path("/")
-                .sameSite("Lax")
-                .maxAge(refreshExpiration / 1000)
-                .build();
+        ResponseCookie cookie = createRefreshTokenCookie(refreshToken.getToken(), refreshExpiration / 1000);
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
@@ -91,13 +85,7 @@ public class AuthServiceImplementation  implements AuthService {
 
         String newAccessToken = jwtService.generateAccessToken(user);
 
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken.getToken())
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(7 * 24 * 60 * 60)
-                .sameSite("Lax")
-                .build();
+        ResponseCookie cookie = createRefreshTokenCookie(refreshToken.getToken(), 7 * 24 * 60 * 60);
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         return new TokenResponseDTO(newAccessToken,user.getRole());
@@ -107,6 +95,47 @@ public class AuthServiceImplementation  implements AuthService {
     @Transactional
     public void logout(String refreshTokenValue) {
         refreshTokenService.revokeToken(refreshTokenValue);
+    }
+
+    private ResponseCookie createRefreshTokenCookie(String token, long maxAgeSeconds) {
+        jakarta.servlet.http.HttpServletRequest request = null;
+        try {
+            request = ((org.springframework.web.context.request.ServletRequestAttributes) 
+                org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes())
+                .getRequest();
+        } catch (Exception e) {
+            // Fallback
+        }
+
+        boolean isLocal = true;
+        if (request != null) {
+            String origin = request.getHeader("Origin");
+            String referer = request.getHeader("Referer");
+            String host = request.getServerName();
+            
+            if (origin != null && !origin.contains("localhost") && !origin.contains("127.0.0.1")) {
+                isLocal = false;
+            } else if (referer != null && !referer.contains("localhost") && !referer.contains("127.0.0.1")) {
+                isLocal = false;
+            } else if (host != null && !host.contains("localhost") && !host.contains("127.0.0.1")) {
+                isLocal = false;
+            }
+        }
+
+        ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie.from("refreshToken", token)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(maxAgeSeconds);
+
+        if (isLocal) {
+            cookieBuilder.secure(false)
+                         .sameSite("Lax");
+        } else {
+            cookieBuilder.secure(true)
+                         .sameSite("None");
+        }
+
+        return cookieBuilder.build();
     }
 
     @Override
