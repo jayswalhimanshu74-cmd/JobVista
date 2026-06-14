@@ -78,7 +78,7 @@ package com.Backend.Jobvista.entity;
             }
 
             if (this.status == null) {
-                this.status = Status.PENDING;
+                this.status = Status.ACTIVE;
             }
         }
         @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
