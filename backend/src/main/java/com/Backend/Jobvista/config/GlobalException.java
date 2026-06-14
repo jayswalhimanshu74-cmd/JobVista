@@ -58,6 +58,16 @@ public class GlobalException {
         ));
     }
 
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthentication(org.springframework.security.core.AuthenticationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                "error", "Unauthorized",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString(),
+                "status", 401
+        ));
+    }
+
     @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
     public ResponseEntity<?> handleAccessDenied(Exception ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
