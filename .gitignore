@@ -8,9 +8,9 @@
 # Videos
 *.mp4
 
-del
-git
-main
+/del
+/git
+/main
 
 # Frontend
 frontend/node_modules/
@@ -26,6 +26,4 @@ backend/uploads/
 .vscode/
 
 # OS
-.DS_Store*.zip
-"*.zip" 
-*.zip
+.DS_Store
