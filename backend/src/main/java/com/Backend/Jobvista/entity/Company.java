@@ -40,6 +40,7 @@ public class Company {
     @Column(length = 1500)
     private String description;
 
+    @Column(name = "logo")
     private String logoUrl;
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL)
