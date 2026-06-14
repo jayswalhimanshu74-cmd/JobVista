@@ -13,7 +13,11 @@ class WebSocketService {
 
  connect(onConnected) {
   const token = getAccessToken();
-  let WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080';
+  let WS_URL = import.meta.env.VITE_WS_URL;
+  if (!WS_URL) {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || "https://jobvista-psro.onrender.com/api/v1";
+      WS_URL = apiBase.replace('/api/v1', '/ws');
+  }
   if (window.location.protocol === 'https:' && WS_URL.startsWith('http://') && !WS_URL.includes('localhost') && !WS_URL.includes('127.0.0.1')) {
       WS_URL = WS_URL.replace('http://', 'https://');
   }
