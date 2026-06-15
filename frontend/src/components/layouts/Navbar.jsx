@@ -137,41 +137,43 @@ function Navbar() {
       </div>
 
       {/* Mobile Menu Drawer Overlay */}
-      <div className={`mobile-menu ${menuOpen ? "open" : ""}`}>
-        <ul className="mobile-menu-links">
-          <li><Link to="/" onClick={() => setMenuOpen(false)}>Home</Link></li>
-          <li><Link to="/jobs" onClick={() => setMenuOpen(false)}>Jobs</Link></li>
-          <li><Link to="/companies" onClick={() => setMenuOpen(false)}>Companies</Link></li>
-          {isCompany ? (
-            <li><Link to="/company-dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link></li>
-          ) : (
-            <li><Link to="/resume" onClick={() => setMenuOpen(false)}>Resume</Link></li>
-          )}
-          <li><Link to="/about" onClick={() => setMenuOpen(false)}>About</Link></li>
-        </ul>
+      <div className={`mobile-menu ${menuOpen ? "open" : ""}`} onClick={() => setMenuOpen(false)}>
+        <div className="mobile-menu-drawer" onClick={(e) => e.stopPropagation()}>
+          <ul className="mobile-menu-links">
+            <li><Link to="/" onClick={() => setMenuOpen(false)}>Home</Link></li>
+            <li><Link to="/jobs" onClick={() => setMenuOpen(false)}>Jobs</Link></li>
+            <li><Link to="/companies" onClick={() => setMenuOpen(false)}>Companies</Link></li>
+            {isCompany ? (
+              <li><Link to="/company-dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link></li>
+            ) : (
+              <li><Link to="/resume" onClick={() => setMenuOpen(false)}>Resume</Link></li>
+            )}
+            <li><Link to="/about" onClick={() => setMenuOpen(false)}>About</Link></li>
+          </ul>
 
-        <div className="mobile-menu-actions">
-          {isAuthenticated() ? (
-            <>
-              {isCompany ? (
-                <Link to="/company-dashboard" className="btn btn-secondary" onClick={() => setMenuOpen(false)}>
-                  🏢 {user?.name || "Dashboard"}
-                </Link>
-              ) : (
-                <Link to="/profile" className="btn btn-secondary" onClick={() => setMenuOpen(false)}>
-                  👤 {user?.fullName || user?.name || "Profile"}
-                </Link>
-              )}
-              <button onClick={handleLogout} className="btn btn-danger">
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="btn btn-outline" onClick={() => setMenuOpen(false)}>Login</Link>
-              <Link to="/signup" className="btn btn-primary" onClick={() => setMenuOpen(false)}>Signup</Link>
-            </>
-          )}
+          <div className="mobile-menu-actions">
+            {isAuthenticated() ? (
+              <>
+                {isCompany ? (
+                  <Link to="/company-dashboard" className="btn btn-secondary" onClick={() => setMenuOpen(false)}>
+                    🏢 {user?.name || "Dashboard"}
+                  </Link>
+                ) : (
+                  <Link to="/profile" className="btn btn-secondary" onClick={() => setMenuOpen(false)}>
+                    👤 {user?.fullName || user?.name || "Profile"}
+                  </Link>
+                )}
+                <button onClick={handleLogout} className="btn btn-danger">
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="btn btn-outline" onClick={() => setMenuOpen(false)}>Login</Link>
+                <Link to="/signup" className="btn btn-primary" onClick={() => setMenuOpen(false)}>Signup</Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </nav>
