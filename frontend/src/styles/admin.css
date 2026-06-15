@@ -15,8 +15,10 @@
   flex-direction: column;
   padding: 40px 24px;
   position: sticky;
-  top: 0;
-  height: 100vh;
+  top: 73px;
+  min-height: calc(100vh - 73px);
+  height: auto;
+  align-self: stretch;
   box-shadow: var(--shadow-sm);
   z-index: 100;
 }
@@ -112,6 +114,7 @@
   flex: 1;
   padding: 60px 80px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .dashboard-header {
@@ -191,6 +194,7 @@
   padding: 40px;
   box-shadow: var(--shadow-card);
   margin-bottom: 40px;
+  overflow: hidden;
 }
 
 .dashboard-section h2 {
@@ -320,9 +324,10 @@
 
 @media (max-width: 768px) {
   .admin-sidebar { width: 80px; padding: 40px 10px; }
-  .sidebar-logo, .nav-label, .logout-btn span { display: none; }
-  .admin-main { padding: 20px; }
+  .sidebar-header, .sidebar-logo, .nav-label, .logout-btn span { display: none; }
+  .admin-main { padding: 24px 16px; }
   .dashboard-header h1 { font-size: 2rem; }
+  .stats-grid { grid-template-columns: 1fr; gap: 16px; }
 }
 
 /* ── Profile Image Upload Effects ── */
@@ -382,7 +387,7 @@ div:hover > .upload-overlay {
 
 @media (max-width: 768px) {
   .profile-page-container {
-    padding: var(--space-2xl) var(--space-md);
+    padding: calc(73px + var(--space-md)) var(--space-md) var(--space-md) !important;
   }
   .profile-timeline-grid {
     grid-template-columns: 1fr;
@@ -400,4 +405,35 @@ div:hover > .upload-overlay {
     font-size: 1.4rem;
     margin-bottom: 20px;
   }
+}
+
+.profile-grid-two-cols {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 32px;
+}
+
+@media (max-width: 768px) {
+  .profile-grid-two-cols {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+.comp-input {
+  width: 100%;
+  padding: 14px 20px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--bg-accent);
+  color: var(--text-main);
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.comp-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }

@@ -273,7 +273,7 @@ const Profile = () => {
       </section>
 
       {/* 2. Professional Narrative & Contact */}
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "32px" }}>
+      <div className="profile-grid-two-cols">
         <section className="dashboard-section" style={{ padding: "40px", flex: 1 }}>
           <h3 style={{ margin: "0 0 24px", display: "flex", alignItems: "center", gap: "12px" }}>
             <FileText size={20} color="var(--primary)" /> Professional Summary
@@ -453,7 +453,7 @@ const Profile = () => {
   );
 
   return (
-    <div className="admin-main profile-page-container">
+    <div className="profile-page-container">
       {toast && (
         <div className={`comp-toast ${toast.type}`} style={{ zIndex: 1000 }}>
           <Check size={18} /> {toast.msg}
