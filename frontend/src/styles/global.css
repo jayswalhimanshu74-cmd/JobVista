@@ -73,6 +73,10 @@
   font-family: "Poppins", sans-serif !important;
 }
 
+html, body {
+  overflow-x: hidden;
+}
+
 body {
   background-color: var(--bg-main);
   color: var(--text-main);
