@@ -1,337 +1,161 @@
-# JobVista – Full Stack Job Portal
+# JobVista
+A production-grade, highly responsive full-stack job portal and talent acquisition platform.
 
-JobVista is a production-grade full-stack job portal that allows job seekers to search, apply, and track jobs, while companies can post and manage listings. Built with Spring Boot and React, it includes secure authentication, real-time features, role-based access, and a fully automated CI/CD pipeline.
+Spring Boot React PostgreSQL WebSockets Caffeine-Cache Flyway Docker
 
-**Live Demo:** :    https://jobvista-8qk6b12ls-jayswalhimanshu74-4107s-projects.vercel.app/
-**Backend API:** https://jobvista-psro.onrender.com  
-**GitHub:** https://github.com/jayswalhimanshu74-cmd/JobVista
+🚀 Overview
+JobVista is a production-ready, full-stack job portal designed to connect candidates with opportunities seamlessly. Job seeker candidates can browse, search, and apply to jobs in real-time, while corporate partners and platform administrators can manage job postings, process candidates, track system metrics, and sync external jobs via third-party APIs.
 
----
+Built with a performance-first architecture, the platform includes stateless JWT authentication with secure HTTP-only cookies, robust in-memory caching, real-time status updates via WebSockets, and fully automated deployment configurations.
 
-## Tech Stack
+✨ Key Features
+- **Candidate Workspace**: Browse, search, and filter job postings. Apply with a single click, bookmark opportunities, track application histories, and upload PDF resumes.
+- **Corporate Control Center**: Empower companies to post, update, and manage job listings, track applicants, and adjust application statuses dynamically.
+- **Admin Control Console**: Monitor platform-wide metrics, oversee company and user directories, and trigger background synchronizations with external job boards.
+- **Real-Time Job Sync**: Live application updates and status changes streamed straight to the user dashboard using STOMP WebSockets.
+- **Enterprise Security**: Secure session management with HTTP-only Refresh Token cookies, in-memory Access Tokens, strict CORS controls, and input/file validation.
+- **Flyway Migrations**: Production database changes are fully controlled and tracked via versioned SQL migration scripts.
+- **Automated CI/CD**: Seamless verification pipeline that compiles and builds frontend and backend code on every push.
 
-### Frontend
-- React 19 + Vite
-- Tailwind CSS
-- Axios (with interceptors + auto token refresh)
-- STOMP.js + SockJS (WebSocket)
-- React Router v7
-- Lucide React (icons)
+🏗 Architecture Diagram
 
-### Backend
-- Spring Boot 4.x (Java 17)
-- Spring Security + JWT (access + refresh tokens)
-- Spring WebSocket (STOMP)
-- Spring Data JPA + Hibernate
-- Flyway (database migrations)
-- Caffeine Cache (TTL-based)
-- Bucket4j (rate limiting)
-- Spring Mail (Gmail SMTP)
+![Architectural Diagram](screenshots/architectural%20diagram.png)
 
-### Database
-- PostgreSQL (Render hosted)
+```mermaid
+graph TD
+    %% Client Tier
+    subgraph Client ["Client Tier (React 19 on Vercel)"]
+        A["React 19 SPA"] --> B["React Router v7"]
+        A --> C["Axios Interceptors (Auth & Auto-Refresh)"]
+        A --> D["STOMP.js & SockJS (WebSockets)"]
+    end
 
-### DevOps
-- Docker
-- GitHub Actions CI/CD
-- Render (backend hosting)
-- Vercel (frontend hosting)
+    %% Security & Gateway Tier
+    subgraph Security ["Security & Gateway"]
+        E["Spring Security Filter Chain"] --> F["Bucket4j (Rate Limiting)"]
+        E --> G["JWT Authentication Provider"]
+    end
 
-### Integrations
-- Adzuna Job API (external job sync)
-- Gmail SMTP (email notifications)
+    %% Application Tier
+    subgraph AppServer ["Application Tier (Spring Boot on Render)"]
+        H["Spring Boot MVC Controllers"] --> I["Services (Business Logic)"]
+        I --> J["Caffeine Cache (Local In-Memory Cache)"]
+        I --> K["Spring Data JPA (Repositories)"]
+    end
 
----
+    %% Data & External Services
+    subgraph DataService ["Data & External Services"]
+        L[("PostgreSQL Database (Neon)")]
+        M["Gmail SMTP Server"]
+        N["Adzuna Jobs Sync API"]
+    end
 
-## Features
+    %% Connections
+    C -->|REST HTTPS Requests| E
+    D -->|WS Connections| E
+    G --> H
+    K -->|Hibernate ORM| L
+    I -->|Spring Mail| M
+    I -->|External API Call| N
 
-### Job Seeker
-- Register, login and manage profile
-- Browse, search and filter jobs
-- Apply to jobs with one click
-- Save and unsave jobs
-- View application history and status
-- Upload and download resume (PDF only)
-- Receive email notifications on apply and status change
-- Real-time job updates via WebSocket
-- AI-powered job recommendations based on skills and location
-
-### Company
-- Post, edit and delete job listings
-- View and manage applications per job
-- Update application status (Applied, Reviewed, Accepted, Rejected)
-- Company profile with logo and banner
-
-### Admin
-- Full user management (view, activate, deactivate)
-- Platform-wide application monitoring
-- Company management
-- Sync external jobs from Adzuna API
-
-### System
-- JWT authentication with httpOnly refresh token cookie
-- Role-based access control (USER, COMPANY, ADMIN)
-- IP-based rate limiting on login and register (10 req/min)
-- File upload validation (type, size, extension whitelist)
-- Pagination with server-side size guards (max 50/page)
-- Flyway versioned database migrations
-- Caffeine cache with 5-minute TTL
-- WebSocket authentication via JWT STOMP headers
-- React Error Boundaries with 404 fallback page
-- Structured SLF4J logging throughout
-- Automated CI/CD — every push triggers build verification
-
----
-
-## Recent Updates (v2.0)
-
-The following improvements were made to bring the project to industry standard:
-
-**Security**
-- Purged all credentials from Git history
-- Refresh token removed from response body — httpOnly cookie only
-- Rate limiting added to `/auth/login` and `/auth/register`
-- File upload now validates MIME type and extension whitelist
-- CORS restricted to specific production domains only
-- Admin-only endpoints properly role-guarded
-
-**Bug Fixes**
-- Removed `unique=true` from `Job.title` — was crashing duplicate job titles
-- Fixed dual seeder conflict between `AdminSeeder` and `DataInitializer`
-- Fixed JWT expiry inconsistency (access: 15min, refresh: 7 days)
-- Built `JobDetails.jsx` — was empty, crashing the app
-- Fixed logger instantiation in `AuthController`
-- Fixed `application/**` endpoints — now require authentication
-
-**Architecture**
-- Added Flyway migrations — replaced `ddl-auto=update`
-- Switched to Caffeine cache with TTL and size limits
-- Eliminated N+1 queries in job listings using `companyName` field
-- Added WebSocket JWT authentication at STOMP level
-- Added React Error Boundaries on all routes
-- Built UI component library (Button, Card, Input, Toast)
-- Replaced all `System.out.println` with SLF4J logging
-- Added pagination size guards on all endpoints
-- Added GitHub Actions CI/CD pipeline
-
----
-
-## Project Structure
-
-```
-JobVista/
-├── .github/
-│   └── workflows/
-│       └── ci.yml              # GitHub Actions CI/CD
-├── backend/
-│   ├── src/main/java/com/Backend/Jobvista/
-│   │   ├── config/             # Security, Cache, WebSocket, RateLimit
-│   │   ├── controller/         # REST API controllers
-│   │   ├── dto/                # Request/Response DTOs
-│   │   ├── entity/             # JPA entities
-│   │   ├── repository/         # Spring Data repositories
-│   │   ├── security/           # JWT filter, service, refresh token
-│   │   ├── service/            # Business logic
-│   │   └── utills/             # PageUtils, EmailService, etc.
-│   └── src/main/resources/
-│       ├── db/migration/       # Flyway SQL migrations
-│       └── application.properties
-├── frontend/
-│   └── src/
-│       ├── api/                # Axios config, services, WebSocket
-│       ├── components/
-│       │   ├── layouts/        # Navbar, Sidebars
-│       │   └── ui/             # Button, Card, Input, Toast, ErrorBoundary
-│       ├── context/            # AuthContext
-│       ├── pages/
-│       │   ├── admin/          # Admin dashboard pages
-│       │   ├── company/        # Company dashboard pages
-│       │   └── user/           # Job seeker pages
-│       └── styles/             # CSS modules
-├── Dockerfile
-└── README.md
+    %% Styling
+    classDef client fill:#e0f2fe,stroke:#0284c7,stroke-width:2px;
+    classDef security fill:#fee2e2,stroke:#ef4444,stroke-width:2px;
+    classDef app fill:#f0fdf4,stroke:#22c55e,stroke-width:2px;
+    classDef data fill:#faf5ff,stroke:#a855f7,stroke-width:2px;
+    class Client client;
+    class Security security;
+    class AppServer app;
+    class DataService data;
 ```
 
----
+### Key Architectural Concepts
+- **Decoupled JWT Auth**: Stateless Access Tokens (15-min TTL) in React state combined with Secure, HttpOnly, SameSite Cookies for Refresh Tokens (7-day TTL).
+- **IP-Based Rate Limiting**: Managed at the gateway/filter level using Bucket4j to prevent brute-force attacks on authenticating endpoints.
+- **WebSocket Auth Integration**: Custom Stomp channel interceptors handle incoming JWT validation headers, securing real-time client socket connections.
+- **Caffeine Local Cache**: Placed on high-traffic data views (e.g. active job listings, partner directories) with auto-eviction and 5-minute TTL constraints to alleviate DB loads.
+- **Schema Control**: Database schema evolutions are governed through SQL scripts managed by Flyway.
 
-## Setup Instructions
+🛠 Tech Stack
+- **Frontend**: React 19, Vite, Axios, STOMP.js, SockJS, React Router v7, Lucide React, CSS
+- **Backend**: Spring Boot 3.x, Spring Security, Spring WebSockets, Spring Data JPA, Java 17
+- **Database**: PostgreSQL (Neon Cloud / Render), Caffeine Cache (Local In-Memory)
+- **Infrastructure**: Docker, GitHub Actions (CI/CD), Render, Vercel
 
-### 1. Clone the Repository
+📸 Screenshots
 
+### Landing Page & Authentication
+| Landing Page | Login Page | signup page |
+| :---: | :---: | :---: |
+| ![Landing Page](screenshots/landing%20page.png) | ![Login Page](screenshots/login%20page.png) | ![signup page](screenshots/signup%20page.png) |
+
+### Dashboards & Management
+| Admin Dashboard | Company Dashboard | Post a Job |
+| :---: | :---: | :---: |
+| ![Admin Dashboard](screenshots/admin%20page.png) | ![Company Dashboard](screenshots/company-dashboard%20page.png) | ![Post a Job](screenshots/post%20a%20job.png) |
+
+### Candidate Experience
+| Jobs Directory | Resume Builder | Company Directory |
+| :---: | :---: | :---: |
+| ![Jobs Directory](screenshots/job%20page.png) | ![Resume Builder](screenshots/resume%20builder%20page.png) | ![Company Directory](screenshots/company%20page.png) |
+
+💻 Local Setup & Deployment
+Want to run this yourself? Follow the steps below:
+
+#### 1. Clone the Repository
 ```bash
 git clone https://github.com/jayswalhimanshu74-cmd/JobVista.git
 cd JobVista
 ```
 
-### 2. Backend Setup
-
-```bash
-cd backend
-```
-
-Create a `.env` file at the project root (never commit this):
-
+#### 2. Backend Configuration
+Create a `.env` file at the root of the project:
 ```env
 DB_URL=jdbc:postgresql://localhost:5432/jobvista
 DB_USERNAME=postgres
 DB_PASSWORD=your_password
-
 JWT_SECRET_KEY=your_secret_minimum_32_chars
-
 ADMIN_PASSWORD=your_admin_password
-
 MAIL_USERNAME=your_email@gmail.com
 GMAIL_APP_PASSWORD=your_gmail_app_password
-
 ADZUNA_APP_ID=your_adzuna_app_id
 ADZUNA_APP_KEY=your_adzuna_app_key
-
 VITE_API_BASE_URL=http://localhost:8080/api/v1
 VITE_WS_URL=http://localhost:8080
 VITE_IMAGE_BASE_URL=http://localhost:8080
 ```
-
-Run the backend:
-
+Run the Spring Boot application:
 ```bash
+cd backend
 ./mvnw spring-boot:run
 ```
+The backend API is accessible at: `http://localhost:8080`
 
-Backend runs at: `http://localhost:8080`
-
-### 3. Frontend Setup
-
+#### 3. Frontend Configuration
+Navigate to the frontend folder and install dependencies:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+The React development server runs at: `http://localhost:5173`
 
-Frontend runs at: `http://localhost:5173`
+🔒 Security Features
+Security is prioritized across all layers of the JobVista application architecture:
+- **XSS Mitigation**: In-memory token storage prevents malicious scripts from scraping access credentials from localStorage.
+- **CSRF Defense**: Refresh tokens are isolated inside HttpOnly cookie scopes with strict SameSite restrictions.
+- **Payload Validation**: Hard whitelists enforce PDF-only resume uploads and strict MIME-type file parsing.
+- **Fail-Fast Security Init**: System rejects boots when JWT configuration credentials or encryption keys are weak.
+- **Role-Based Guards**: Method-level security restrictions ensure company and admin operations are locked to matching users.
 
----
+🔮 Future Improvements
+- **Redis Cache Tier**: Upgrading from local Caffeine memory to Redis cluster to enable distributed caching.
+- **AWS S3 File Storage**: Transition local uploads (resumes/banners) to S3/Cloudflare R2 buckets for persistent, highly-available file access.
+- **AI Resume Analysis**: Integrate candidate resume parsing algorithms to auto-extract capabilities and match them against jobs.
+- **Security Checkpoints**: Email verification links on candidate signups and password recovery.
 
-## Environment Variables Reference
+🤝 Contributing
+Contributions, bug reports, and features are welcome! Feel free to open issues or file pull requests.
 
-| Variable | Description |
-|----------|-------------|
-| `DB_URL` | PostgreSQL JDBC connection URL |
-| `DB_USERNAME` | Database username |
-| `DB_PASSWORD` | Database password |
-| `JWT_SECRET_KEY` | JWT signing secret (min 32 chars) — generate with `openssl rand -base64 32` |
-| `ADMIN_PASSWORD` | Default admin account password |
-| `MAIL_USERNAME` | Gmail address for sending emails |
-| `GMAIL_APP_PASSWORD` | Gmail App Password (not your login password) |
-| `ADZUNA_APP_ID` | Adzuna API app ID |
-| `ADZUNA_APP_KEY` | Adzuna API key |
-| `VITE_API_BASE_URL` | Backend API base URL for frontend |
-| `VITE_WS_URL` | WebSocket base URL for frontend |
-| `VITE_IMAGE_BASE_URL` | Image/upload base URL for frontend |
-
----
-
-## Docker
-
-```bash
-docker build -t jobvista .
-docker run -p 8080:8080 \
-  -e SPRING_DATASOURCE_URL=your_db_url \
-  -e DB_USERNAME=your_username \
-  -e DB_PASSWORD=your_password \
-  -e JWT_SECRET_KEY=your_secret \
-  jobvista
-```
-
----
-
-## CI/CD Pipeline
-
-Every push to `main` triggers GitHub Actions:
-
-- **Backend Build** — Maven compile and package
-- **Frontend Build** — npm install and Vite build
-
-Status badge reflects the health of the latest commit.
-
----
-
-## API Documentation
-
-Swagger UI is available at:
-```
-http://localhost:8080/swagger-ui.html
-```
-
-Key endpoint groups:
-
-| Prefix | Access | Description |
-|--------|--------|-------------|
-| `/api/v1/auth/**` | Public | Register, login, refresh, logout |
-| `/api/v1/job/**` | Public (GET) | Browse and search jobs |
-| `/api/v1/company/**` | Public (GET) | Browse companies |
-| `/api/v1/application/**` | Authenticated | Apply, withdraw, view applications |
-| `/api/v1/users/**` | Authenticated | Profile management |
-| `/api/v1/jobSeeker/**` | Authenticated | Job seeker profile and resume |
-| `/api/v1/admin/**` | ADMIN only | User and platform management |
-
----
-
-## Future Enhancements
-
-**High Priority**
-- Unit and integration test coverage (currently ~15%)
-- AWS S3 or Cloudflare R2 for file storage (replace local filesystem — not persistent on Render free tier)
-- Redis cache (replace Caffeine for multi-instance deployments)
-- Email verification on registration
-
-**Medium Priority**
-- Password reset via email link
-- OAuth2 login (Google, LinkedIn)
-- Resume parsing with AI (extract skills and experience automatically)
-- Advanced job filters (salary range, experience level, remote/onsite)
-- Notification preferences (email, in-app)
-
-**Nice to Have**
-- Live chat between recruiter and applicant
-- Mobile app (React Native)
-- Company analytics dashboard (views, applications, conversion rate)
-- Job alerts (email digest for saved searches)
-- Interview scheduling integration
-
----
-
-## Screenshots
-
-> Add screenshots here
-
-- Home Page
-- Job Listings
-- Job Details
-- User Profile
-- Company Dashboard
-- Admin Dashboard
-
----
-
-## Contributing
-
-Contributions are welcome. Fork the repository, make your changes on a feature branch, and submit a pull request. Please ensure the CI pipeline passes before requesting a review.
-
----
-
-## License
-
-This project is open-source and available under the MIT License.
-
----
-
-## Author
-
-**Himanshu Jayswal**
-
-- GitHub: https://github.com/jayswalhimanshu74-cmd
-- Live: https://jobvista.
-
----
-
-If you find this project useful, give it a star on GitHub!
+📄 License
+This project is open-source and licensed under the MIT License.
