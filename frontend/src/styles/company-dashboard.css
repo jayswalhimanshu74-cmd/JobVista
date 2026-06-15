@@ -98,6 +98,7 @@
   flex: 1;
   padding: 60px 80px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .comp-page-header {
@@ -177,6 +178,7 @@
   padding: 40px;
   box-shadow: var(--shadow-card);
   margin-bottom: 40px;
+  overflow: hidden;
 }
 
 .comp-section h2 {
@@ -308,6 +310,7 @@
 .comp-field input,
 .comp-field select,
 .comp-field textarea {
+  width: 100%;
   padding: 14px 20px;
   border: 1.5px solid var(--border-color);
   border-radius: 14px;
