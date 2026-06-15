@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosInstance from "../../api/axiosConfig";
 import { AuthContext } from "../../context/AuthContext";
+import "../../styles/jobs.css";
 import {
     MapPin, Briefcase, Clock, DollarSign, Building2,
     ArrowLeft, Bookmark, BookmarkCheck, Share2, ExternalLink
@@ -86,7 +87,7 @@ const JobDetails = () => {
     );
 
     return (
-        <div style={{ maxWidth: "860px", margin: "2rem auto", padding: "0 1rem" }}>
+        <div className="job-details-page">
 
             {/* Toast */}
             {toast && (
@@ -111,13 +112,10 @@ const JobDetails = () => {
             </button>
 
             {/* Header Card */}
-            <div style={{
-                background: "#fff", border: "1px solid #e5e7eb",
-                borderRadius: "12px", padding: "2rem", marginBottom: "1.5rem"
-            }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+            <div className="job-details-card card">
+                <div className="job-details-header">
                     <div>
-                        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#111", margin: "0 0 8px" }}>
+                        <h1 style={{ fontSize: "1.8rem", fontWeight: 800, color: "#111", margin: "0 0 8px" }}>
                             {job.title}
                         </h1>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6b7280", fontSize: "15px" }}>
@@ -127,7 +125,7 @@ const JobDetails = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div style={{ display: "flex", gap: "10px" }}>
+                    <div className="job-details-actions">
                         <button onClick={handleSave} style={{
                             display: "flex", alignItems: "center", gap: "6px",
                             padding: "10px 16px", borderRadius: "8px", cursor: "pointer",
@@ -208,11 +206,8 @@ const JobDetails = () => {
             </div>
 
             {/* Description Card */}
-            <div style={{
-                background: "#fff", border: "1px solid #e5e7eb",
-                borderRadius: "12px", padding: "2rem", marginBottom: "1.5rem"
-            }}>
-                <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: "#111", marginBottom: "1rem" }}>
+            <div className="job-details-card card">
+                <h2 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#111", marginBottom: "1rem" }}>
                     Job Description
                 </h2>
                 <p style={{ color: "#374151", lineHeight: "1.8", whiteSpace: "pre-wrap" }}>
@@ -222,11 +217,8 @@ const JobDetails = () => {
 
             {/* Skills Card */}
             {job.requiredSkills && (
-                <div style={{
-                    background: "#fff", border: "1px solid #e5e7eb",
-                    borderRadius: "12px", padding: "2rem"
-                }}>
-                    <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: "#111", marginBottom: "1rem" }}>
+                <div className="job-details-card card">
+                    <h2 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#111", marginBottom: "1rem" }}>
                         Required Skills
                     </h2>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>

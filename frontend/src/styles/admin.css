@@ -334,3 +334,70 @@
 div:hover > .upload-overlay {
   opacity: 1 !important;
 }
+
+/* ── User Profile Layout ── */
+.profile-page-container {
+  padding: 100px 60px 60px;
+  background: var(--bg-main);
+  min-height: 100vh;
+}
+
+.profile-dashboard-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 32px;
+  align-items: start;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.profile-sidebar-panel {
+  position: sticky;
+  top: 100px;
+  padding: 32px;
+  height: fit-content;
+}
+
+.profile-main-content {
+  min-width: 0;
+}
+
+.profile-timeline-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+/* ── Profile Responsive Overrides ── */
+@media (max-width: 1024px) {
+  .profile-dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+  .profile-sidebar-panel {
+    position: relative;
+    top: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-page-container {
+    padding: var(--space-2xl) var(--space-md);
+  }
+  .profile-timeline-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .dashboard-section {
+    padding: 24px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+  }
+  .profile-sidebar-panel {
+    padding: 24px;
+  }
+  .dashboard-section h2 {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+}

@@ -103,3 +103,16 @@
   text-decoration: underline;
 }
 
+@media (max-width: 480px) {
+  .login-card {
+    padding: 35px 20px;
+    border-radius: var(--radius-lg);
+  }
+  .login-card h2 {
+    font-size: 1.8rem;
+  }
+  .login-subtitle {
+    margin-bottom: 25px;
+  }
+}
+

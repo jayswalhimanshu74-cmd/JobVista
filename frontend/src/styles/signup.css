@@ -133,3 +133,19 @@
   text-decoration: underline;
 }
 
+@media (max-width: 480px) {
+  .signup-card {
+    padding: 35px 20px;
+    border-radius: var(--radius-lg);
+  }
+  .signup-card h2 {
+    font-size: 1.8rem;
+  }
+  .role-toggle {
+    margin-bottom: 20px;
+  }
+  .signup-subtitle {
+    margin-bottom: 20px;
+  }
+}
+

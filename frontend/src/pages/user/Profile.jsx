@@ -163,7 +163,7 @@ const Profile = () => {
 
   // 5. Structural Sub-Renderers
   const renderSidebar = () => (
-    <aside className="dashboard-section" style={{ position: "sticky", top: "100px", padding: "32px", height: "fit-content" }}>
+    <aside className="dashboard-section profile-sidebar-panel">
       <div style={{ textAlign: "center", marginBottom: "32px" }}>
         <div style={{ position: "relative", display: "inline-block", cursor: "pointer" }} onClick={() => document.getElementById("photo-upload").click()}>
           <img
@@ -345,8 +345,8 @@ const Profile = () => {
       </section>
 
       {/* 4. Timeline Sections */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px" }}>
-        <section className="dashboard-section" style={{ padding: "40px" }}>
+      <div className="profile-timeline-grid">
+        <section className="dashboard-section">
           <h3 style={{ margin: "0 0 32px", display: "flex", alignItems: "center", gap: "12px" }}>
             <GraduationCap size={20} color="var(--primary)" /> Academic Pedigree
           </h3>
@@ -363,7 +363,7 @@ const Profile = () => {
           </div>
         </section>
 
-        <section className="dashboard-section" style={{ padding: "40px" }}>
+        <section className="dashboard-section">
           <h3 style={{ margin: "0 0 32px", display: "flex", alignItems: "center", gap: "12px" }}>
             <Briefcase size={20} color="var(--primary)" /> Industry Tenure
           </h3>
@@ -393,7 +393,7 @@ const Profile = () => {
   );
 
   const renderApplications = () => (
-    <section className="dashboard-section" style={{ padding: "40px" }}>
+    <section className="dashboard-section">
       <h2 style={{ margin: "0 0 32px", display: "flex", alignItems: "center", gap: "12px" }}><FileText size={24} color="var(--primary)" /> Application History</h2>
       {appliedJobs.length === 0 ? (
         <div className="comp-empty"><AlertCircle size={40} /><p>No active applications.</p></div>
@@ -423,7 +423,7 @@ const Profile = () => {
   );
 
   const renderWishlist = () => (
-    <section className="dashboard-section" style={{ padding: "40px" }}>
+    <section className="dashboard-section">
       <h2 style={{ margin: "0 0 32px", display: "flex", alignItems: "center", gap: "12px" }}><Bookmark size={24} color="var(--primary)" /> Career Wishlist</h2>
       {savedJobs.length === 0 ? (
         <div className="comp-empty"><Star size={40} /><p>No opportunities saved.</p></div>
@@ -453,30 +453,20 @@ const Profile = () => {
   );
 
   return (
-    <div className="admin-main" style={{ padding: "100px 60px 60px", background: "var(--bg-main)", minHeight: "100vh" }}>
+    <div className="admin-main profile-page-container">
       {toast && (
         <div className={`comp-toast ${toast.type}`} style={{ zIndex: 1000 }}>
           <Check size={18} /> {toast.msg}
         </div>
       )}
 
-      <div className="profile-dashboard-layout" style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-        gap: "32px",
-        alignItems: "start",
-        maxWidth: "1400px",
-        margin: "0 auto"
-      }}>
-        {/* Force the layout to be 320px 1fr on large screens via a media-query-like approach or just a refined grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 320px) 1fr", gap: "32px", width: "100%", gridColumn: "1 / -1" }}>
-          {renderSidebar()}
-          <main style={{ minWidth: 0 }}>
-            {activeTab === "overview" && renderOverview()}
-            {activeTab === "applied" && renderApplications()}
-            {activeTab === "saved" && renderWishlist()}
-          </main>
-        </div>
+      <div className="profile-dashboard-layout">
+        {renderSidebar()}
+        <main className="profile-main-content">
+          {activeTab === "overview" && renderOverview()}
+          {activeTab === "applied" && renderApplications()}
+          {activeTab === "saved" && renderWishlist()}
+        </main>
       </div>
     </div>
   );
