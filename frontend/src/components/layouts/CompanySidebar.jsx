@@ -14,7 +14,7 @@ function CompanySidebar({ activeTab, setActiveTab, companyName }) {
     <aside className="company-sidebar">
       <div className="sidebar-brand">
         <h2>
-        {companyName || "Company"}
+          <span>{companyName || "Company"}</span>
         </h2>
         <p>Business Central</p>
       </div>
