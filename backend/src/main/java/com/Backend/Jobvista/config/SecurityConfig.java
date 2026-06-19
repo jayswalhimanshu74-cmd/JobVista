@@ -87,7 +87,7 @@ public class SecurityConfig {
                 "https://www.jobvista.com",
                 "https://jobvista-pi.vercel.app",
                 "https://jobvista-git-main-jayswalhimanshu74-4107s-projects.vercel.app",
-                "https://jobvista-8qk6b12ls-jayswalhimanshu74-4107s-projects.vercel.app"
+                "https://jobvista-*-jayswalhimanshu74-4107s-projects.vercel.app"
             ));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
