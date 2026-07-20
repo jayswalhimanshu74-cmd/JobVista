@@ -9,6 +9,4 @@ class JobvistaApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
-
 }

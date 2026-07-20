@@ -1,6 +1,6 @@
 import axiosInstance from "../../api/axiosConfig";
 import { useState, useEffect, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import "../../styles/navbar.css";
 import { isAuthenticated } from "../../utills/auth";
 import { Bell, Menu, X } from "lucide-react";
@@ -11,6 +11,7 @@ import { AuthContext } from "../../context/AuthContext";
 
 function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { loggedIn, user: contextUser, logout } = useContext(AuthContext);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -19,6 +20,11 @@ function Navbar() {
 
   // Sync context user with local state
   const user = contextUser;
+
+  // 🔥 Hide main public navbar on admin dashboard pages
+  if (location.pathname.startsWith("/admin")) {
+    return null;
+  }
 
   // 🔥 WebSocket and Notifications Logic
   useEffect(() => {
@@ -31,12 +37,8 @@ function Navbar() {
       webSocketService.connect(() => {
         // Subscribe to notifications
         webSocketService.subscribe(`/topic/notifications/${user.email}`, (message) => {
-          // message is just a string in our current implementation
-          // Re-fetch to get the full object with ID and Type
           notificationService.getNotifications().then(setNotifications);
           notificationService.getUnreadCount().then(setUnreadCount);
-          
-          // Show toast or browser notification if needed
         });
       });
 
@@ -56,7 +58,9 @@ function Navbar() {
     logout();
   };
 
+  const isAdmin = user?.role === "ADMIN" || localStorage.getItem("adminLoggedIn") === "true";
   const isCompany = user?.role === "COMPANY";
+  const isUserLoggedIn = loggedIn || isAuthenticated() || isAdmin;
 
   return (
     <>
@@ -69,7 +73,9 @@ function Navbar() {
           <li><Link to="/">Home</Link></li>
           <li><Link to="/jobs">Jobs</Link></li>
           <li><Link to="/companies">Companies</Link></li>
-          {isCompany ? (
+          {isAdmin ? (
+            <li><Link to="/admin">Admin Dashboard</Link></li>
+          ) : isCompany ? (
             <li><Link to="/company-dashboard">Dashboard</Link></li>
           ) : (
             <li><Link to="/resume">Resume</Link></li>
@@ -79,7 +85,7 @@ function Navbar() {
 
         {/* Desktop Navigation Actions */}
         <div className="nav-right">
-          {isAuthenticated() ? (
+          {isUserLoggedIn ? (
             <>
               <div className="notification-bell-wrapper" onClick={() => setShowNotifications(!showNotifications)}>
                   <Bell size={22} color="#4b5563" />
@@ -94,7 +100,11 @@ function Navbar() {
                   />
               )}
 
-              {isCompany ? (
+              {isAdmin ? (
+                <Link to="/admin" className="btn btn-secondary">
+                  👑 Admin Portal
+                </Link>
+              ) : isCompany ? (
                 <Link to="/company-dashboard" className="btn btn-secondary">
                   🏢 {user?.name || "Dashboard"}
                 </Link>
@@ -117,7 +127,7 @@ function Navbar() {
 
         {/* Mobile Navigation Controls */}
         <div className="nav-right-mobile" style={{ display: "none" }}>
-          {isAuthenticated() && (
+          {isUserLoggedIn && (
             <div className="notification-bell-wrapper" onClick={() => setShowNotifications(!showNotifications)}>
                 <Bell size={22} color="#4b5563" />
                 {unreadCount > 0 && <span className="unread-badge">{unreadCount}</span>}
@@ -152,7 +162,9 @@ function Navbar() {
             <li><Link to="/" onClick={() => setMenuOpen(false)}>Home</Link></li>
             <li><Link to="/jobs" onClick={() => setMenuOpen(false)}>Jobs</Link></li>
             <li><Link to="/companies" onClick={() => setMenuOpen(false)}>Companies</Link></li>
-            {isCompany ? (
+            {isAdmin ? (
+              <li><Link to="/admin" onClick={() => setMenuOpen(false)}>Admin Dashboard</Link></li>
+            ) : isCompany ? (
               <li><Link to="/company-dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link></li>
             ) : (
               <li><Link to="/resume" onClick={() => setMenuOpen(false)}>Resume</Link></li>
@@ -161,9 +173,13 @@ function Navbar() {
           </ul>
 
           <div className="mobile-menu-actions">
-            {isAuthenticated() ? (
+            {isUserLoggedIn ? (
               <>
-                {isCompany ? (
+                {isAdmin ? (
+                  <Link to="/admin" className="btn btn-secondary" onClick={() => setMenuOpen(false)}>
+                    👑 Admin Portal
+                  </Link>
+                ) : isCompany ? (
                   <Link to="/company-dashboard" className="btn btn-secondary" onClick={() => setMenuOpen(false)}>
                     🏢 {user?.name || "Dashboard"}
                   </Link>

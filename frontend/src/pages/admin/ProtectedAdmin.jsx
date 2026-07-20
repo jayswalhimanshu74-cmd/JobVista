@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import AdminLogin from "./AdminLogin";
 import axiosInstance from "../../api/axiosConfig";
 import { getAccessToken, setAccessToken } from "../../utills/tokenStore";
+import { AuthContext } from "../../context/AuthContext";
 
 // ProtectedAdmin persists admin authentication via localStorage + JWT.
 // On refresh it checks whether a valid admin token still exists.
 // The axios interceptor will auto-refresh the token if it has expired.
 function ProtectedAdmin({ AdminComponent }) {
+  const { logout } = useContext(AuthContext);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checking, setChecking] = useState(true);
 
@@ -64,6 +66,7 @@ function ProtectedAdmin({ AdminComponent }) {
     localStorage.removeItem("adminLoggedIn");
     localStorage.removeItem("user");
     setIsAuthenticated(false);
+    if (logout) logout();
   };
 
   if (checking) {

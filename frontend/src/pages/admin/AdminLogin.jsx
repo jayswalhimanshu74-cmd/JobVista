@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import axiosInstance from "../../api/axiosConfig";
 import "../../styles/admin-login.css";
 import { setAccessToken } from "../../utills/tokenStore";
+import { AuthContext } from "../../context/AuthContext";
 
 function AdminLogin({ onLoginSuccess }) {
+  const { login: authContextLogin } = useContext(AuthContext);
   const [credentials, setCredentials] = useState({
     email: "",
     password: "",
@@ -43,6 +45,10 @@ function AdminLogin({ onLoginSuccess }) {
       // Store the JWT so axiosInstance attaches it to every request
       setAccessToken(accessToken);
       localStorage.setItem("adminLoggedIn", "true");
+
+      if (authContextLogin) {
+        authContextLogin(accessToken, { role: "ADMIN", email: credentials.email, name: "Admin" });
+      }
 
       onLoginSuccess();
     } catch (err) {

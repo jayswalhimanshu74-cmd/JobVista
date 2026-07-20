@@ -152,6 +152,7 @@ public class JobServiceImplementation implements JobService {
 
     }
 
+    @Transactional
     @CacheEvict(value = "jobs", allEntries = true)
     @Override
     public void deleteJob(UUID jobId) {
@@ -419,6 +420,7 @@ public class JobServiceImplementation implements JobService {
         return mapToResponse(job);
     }
 
+    @Transactional
     @CacheEvict(value = "jobs", allEntries = true)
     @Override
     public JobResponseDTO createJob(JobRequestDTO dto, String email) {
