@@ -1,0 +1,1371 @@
+[
+  {
+    "id": "TC001",
+    "title": "Candidate applies to a job and sees it in the profile tracker",
+    "description": "Verifies that a candidate can apply from a job listing and later see that application in the profile tracking area.",
+    "category": "Administrator Control Console",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Search for a job using a relevant keyword"
+      },
+      {
+        "type": "action",
+        "description": "Open a matching job listing"
+      },
+      {
+        "type": "action",
+        "description": "Apply to the job"
+      },
+      {
+        "type": "action",
+        "description": "Open the profile page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the application tracker is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the submitted application appears in the history"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Sign in as a candidate and reach the job browsing area",
+    "description": "A candidate can log in with valid credentials and is routed to the appropriate authenticated destination.",
+    "category": "Candidate & Company Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the appropriate authenticated destination is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Sign in as an employer and reach the company dashboard",
+    "description": "A company representative can log in with valid credentials and is routed to the company dashboard.",
+    "category": "Candidate & Company Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the company dashboard is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Browse jobs and apply to a listing",
+    "description": "A candidate can search jobs, open a job detail, and submit an application successfully.",
+    "category": "Job Search and Application Flow",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /jobs"
+      },
+      {
+        "type": "action",
+        "description": "Search for a relevant job"
+      },
+      {
+        "type": "action",
+        "description": "Open a job detail"
+      },
+      {
+        "type": "action",
+        "description": "Apply for the job"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the application is submitted successfully"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Admin signs in and sees the platform overview",
+    "description": "Verifies that an administrator can log in and reach the admin dashboard with platform metrics visible.",
+    "category": "Administrator Control Console",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the admin area entry point"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the platform overview is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system metrics are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Browse jobs and apply from job details",
+    "description": "A candidate can open a job listing, review its details, and submit an application successfully.",
+    "category": "Job Discovery & Application",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /jobs"
+      },
+      {
+        "type": "action",
+        "description": "Click a job listing to open its details"
+      },
+      {
+        "type": "action",
+        "description": "Click the apply action for the opened job"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an application confirmation is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Candidate signs up, logs in, and reaches the jobs page",
+    "description": "Verifies that a new candidate can register, authenticate, and arrive at the job browsing experience.",
+    "category": "Administrator Control Console",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /signup"
+      },
+      {
+        "type": "action",
+        "description": "Complete the candidate registration form with valid details"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the jobs browsing page is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Register as a new candidate and reach login",
+    "description": "A new job seeker can complete registration and is returned to the login page afterward.",
+    "category": "Candidate & Company Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /signup"
+      },
+      {
+        "type": "action",
+        "description": "Choose the job seeker role"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the registration details with valid candidate information"
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login page is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Post a new job from the employer dashboard",
+    "description": "A logged-in employer can create a new job posting and see it appear in their job listings.",
+    "category": "Employer Dashboard",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /company-dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Switch to the job posting view"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the job details with valid information"
+      },
+      {
+        "type": "action",
+        "description": "Submit the job posting"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new job listing is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "Search for a job and apply from matching results",
+    "description": "A candidate can search for a relevant job, open a matching result, and apply successfully.",
+    "category": "Job Discovery & Application",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /jobs"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the job search field with a valid search term"
+      },
+      {
+        "type": "action",
+        "description": "Review the filtered results"
+      },
+      {
+        "type": "action",
+        "description": "Click a matching job listing to open its details"
+      },
+      {
+        "type": "action",
+        "description": "Click the apply action for the opened job"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an application confirmation is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "Employer posts a job and reviews applicants",
+    "description": "Verifies that an employer can sign in, create a job posting, and inspect applicants for that job.",
+    "category": "Administrator Control Console",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Open the company dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Create a new job posting with valid details"
+      },
+      {
+        "type": "action",
+        "description": "Open the applicant review area for the new job"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify applicants for the job are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new job posting is listed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "Register as a new company representative and reach login",
+    "description": "A new company representative can complete registration and is returned to the login page afterward.",
+    "category": "Candidate & Company Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /signup"
+      },
+      {
+        "type": "action",
+        "description": "Choose the company role"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the registration details with valid company information"
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login page is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC013",
+    "title": "Complete admin management flow",
+    "description": "A logged-in administrator can review platform data, search for a record, edit or delete it, and see the listing update.",
+    "category": "Admin Platform Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin"
+      },
+      {
+        "type": "action",
+        "description": "Review the platform metrics overview"
+      },
+      {
+        "type": "action",
+        "description": "Search for a user, job, or company record"
+      },
+      {
+        "type": "action",
+        "description": "Edit or delete the selected record"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the listing updates to reflect the change"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC014",
+    "title": "Withdraw an active application from a job",
+    "description": "A candidate can open an already applied job and withdraw the application successfully.",
+    "category": "Job Discovery & Application",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /jobs"
+      },
+      {
+        "type": "action",
+        "description": "Open a job with an existing application"
+      },
+      {
+        "type": "action",
+        "description": "Click the withdraw action for the application"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the application is removed from the active list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC015",
+    "title": "Employer updates an application status",
+    "description": "Verifies that an employer can change an applicant's status from the company dashboard and see the update reflected.",
+    "category": "Administrator Control Console",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Open the company dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open a job's applicant list"
+      },
+      {
+        "type": "action",
+        "description": "Change an application status"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated application status is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC016",
+    "title": "Delete account from profile",
+    "description": "A logged-in candidate can delete their account from profile settings and the account is removed from the platform.",
+    "category": "User Profile & Application Tracker",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "action",
+        "description": "Choose to delete the account"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the deletion"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the account is removed and the user is no longer shown as signed in"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC017",
+    "title": "Admin reviews application records from the dashboard",
+    "description": "Verifies that an administrator can open the applications view and inspect platform-wide application records.",
+    "category": "Administrator Control Console",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the admin area entry point"
+      },
+      {
+        "type": "action",
+        "description": "Open the applications view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify application records are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify application details are visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC018",
+    "title": "Review applicants and change application status",
+    "description": "A logged-in employer can open an applicant submission, review it, and change the application status successfully.",
+    "category": "Employer Dashboard",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /company-dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Switch to the applications view"
+      },
+      {
+        "type": "action",
+        "description": "Open an applicant submission"
+      },
+      {
+        "type": "action",
+        "description": "Change the application status to a reviewed outcome"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated application status is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC019",
+    "title": "Candidate searches jobs and opens a listing",
+    "description": "Verifies that a candidate can search for jobs and open a matching job detail view.",
+    "category": "Administrator Control Console",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Search for a job using a relevant keyword"
+      },
+      {
+        "type": "action",
+        "description": "Open a matching job listing"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify job details are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the job can be applied to or saved"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC020",
+    "title": "Admin searches for a record and updates it",
+    "description": "Verifies that an administrator can search for a job, user, or company and complete an edit or delete action with the listing updated afterward.",
+    "category": "Administrator Control Console",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Click the admin area entry point"
+      },
+      {
+        "type": "action",
+        "description": "Search for a job, user, or company"
+      },
+      {
+        "type": "action",
+        "description": "Open the matching record"
+      },
+      {
+        "type": "action",
+        "description": "Edit or delete the record"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated listing is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC021",
+    "title": "Update an existing job posting",
+    "description": "A logged-in employer can edit an existing job posting and see the updated listing in their dashboard.",
+    "category": "Employer Dashboard",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /company-dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing job in the employer jobs view"
+      },
+      {
+        "type": "action",
+        "description": "Update the job details with valid changes"
+      },
+      {
+        "type": "action",
+        "description": "Save the job changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated job listing is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC022",
+    "title": "Reject invalid login credentials",
+    "description": "A user entering incorrect credentials sees clear access failure feedback and remains unable to proceed.",
+    "category": "Candidate & Company Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with invalid credentials"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with invalid credentials"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a login failure message is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC023",
+    "title": "Save a job from the jobs page",
+    "description": "A candidate can save a job from the browsing experience and later find it in their saved jobs list.",
+    "category": "User Profile & Application Tracker",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /jobs"
+      },
+      {
+        "type": "action",
+        "description": "Search for a relevant job"
+      },
+      {
+        "type": "action",
+        "description": "Save the job"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "action",
+        "description": "Switch to the saved jobs view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the saved job is displayed in the saved jobs list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC024",
+    "title": "Candidate receives and reads a notification about a status change",
+    "description": "Verifies that a candidate can see a live notification, open the notification panel, mark it as read, and observe the unread state clear.",
+    "category": "Real-Time Notifications",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Wait for a real-time notification to appear"
+      },
+      {
+        "type": "action",
+        "description": "Open the notification panel"
+      },
+      {
+        "type": "action",
+        "description": "Mark the notification as read"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the notification is shown as read"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the unread state is cleared"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC025",
+    "title": "Review profile, applications, and saved jobs",
+    "description": "A logged-in candidate can open their profile, review application status history, and switch to saved jobs successfully.",
+    "category": "User Profile & Application Tracker",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "action",
+        "description": "Switch to the applied jobs view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify application status entries are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Switch to the saved jobs view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify saved job listings are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC026",
+    "title": "Candidate sees a live application update in notifications",
+    "description": "Verifies that a candidate receives a real-time application status alert and can review the update details in the notifications panel.",
+    "category": "Real-Time Notifications",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Wait for a real-time toast alert"
+      },
+      {
+        "type": "action",
+        "description": "Open the notification panel"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify recent notification details are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the application update is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC027",
+    "title": "Update profile information",
+    "description": "A logged-in candidate can edit profile details and see the updated information saved in their profile.",
+    "category": "User Profile & Application Tracker",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "action",
+        "description": "Update the profile details with valid phone, skills, experience, education, and career goal information"
+      },
+      {
+        "type": "action",
+        "description": "Save the profile changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated profile information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC028",
+    "title": "Save and later remove a job bookmark",
+    "description": "A candidate can save a job for later from the listings and then remove it from saved jobs.",
+    "category": "Job Discovery & Application",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /jobs"
+      },
+      {
+        "type": "action",
+        "description": "Click a job listing to open its details"
+      },
+      {
+        "type": "action",
+        "description": "Save the opened job"
+      },
+      {
+        "type": "action",
+        "description": "Open the saved job details"
+      },
+      {
+        "type": "action",
+        "description": "Remove the job from saved items"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the job is no longer saved"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC029",
+    "title": "Candidate saves a job and sees it in the profile saved jobs area",
+    "description": "Verifies that a candidate can save a job from browsing and later find it in saved jobs on the profile page.",
+    "category": "Administrator Control Console",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Search for a job using a relevant keyword"
+      },
+      {
+        "type": "action",
+        "description": "Save the job"
+      },
+      {
+        "type": "action",
+        "description": "Open the profile page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify saved jobs are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the saved job appears in the list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC030",
+    "title": "Apply to a job from a company profile",
+    "description": "A candidate can open a company profile, choose one of its open roles, and submit an application successfully.",
+    "category": "Company Directory",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /companies"
+      },
+      {
+        "type": "action",
+        "description": "Open a company profile"
+      },
+      {
+        "type": "action",
+        "description": "Select an open role"
+      },
+      {
+        "type": "action",
+        "description": "Click the apply action for the selected role"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an application confirmation is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC031",
+    "title": "Preview and export a resume",
+    "description": "A logged-in candidate can preview their resume content and export it as a PDF from the resume builder.",
+    "category": "Resume Builder & PDF Export",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /resume"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the resume header and contact details"
+      },
+      {
+        "type": "action",
+        "description": "Open the resume preview"
+      },
+      {
+        "type": "action",
+        "description": "Export the resume as a PDF"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the resume preview is displayed and the export action completes successfully"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC032",
+    "title": "Build and save a resume draft",
+    "description": "A logged-in candidate can complete required resume fields and save a local draft successfully.",
+    "category": "Resume Builder & PDF Export",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /resume"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the resume header and contact details"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the work experience, education, skills, and summary sections with valid information"
+      },
+      {
+        "type": "action",
+        "description": "Save the resume draft"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the resume draft is saved and the entered content remains visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC033",
+    "title": "Browse companies and inspect a company profile",
+    "description": "A visitor can open a company profile from the directory and review its description and open roles.",
+    "category": "Company Directory",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /companies"
+      },
+      {
+        "type": "action",
+        "description": "Open a company profile"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the company details are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the open job openings are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC034",
+    "title": "Edit company profile information",
+    "description": "A logged-in employer can update company profile details and see the refreshed company information.",
+    "category": "Employer Dashboard",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /company-dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Switch to the company profile view"
+      },
+      {
+        "type": "action",
+        "description": "Update the company information with valid changes"
+      },
+      {
+        "type": "action",
+        "description": "Save the company profile changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the refreshed company profile is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC035",
+    "title": "Remove a saved job from profile",
+    "description": "A logged-in candidate can remove a saved job from their profile and see it disappear from the saved list.",
+    "category": "User Profile & Application Tracker",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "action",
+        "description": "Switch to the saved jobs view"
+      },
+      {
+        "type": "action",
+        "description": "Remove one saved job from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the saved job is no longer displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC036",
+    "title": "Continue browsing paginated job results",
+    "description": "A candidate can move through job listings across pages and keep browsing additional roles.",
+    "category": "Job Discovery & Application",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /jobs"
+      },
+      {
+        "type": "action",
+        "description": "Open the next page of job results"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify additional job listings are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC037",
+    "title": "Show resume validation feedback",
+    "description": "A logged-in candidate sees validation feedback when required resume fields are left empty or text limits are exceeded.",
+    "category": "Resume Builder & PDF Export",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the login credential fields with {{LOGIN_USER}} and {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /resume"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to validate the resume with required fields left empty"
+      },
+      {
+        "type": "action",
+        "description": "Enter an overlong value in a field with a character limit"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify resume validation feedback is displayed"
+      }
+    ],
+    "priority": "Low"
+  }
+]

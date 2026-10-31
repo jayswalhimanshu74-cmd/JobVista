@@ -119,10 +119,11 @@ public class JobController {
     }
 
     @GetMapping("/{jobId}")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<JobResponseDTO> getJobById(@PathVariable UUID jobId) {
-
-        String email = securityUtill.getCurrentUserEmail();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = (auth != null && auth.isAuthenticated()
+                && !"anonymousUser".equals(auth.getPrincipal()))
+                ? auth.getName() : null;
 
         return ResponseEntity.ok(
                 jobService.getJobByJobId(jobId, email)

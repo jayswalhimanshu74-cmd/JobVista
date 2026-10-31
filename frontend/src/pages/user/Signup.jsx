@@ -77,7 +77,7 @@ function Signup() {
 
       await authService.register(userPayload);
 
-      // Step 2: For COMPANY, auto-login and create company profile
+      // Step 2: For COMPANY, auto-create company profile then redirect to /login
       if (role === "COMPANY") {
         try {
           const tokenData = await authService.login({
@@ -85,41 +85,37 @@ function Signup() {
             password: formData.password,
           });
 
-          // Set the token so axiosInstance can use it
-          setAccessToken(tokenData.accessToken);
+          if (tokenData?.accessToken) {
+            setAccessToken(tokenData.accessToken);
 
-          // Create company profile
-          await axiosInstance.post("/company", {
-            companyName: formData.companyName,
-            companyEmail: formData.companyEmail || formData.email,
-            location: formData.location,
-            companyWebsite: formData.companyWebsite,
-            description: formData.description,
-            logoUrl: formData.logoUrl,
-          });
-
-          // Fetch user profile and set context
-          const me = await authService.getCurrentUser();
-          login(tokenData.accessToken, me);
-          localStorage.setItem("user", JSON.stringify(me));
-
-          navigate("/company-dashboard");
-          return;
+            // Create company profile
+            await axiosInstance.post("/company", {
+              companyName: formData.companyName,
+              companyEmail: formData.companyEmail || formData.email,
+              location: formData.location,
+              companyWebsite: formData.companyWebsite,
+              description: formData.description,
+              logoUrl: formData.logoUrl,
+            });
+          }
         } catch (companyErr) {
-          console.error("Company setup error:", companyErr);
-          // User was created but company profile failed — still redirect to login
-          showToast("Account created! Profile setup needed.", "warning");
-          setTimeout(() => navigate("/login"), 1500);
-          return;
+          console.warn("Company setup warning:", companyErr);
+        } finally {
+          // Clean up any session tokens so user lands cleanly on the login screen
+          setAccessToken(null);
+          localStorage.removeItem("user");
+          localStorage.removeItem("role");
         }
       }
 
-      // For USER role, just go to login
-      showToast("Signup successful! Please login.", "success");
-      setTimeout(() => navigate("/login"), 1500);
+      setLoading(false);
+      showToast("Account created successfully! Please log in.", "success");
+      navigate("/login");
+      return;
 
     } catch (err) {
-      const msg = err.response?.data?.message || "Registration failed. Please try again.";
+      const msg = err.response?.data?.message || err.response?.data?.error || "Registration failed. Please try again.";
+      setError(msg);
       showToast(msg, "error");
     } finally {
       setLoading(false);

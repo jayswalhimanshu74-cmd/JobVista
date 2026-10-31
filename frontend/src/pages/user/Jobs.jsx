@@ -102,14 +102,19 @@ const Jobs = () => {
   }, [page, searchKeyword]);
 
   const handleApplyClick = async (job) => {
-    if (!isAuthenticated()) {
+    const token = localStorage.getItem("accessToken");
+    if (!isAuthenticated() && !token) {
       showToast("Please login to apply for jobs", "warning");
-      setTimeout(() => navigate("/login"), 1500);
+      setTimeout(() => navigate("/login"), 1000);
       return;
     }
 
-    if (!user || (user.role !== "USER" && user.role !== "ROLE_USER")) {
-      showToast(`Only job seekers can apply. Your role: ${user?.role || "unknown"}`, "error");
+    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const currentUser = user || storedUser;
+    const role = currentUser?.role;
+
+    if (role && role !== "USER" && role !== "ROLE_USER") {
+      showToast(`Only job seekers can apply. Your role: ${role}`, "error");
       return;
     }
 
@@ -124,10 +129,7 @@ const Jobs = () => {
       setAppliedJobIds(prev => new Set([...prev, job.jobId]));
       showToast(`🎉 Successfully applied to "${job.title}"!`, "success");
       
-      // Close modal if open
-      if (viewingJob?.jobId === job.jobId) {
-        setViewingJob(null);
-      }
+      // Keep modal open so the candidate can see the confirmation step and updated CTA
     } catch (error) {
       console.error("Apply error:", error);
       const status = error.response?.status;
@@ -370,7 +372,13 @@ const Jobs = () => {
                   <span className="job-company-name">{job.companyName}</span>
                 </div>
                 <div className="job-card-title-row">
-                  <h3 className="job-title">{job.title}</h3>
+                  <h3
+                    className="job-title"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => navigate(`/jobs/${job.jobId}`)}
+                  >
+                    {job.title}
+                  </h3>
                   <span className="job-type-badge">
                     {(job.employmentType || "").replace(/_/g, " ")}
                   </span>
@@ -475,6 +483,28 @@ const Jobs = () => {
             </div>
 
             <div className="modal-body">
+              {appliedJobIds.has(viewingJob.jobId) && (
+                <div style={{
+                  backgroundColor: "#ecfdf5",
+                  border: "1px solid #10b981",
+                  color: "#065f46",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  marginBottom: "1.2rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px"
+                }}>
+                  <span style={{ fontSize: "1.2rem", fontWeight: "bold" }}>✓</span>
+                  <div>
+                    <div style={{ fontWeight: 600 }}>Application Submitted!</div>
+                    <div style={{ fontSize: "0.85rem", color: "#047857" }}>
+                      Your application has been received for {viewingJob.title}.
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="modal-grid">
                 <div className="modal-info-card">
                   <span className="modal-info-label">Location</span>

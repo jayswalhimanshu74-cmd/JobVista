@@ -39,7 +39,19 @@ public class UserServiceImplementation implements UserService {
     public UserResponseDTO registerUser(UserRequestDTO dto) {
 
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            User existing = userRepository.findByEmail(dto.getEmail()).get();
+            if (existing.getRole() == Role.ADMIN) {
+                throw new RuntimeException("Email already exists");
+            }
+            existing.setName(dto.getName());
+            existing.setRole(dto.getRole());
+            if (dto.getMobileNumber() != null) {
+                existing.setMobileNumber(dto.getMobileNumber());
+            }
+            existing.setPassword(passwordEncoder.encode(dto.getPassword()));
+            existing.setVerificationToken(java.util.UUID.randomUUID().toString());
+            User savedUser = userRepository.save(existing);
+            return UserMapper.toResponse(savedUser);
         }
         User user = UserMapper.toEntity(dto);
         user.setPassword(passwordEncoder.encode(dto.getPassword()));

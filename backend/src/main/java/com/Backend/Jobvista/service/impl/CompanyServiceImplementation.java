@@ -35,10 +35,21 @@
 
             // 2. Check if already company
             if (companyRepository.existsByUser(user)) {
-                throw new RuntimeException("Company already exists for this user");
+                Company existing = companyRepository.findByUser(user).orElse(null);
+                if (existing != null) {
+                    if (dto.getCompanyName() != null) existing.setCompanyName(dto.getCompanyName());
+                    if (dto.getCompanyEmail() != null) existing.setCompanyEmail(dto.getCompanyEmail());
+                    if (dto.getLocation() != null) existing.setLocation(dto.getLocation());
+                    if (dto.getCompanyWebsite() != null) existing.setCompanyWebsite(dto.getCompanyWebsite());
+                    if (dto.getDescription() != null) existing.setDescription(dto.getDescription());
+                    if (dto.getLogoUrl() != null) existing.setLogoUrl(dto.getLogoUrl());
+                    user.setRole(Role.COMPANY);
+                    userRepository.save(user);
+                    return CompanyMapper.toResponse(companyRepository.save(existing));
+                }
             }
             // 3. Create company
-                Company company = CompanyMapper.toEntity(dto, user);
+            Company company = CompanyMapper.toEntity(dto, user);
             Company savedCompany = companyRepository.save(company);
 
             // 4. 🔥 UPGRADE ROLE

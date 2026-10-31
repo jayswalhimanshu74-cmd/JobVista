@@ -11,7 +11,7 @@ import {
 const JobDetails = () => {
     const { jobId } = useParams();
     const navigate = useNavigate();
-    const { user, loggedIn } = useContext(AuthContext);
+    const { user, loggedIn, setAppliedJobs } = useContext(AuthContext);
 
     const [job, setJob] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -31,7 +31,7 @@ const JobDetails = () => {
                 setLoading(true);
                 const res = await axiosInstance.get(`/job/${jobId}`);
                 setJob(res.data);
-                setSaved(res.data.saved || false);
+                setSaved(res.data.saved || res.data.isSaved || false);
             } catch (err) {
                 console.error("Failed to fetch job", err);
                 showToast("Failed to load job details", "error");
@@ -42,23 +42,63 @@ const JobDetails = () => {
         if (jobId) fetchJob();
     }, [jobId]);
 
+    // Check if the current user has already applied to this job
+    useEffect(() => {
+        const checkApplicationStatus = async () => {
+            const token = localStorage.getItem("accessToken");
+            if (!token) return;
+            try {
+                const res = await axiosInstance.get("/application/me", { params: { page: 0, size: 50 } });
+                const apps = res.data?.content || res.data || [];
+                if (Array.isArray(apps)) {
+                    const hasApplied = apps.some(app => String(app.jobId) === String(jobId) || String(app.job?.jobId) === String(jobId));
+                    if (hasApplied) {
+                        setApplied(true);
+                    }
+                }
+            } catch (err) {
+                // Guest or error
+            }
+        };
+        if (jobId) checkApplicationStatus();
+    }, [jobId]);
+
     const handleApply = async () => {
-        if (!loggedIn) { navigate("/login"); return; }
+        const token = localStorage.getItem("accessToken");
+        if (!loggedIn && !token) { 
+            navigate("/login", { state: { from: { pathname: `/jobs/${jobId}` } } }); 
+            return; 
+        }
         try {
             setApplying(true);
             await axiosInstance.post(`/application/apply/${jobId}`);
             setApplied(true);
-            showToast("Application submitted successfully!");
+            if (setAppliedJobs) {
+                setAppliedJobs(prev => new Set([...prev, jobId]));
+            }
+            showToast("Application submitted successfully!", "success");
         } catch (err) {
-            const msg = err.response?.data?.message || "Failed to apply";
-            showToast(msg, "error");
+            if (err.response?.status === 409) {
+                setApplied(true);
+                if (setAppliedJobs) {
+                    setAppliedJobs(prev => new Set([...prev, jobId]));
+                }
+                showToast("You have already applied for this job!", "info");
+            } else {
+                const msg = err.response?.data?.message || err.response?.data?.error || "Failed to apply";
+                showToast(msg, "error");
+            }
         } finally {
             setApplying(false);
         }
     };
 
     const handleSave = async () => {
-        if (!loggedIn) { navigate("/login"); return; }
+        const token = localStorage.getItem("accessToken");
+        if (!loggedIn && !token) { 
+            navigate("/login", { state: { from: { pathname: `/jobs/${jobId}` } } }); 
+            return; 
+        }
         try {
             if (saved) {
                 await axiosInstance.delete(`/saved-jobs/${jobId}`);
@@ -110,6 +150,48 @@ const JobDetails = () => {
             }}>
                 <ArrowLeft size={16} /> Back to Jobs
             </button>
+
+            {/* Application Success Confirmation */}
+            {applied && (
+                <div className="application-success-banner" style={{
+                    backgroundColor: "#ecfdf5",
+                    border: "1px solid #10b981",
+                    color: "#065f46",
+                    padding: "16px 20px",
+                    borderRadius: "10px",
+                    marginBottom: "1.5rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    boxShadow: "0 2px 8px rgba(16, 185, 129, 0.12)"
+                }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <span style={{ fontSize: "1.5rem", fontWeight: "bold" }}>✓</span>
+                        <div>
+                            <strong style={{ fontSize: "1.05rem", display: "block" }}>Application Submitted Successfully!</strong>
+                            <p style={{ margin: "4px 0 0", fontSize: "0.875rem", color: "#047857" }}>
+                                Your application has been received. You can review and track your application status in your profile.
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => navigate("/profile")}
+                        style={{
+                            backgroundColor: "#059669",
+                            color: "#fff",
+                            border: "none",
+                            padding: "8px 18px",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            fontWeight: 600,
+                            fontSize: "0.875rem",
+                            whiteSpace: "nowrap"
+                        }}
+                    >
+                        View in Profile
+                    </button>
+                </div>
+            )}
 
             {/* Header Card */}
             <div className="job-details-card card">

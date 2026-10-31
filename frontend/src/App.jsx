@@ -8,6 +8,7 @@ import Admin from "./pages/user/Admin";
 import Companies from "./pages/user/Companies";
 import Home from "./pages/user/Home";
 import Jobs from "./pages/user/Jobs";
+import JobDetails from "./pages/user/JobDetails";
 import Login from "./pages/user/Login";
 import Profile from "./pages/user/Profile";
 import Resume from "./pages/user/Resume";
@@ -37,6 +38,8 @@ function App() {
 
 
           <Route path="/jobs" element={<ErrorBoundary><Jobs /></ErrorBoundary>} />
+          <Route path="/jobs/:jobId" element={<ErrorBoundary><JobDetails /></ErrorBoundary>} />
+          <Route path="/job/:jobId" element={<ErrorBoundary><JobDetails /></ErrorBoundary>} />
 
           <Route path="/companies" element={<ErrorBoundary><Companies /></ErrorBoundary>} />
 

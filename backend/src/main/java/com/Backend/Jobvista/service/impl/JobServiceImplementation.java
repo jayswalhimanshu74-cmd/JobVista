@@ -26,7 +26,6 @@ import java.util.*;
 @Transactional(readOnly = true)
 public class JobServiceImplementation implements JobService {
 
-
     private final JobRepository jobRepository;
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
@@ -37,9 +36,9 @@ public class JobServiceImplementation implements JobService {
     private final com.Backend.Jobvista.service.UserActivityService userActivityService;
     private final com.Backend.Jobvista.service.JobApplicationService jobApplicationService;
 
-
     public Page<JobResponseDTO> getAllJobs(int page, int size, String email) {
-        Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by("postedAt").descending());
+        Pageable pageable = PageRequest.of(page, size,
+                org.springframework.data.domain.Sort.by("postedAt").descending());
         Page<Job> jobPage = jobRepository.findAll(pageable);
 
         if (email == null) {
@@ -78,20 +77,20 @@ public class JobServiceImplementation implements JobService {
         Job job = jobRepository.findByJobId(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
 
-        //  2. Get User
+        // 2. Get User
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        //  3. Get Company
+        // 3. Get Company
         Company company = companyRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Company not found"));
 
-        //  4. Authorization check
+        // 4. Authorization check
         if (!job.getCompany().getId().equals(company.getId())) {
             throw new RuntimeException("You are not authorized to update this job");
         }
 
-        //  5. Update fields (only if not null)
+        // 5. Update fields (only if not null)
         if (dto.getTitle() != null) {
             job.setTitle(dto.getTitle());
         }
@@ -138,18 +137,19 @@ public class JobServiceImplementation implements JobService {
     @Override
     public JobResponseDTO getJobByJobId(UUID jobId, String email) {
 
+        Job job = jobRepository.findByJobId(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
 
-            Job job = jobRepository.findByJobId(jobId)
-                    .orElseThrow(() -> new RuntimeException("Job not found"));
+        if (email != null) {
+            userRepository.findByEmail(email).ifPresent(user -> {
+                if (user.getRole() == Role.USER) {
+                    // 🔥 TRACK VIEW ASYNC (only candidates track recently viewed jobs)
+                    userActivityService.trackJobView(user, job);
+                }
+            });
+        }
 
-            User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            // 🔥 TRACK VIEW ASYNC
-            userActivityService.trackJobView(user, job);
-
-            return JobMapper.toResponse(job);
-
+        return JobMapper.toResponse(job);
     }
 
     @Transactional
@@ -192,8 +192,7 @@ public class JobServiceImplementation implements JobService {
             UUID companyId,
             int page,
             int size,
-            String sortBy
-    ) {
+            String sortBy) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).descending());
 
         if (keyword != null && companyId != null) {
@@ -251,8 +250,7 @@ public class JobServiceImplementation implements JobService {
                         keyword,
                         keyword,
                         keyword,
-                        pageable
-                );
+                        pageable);
     }
 
     @Override
@@ -277,19 +275,15 @@ public class JobServiceImplementation implements JobService {
         List<Job> jobs = jobRepository.findRelevantJobs(
                 primarySkill,
                 location,
-                experience
-        );
+                experience);
 
         return jobs.stream()
                 .map(job -> {
                     int score = 0;
 
-
-                    //Skill match
+                    // Skill match
                     int skillScore = 0;
                     if (job.getDescription() != null && skills != null) {
-
-
 
                         for (String skill : skillList) {
                             if (job.getDescription().toLowerCase().contains(skill.trim())) {
@@ -327,28 +321,25 @@ public class JobServiceImplementation implements JobService {
                         }
                     }
                     // 🔹 Experience match (simple logic)
-                    if ( job.getExperienceRequired() != null && job.getExperienceRequired() <= experience) {
+                    if (job.getExperienceRequired() != null && job.getExperienceRequired() <= experience) {
                         score += 2;
                     }
 
                     return Map.entry(job, score);
 
                 })
-                .filter(entry->entry.getValue()>0)
+                .filter(entry -> entry.getValue() > 0)
                 .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
                 .skip(skip)
                 .limit(size)
-                .map(entry->JobMapper.toResponse(entry.getKey()))
+                .map(entry -> JobMapper.toResponse(entry.getKey()))
                 .toList();
     }
 
-
-    @Cacheable(
-            value = "jobs",
-            key = "#keyword + '-' + #location + '-' + #minSalary + '-' + #maxSalary + '-' + #page + '-' + #size"
-    )
+    @Cacheable(value = "jobs", key = "#keyword + '-' + #location + '-' + #minSalary + '-' + #maxSalary + '-' + #page + '-' + #size")
     @Override
-    public Page<JobResponseDTO> searchJobs(String keyword, String location, Integer minSalary, Integer maxSalary, int page, int size) {
+    public Page<JobResponseDTO> searchJobs(String keyword, String location, Integer minSalary, Integer maxSalary,
+            int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
@@ -357,7 +348,7 @@ public class JobServiceImplementation implements JobService {
                 .and(JobSpecification.hasLocation(location))
                 .and(JobSpecification.hasSalary(minSalary, maxSalary));
 
-        Page<Job> jobs =  jobRepository.findAll(spec, pageable);
+        Page<Job> jobs = jobRepository.findAll(spec, pageable);
 
         List<JobResponseDTO> dtoList = jobs.getContent()
                 .stream()
@@ -367,8 +358,7 @@ public class JobServiceImplementation implements JobService {
         return new org.springframework.data.domain.PageImpl<>(
                 dtoList,
                 pageable,
-                jobs.getTotalElements()
-        );
+                jobs.getTotalElements());
     }
 
     @Transactional
@@ -381,8 +371,7 @@ public class JobServiceImplementation implements JobService {
                     .orElseGet(() -> companyRepository.save(
                             Company.builder()
                                     .companyName(companyName)
-                                    .build()
-                    ));
+                                    .build()));
         }
 
         Job job = Job.builder()
@@ -406,8 +395,7 @@ public class JobServiceImplementation implements JobService {
                 .companyName(
                         Optional.ofNullable(job.getCompany())
                                 .map(Company::getCompanyName)
-                                .orElse(null)
-                )
+                                .orElse(null))
                 .isSaved(false).build();
     }
 
@@ -438,12 +426,10 @@ public class JobServiceImplementation implements JobService {
         eventPublisher.publishEvent(new com.Backend.Jobvista.event.ApplicationEvent(
                 null, null, response.getTitle(), null,
                 com.Backend.Jobvista.event.ApplicationEvent.EventType.JOB_CREATED,
-                response
-        ));
+                response));
 
         return response;
     }
-
 
     @Override
     public List<JobResponseDTO> getRecentJobs(String email) {

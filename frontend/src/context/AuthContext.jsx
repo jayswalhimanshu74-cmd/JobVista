@@ -7,33 +7,67 @@ import { getAccessToken, setAccessToken } from "../utills/tokenStore";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
+  const [loggedIn, setLoggedIn] = useState(() => isAuthenticated());
+  const [user, setUser] = useState(() => getUser());
   const [appliedJobs, setAppliedJobs] = useState(new Set());
-
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     const initAuth = async () => {
-      try {
-        const res = await axiosInstance.post("/auth/refresh", {});
-        const token = res.data.accessToken;
-        setAccessToken(token);
-        setLoggedIn(true);
-        
-        const role = await fetchUserProfile();
-        if (role === "USER" || role === "ROLE_USER") {
-          await fetchAppliedJobs();
+      const token = getAccessToken();
+      if (token) {
+        // User already has an access token in storage; refresh profile in background
+        try {
+          const res = await axiosInstance.get("/users/me");
+          if (isMounted && res.data) {
+            setUser(res.data);
+            localStorage.setItem("user", JSON.stringify(res.data));
+            const role = res.data.role;
+            if (role === "USER" || role === "ROLE_USER") {
+              fetchAppliedJobs(res.data);
+            }
+          }
+        } catch (err) {
+          // If token expired/invalid, clear it gracefully
+          if (err.response?.status === 401) {
+            setAccessToken(null);
+            localStorage.removeItem("user");
+            if (isMounted) {
+              setLoggedIn(false);
+              setUser(null);
+            }
+          }
         }
-      } catch (err) {
-        console.log("No active session or silent refresh failed.");
-        setLoggedIn(false);
-        setUser(null);
-      } finally {
-        setLoading(false);
+      } else {
+        // No local token; attempt silent cookie refresh non-blockingly
+        try {
+          const res = await axiosInstance.post("/auth/refresh", {});
+          if (isMounted && res.data?.accessToken) {
+            setAccessToken(res.data.accessToken);
+            setLoggedIn(true);
+            const userRes = await axiosInstance.get("/users/me");
+            if (isMounted && userRes.data) {
+              setUser(userRes.data);
+              localStorage.setItem("user", JSON.stringify(userRes.data));
+              const role = userRes.data.role;
+              if (role === "USER" || role === "ROLE_USER") {
+                fetchAppliedJobs(userRes.data);
+              }
+            }
+          }
+        } catch {
+          // Expected for guest visitors; no action required
+        }
       }
     };
+
     initAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const fetchUserProfile = async () => {
@@ -42,7 +76,7 @@ export const AuthProvider = ({ children }) => {
       const userData = res.data;
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
-      return userData.role; // Return role for chaining
+      return userData.role;
     } catch (err) {
       console.error("Failed to fetch user profile", err);
       if (err.response?.status === 401) logout();
@@ -50,22 +84,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const fetchAppliedJobs = async () => {
-    // Extra guard: only for candidates
-    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-    const role = user?.role || storedUser.role;
+  const fetchAppliedJobs = async (currentUser) => {
+    const activeUser = currentUser || user || getUser();
+    const role = activeUser?.role;
     
     if (role !== "USER" && role !== "ROLE_USER") return;
 
     try {
       const res = await axiosInstance.get("/application/me", { params: { page: 0, size: 50 } });
-      const content = res?.data?.content || res?.content;
-      if (content) {
-        const ids = new Set(content.map(app => app.jobId));
+      const content = res?.data?.content || res?.content || res?.data;
+      if (Array.isArray(content)) {
+        const ids = new Set(content.map(app => app.jobId || app.job?.jobId));
         setAppliedJobs(ids);
       }
     } catch (err) {
-      console.error("Failed to fetch applied jobs in context", err);
+      console.warn("Failed to fetch applied jobs in context", err);
     }
   };
 
@@ -77,7 +110,7 @@ export const AuthProvider = ({ children }) => {
     
     fetchUserProfile().then(role => {
        if (role === "USER" || role === "ROLE_USER") {
-         fetchAppliedJobs();
+         fetchAppliedJobs(userData);
        }
     });
   };
@@ -96,22 +129,8 @@ export const AuthProvider = ({ children }) => {
     window.location.href = "/login";
   };
 
-  if (loading) {
-    return (
-      <div style={{
-        display: "flex", justifyContent: "center", alignItems: "center",
-        minHeight: "100vh", fontFamily: "sans-serif", background: "#f9fafb"
-      }}>
-        <div style={{ textAlign: "center" }}>
-          <h2 style={{ color: "#2563eb", marginBottom: "8px" }}>JobVista</h2>
-          <p style={{ color: "#6b7280" }}>Loading your session...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <AuthContext.Provider value={{ loggedIn, setLoggedIn, user, setUser, login, logout, appliedJobs, setAppliedJobs }}>
+    <AuthContext.Provider value={{ loggedIn, setLoggedIn, user, setUser, login, logout, appliedJobs, setAppliedJobs, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,13 +1,14 @@
-import React, { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useContext, useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../../styles/login.css";
 import authService from "../../api/authService";
 import { AuthContext } from "../../context/AuthContext";
 
 function Login() {
 
-   const { login } = useContext(AuthContext);
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -20,6 +21,12 @@ function Login() {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
+
+  useEffect(() => {
+    if (location.state?.message) {
+      showToast(location.state.message, "success");
+    }
+  }, [location]);
 
   const handleChange = (e) => {
     setFormData({
@@ -40,15 +47,25 @@ function Login() {
         const me = await authService.getCurrentUser();
         login(data.accessToken, me);
         localStorage.setItem("user", JSON.stringify(me));
+        
+        const returnUrl = location.state?.from?.pathname;
+        if (returnUrl) {
+          navigate(returnUrl);
+          return;
+        }
+
         // Role-based redirect
-        if (me.role === "COMPANY") {
+        if (me.role === "ADMIN") {
+          localStorage.setItem("adminLoggedIn", "true");
+          navigate("/admin");
+        } else if (me.role === "COMPANY") {
           navigate("/company-dashboard");
         } else {
-          navigate("/");
+          navigate("/jobs");
         }
       } catch {
         login(data.accessToken, { email: formData.email });
-        navigate("/");
+        navigate("/jobs");
       }
     } catch (err) {
       console.error("Login failed", err);
@@ -75,7 +92,7 @@ function Login() {
       <div className="login-card">
         <h2>Welcome Back</h2>
         <p className="login-subtitle">Login to your account</p>
-        
+
         {error && <div className="error-message" style={{ color: "red", marginBottom: "1rem", fontSize: "0.9rem" }}>{error}</div>}
 
         <form onSubmit={handleSubmit}>

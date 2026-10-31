@@ -69,7 +69,7 @@ public class UserController {
     // =========================
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponseDTO>> getAllUsers()
             throws UserNotFoundException {
 
@@ -77,7 +77,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDTO> getUserById(
             @PathVariable Long id)
             throws UserNotFoundException {

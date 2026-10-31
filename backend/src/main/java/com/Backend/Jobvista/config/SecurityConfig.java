@@ -26,12 +26,16 @@ import java.util.List;
 
 @EnableWebSecurity
 @Configuration
-@AllArgsConstructor
 @EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
     private final RateLimitFilter rateLimitFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtFilter, RateLimitFilter rateLimitFilter) {
+        this.jwtFilter = jwtFilter;
+        this.rateLimitFilter = rateLimitFilter;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -45,20 +49,23 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/public/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/uplads/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         // Public job browsing
                         .requestMatchers(HttpMethod.GET, "/api/v1/job/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/jobs/**").permitAll()
                         // Public company browsing
                         .requestMatchers(HttpMethod.GET, "/api/v1/company/**").permitAll()
+                        // Admin-only endpoints
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         // Everything else requires authentication
+
                         .requestMatchers("/api/v1/application/**").authenticated()
                         .requestMatchers("/api/v1/jobSeeker/**").authenticated()
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/notifications/**").authenticated()
                         .anyRequest().authenticated())
-                  .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
-                  .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -87,8 +94,7 @@ public class SecurityConfig {
                 "https://www.jobvista.com",
                 "https://jobvista-pi.vercel.app",
                 "https://jobvista-git-main-jayswalhimanshu74-4107s-projects.vercel.app",
-                "https://jobvista-*-jayswalhimanshu74-4107s-projects.vercel.app"
-            ));
+                "https://jobvista-*-jayswalhimanshu74-4107s-projects.vercel.app"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
