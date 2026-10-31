@@ -4,8 +4,10 @@ import com.Backend.Jobvista.entity.*;
 import com.Backend.Jobvista.repository.CompanyRepository;
 import com.Backend.Jobvista.repository.JobRepository;
 import com.Backend.Jobvista.repository.UserRepository;
-import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
@@ -21,26 +23,40 @@ public class AdminSeeder implements CommandLineRunner {
     private final CompanyRepository companyRepository;
     private final JobRepository jobRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Environment environment;
+
+    @Value("${ADMIN_PASSWORD:}")
+    private String adminPassword;
+
     private static final Logger log = LoggerFactory.getLogger(AdminSeeder.class);
 
-    public AdminSeeder(UserRepository userRepository, CompanyRepository companyRepository, JobRepository jobRepository, PasswordEncoder passwordEncoder) {
+    public AdminSeeder(UserRepository userRepository,
+                       CompanyRepository companyRepository,
+                       JobRepository jobRepository,
+                       PasswordEncoder passwordEncoder,
+                       Environment environment) {
         this.userRepository = userRepository;
         this.companyRepository = companyRepository;
         this.jobRepository = jobRepository;
         this.passwordEncoder = passwordEncoder;
+        this.environment = environment;
     }
 
     @Override
     public void run(String... args) {
         seedAdmin();
-        seedTestUsers();
+        if (environment.acceptsProfiles(Profiles.of("local"))) {
+            seedTestUsers();
+        } else {
+            log.info("Skipping test users and demo data seeding (active profiles do not include 'local')");
+        }
     }
 
     private void seedAdmin() {
         String adminEmail = "admin@jobvista.com";
-        String adminPassword = System.getenv("ADMIN_PASSWORD");
-        if (adminPassword == null || adminPassword.isEmpty()) {
-            adminPassword = System.getProperty("ADMIN_PASSWORD", "JobVista6051");
+        if (adminPassword == null || adminPassword.isBlank()) {
+            log.warn("ADMIN_PASSWORD is not set or blank; skipping admin user seeding/syncing.");
+            return;
         }
 
         if (userRepository.findByEmail(adminEmail).isPresent()) {

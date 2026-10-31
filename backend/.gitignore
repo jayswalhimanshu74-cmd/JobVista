@@ -38,3 +38,7 @@ build/
 
 .env
 
+
+# Local profile configuration
+application-local.properties
+!application-local.properties.example

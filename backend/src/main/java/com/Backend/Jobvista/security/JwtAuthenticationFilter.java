@@ -59,7 +59,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (blackListedTokenService.isBlacklisted(token)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Token is blacklisted\", \"status\": 401}");
+            response.getWriter()
+                    .write("{\"error\": \"Unauthorized\", \"message\": \"Token is blacklisted\", \"status\": 401}");
             return;
         }
 
@@ -75,8 +76,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                             email,
                             "", // Password not needed for authenticated context
-                            java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role))
-                    );
+                            java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                    "ROLE_" + role)));
 
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
@@ -90,7 +91,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            log.warn("Token expired: {}", e.getMessage());            // We don't return 401 here anymore. We let the request continue as anonymous.
+            log.warn("Token expired: {}", e.getMessage()); // We don't return 401 here anymore. We let the request
+                                                           // continue as anonymous.
             // Spring Security will return 403 if the endpoint is protected.
             // If the endpoint is public (like Home), it will now work.
         } catch (io.jsonwebtoken.JwtException e) {
@@ -98,5 +100,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         filterChain.doFilter(request, response);
     }
-}
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return request.getServletPath().equals("/ping");
+    }
+}
