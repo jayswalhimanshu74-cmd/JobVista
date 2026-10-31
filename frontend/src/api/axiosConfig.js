@@ -6,7 +6,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://jobvista-psro
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
-  timeout: 10000,
+  timeout: 60000,
 });
 
 // Attach access token & Guard protected routes
@@ -72,7 +72,7 @@ axiosInstance.interceptors.response.use(
       !originalRequest._retry
     ) {
       const token = getAccessToken();
-      
+
       // If no token exists, don't try to refresh (guest mode or already logged out)
       if (!token) {
         return Promise.reject(error);
@@ -103,11 +103,11 @@ axiosInstance.interceptors.response.use(
         // Redirect to login if not already on a public page
         const currentPath = window.location.pathname;
         const publicPaths = ["/", "/login", "/signup", "/jobs", "/companies", "/about"];
-        
+
         if (!publicPaths.includes(currentPath) && currentPath !== "/login") {
           window.location.href = "/login?expired=true";
         }
-        
+
         return Promise.reject(err);
       }
     }
