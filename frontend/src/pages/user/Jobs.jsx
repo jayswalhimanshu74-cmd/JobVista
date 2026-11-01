@@ -124,11 +124,11 @@ const Jobs = () => {
     try {
       setApplyingJobId(job.jobId);
       await jobService.applyJob(job.jobId);
-      
+
       // Mark as applied locally
       setAppliedJobIds(prev => new Set([...prev, job.jobId]));
       showToast(`🎉 Successfully applied to "${job.title}"!`, "success");
-      
+
       // Keep modal open so the candidate can see the confirmation step and updated CTA
     } catch (error) {
       console.error("Apply error:", error);
@@ -168,7 +168,7 @@ const Jobs = () => {
     try {
       setWithdrawingJobId(job.jobId);
       await jobService.withdrawJob(job.jobId);
-      
+
       // Remove from applied locally
       setAppliedJobIds(prev => {
         const next = new Set(prev);
@@ -176,7 +176,7 @@ const Jobs = () => {
         return next;
       });
       showToast("Application withdrawn successfully", "info");
-      
+
       if (viewingJob?.jobId === job.jobId) {
         setViewingJob(null);
       }
@@ -221,9 +221,9 @@ const Jobs = () => {
       return { text: "Revoking...", disabled: true, className: "apply-btn withdrawing" };
     }
     if (appliedJobIds.has(job.jobId)) {
-      return { 
-        text: "Withdraw", 
-        disabled: false, 
+      return {
+        text: "Withdraw",
+        disabled: false,
         className: "apply-btn applied withdraw-mode",
         onClick: (e) => {
           e.stopPropagation();
@@ -234,9 +234,9 @@ const Jobs = () => {
     if (applyingJobId === job.jobId) {
       return { text: "Applying...", disabled: true, className: "apply-btn applying" };
     }
-    return { 
-      text: "Apply Now", 
-      disabled: false, 
+    return {
+      text: "Apply Now",
+      disabled: false,
       className: "apply-btn",
       onClick: (e) => {
         e.stopPropagation();
@@ -306,7 +306,7 @@ const Jobs = () => {
           <span className="search-icon">🔍</span>
           <input
             type="text"
-            placeholder="Search jobs by title, company, location or keyword..."
+            placeholder="Searching more jobs…"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             className="job-search-input"
@@ -354,9 +354,9 @@ const Jobs = () => {
                 <div className="company-info-row">
                   {job.companyLogo || job.logoUrl ? (
                     <div className="company-logo-container mini">
-                      <img 
-                        src={job.companyLogo || job.logoUrl} 
-                        alt={job.companyName} 
+                      <img
+                        src={job.companyLogo || job.logoUrl}
+                        alt={job.companyName}
                         className="company-logo-img"
                         onError={(e) => {
                           e.target.onerror = null;
@@ -391,7 +391,7 @@ const Jobs = () => {
                   <span className="job-meta-item">📍 {job.location || "Remote"}</span>
                   <span className="job-meta-item salary">
                     💰 {job.salaryOrStipend || job.salary || "Not disclosed"}
-                  </span> 
+                  </span>
                 </div>
 
                 {job.requiredSkills && (
@@ -465,14 +465,14 @@ const Jobs = () => {
         <div className="modal-overlay" onClick={() => setViewingJob(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setViewingJob(null)}>✕</button>
-            
+
             <div className="modal-header">
               <div className="modal-logo-section">
                 {viewingJob.companyLogo || viewingJob.logoUrl ? (
-                  <img src={viewingJob.companyLogo || viewingJob.logoUrl} alt="" className="modal-company-logo" 
-                       onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}/>
+                  <img src={viewingJob.companyLogo || viewingJob.logoUrl} alt="" className="modal-company-logo"
+                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
                 ) : null}
-                <span className="modal-letter-avatar" style={{display: viewingJob.companyLogo || viewingJob.logoUrl ? 'none' : 'flex'}}>
+                <span className="modal-letter-avatar" style={{ display: viewingJob.companyLogo || viewingJob.logoUrl ? 'none' : 'flex' }}>
                   {(viewingJob.companyName || "J")[0]}
                 </span>
               </div>
@@ -564,7 +564,7 @@ const Jobs = () => {
                     className={applyState.className}
                     onClick={applyState.onClick || (() => handleApplyClick(viewingJob))}
                     disabled={applyState.disabled}
-                    style={{ 
+                    style={{
                       minWidth: "200px",
                       padding: "12px 30px",
                       fontSize: "1rem"
@@ -579,7 +579,7 @@ const Jobs = () => {
         </div>
       )}
     </div>
-    
+
   );
 };
 
