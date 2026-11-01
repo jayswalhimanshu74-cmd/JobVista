@@ -34,34 +34,48 @@ public class JobEnrichmentUtil {
 
         return found.isEmpty() ? "Not specified" : String.join(", ", found);
     }
+
     public static String extractExperience(String description) {
-        if (description == null) return "0";
-        Pattern pattern = Pattern.compile("(\\d+)\\+?\\s?years?", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(description);
-        if (matcher.find()) {
-            return matcher.group(1).replaceAll("[^0-9]", "");
-        }
-        return "0";
+        return String.valueOf(parseExperience(description));
     }
 
+    public static int parseExperience(String description) {
+        if (description == null || description.isBlank()) return 0;
+        try {
+            Pattern pattern = Pattern.compile("(\\d+)\\+?\\s?years?", Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(description);
+            if (matcher.find()) {
+                String digits = matcher.group(1).replaceAll("[^0-9]", "");
+                if (!digits.isEmpty()) {
+                    int val = Integer.parseInt(digits);
+                    return Math.min(Math.max(val, 0), 50);
+                }
+            }
+        } catch (Exception e) {
+            // fallback to default
+        }
+        return 0;
+    }
 
     public static JobType detectJobType(String title) {
+        if (title == null) return JobType.JOB;
         String lower = title.toLowerCase();
 
         if (lower.contains("intern")) return JobType.INTERNSHIP;
         if (lower.contains("manager")) return JobType.MANAGER;
-        if(lower.contains("job")) return  JobType.JOB;
+        if (lower.contains("job")) return JobType.JOB;
         return JobType.JOB;
     }
 
-    public static EmploymentType detectEmploymentType(String description){
+    public static EmploymentType detectEmploymentType(String description) {
+        if (description == null) return EmploymentType.FULL_TIME;
         String lower = description.toLowerCase();
 
-        if (lower.contains("full-time")) return  EmploymentType.FULL_TIME;
-        if (lower.contains("part-time")) return  EmploymentType.PART_TIME;
-        if (lower.contains("remote")) return  EmploymentType.REMOTE;
+        if (lower.contains("full-time")) return EmploymentType.FULL_TIME;
+        if (lower.contains("part-time")) return EmploymentType.PART_TIME;
+        if (lower.contains("remote")) return EmploymentType.REMOTE;
 
-        return  EmploymentType.FULL_TIME;
+        return EmploymentType.FULL_TIME;
     }
 
     public static String formatSalary(Double min, Double max) {
@@ -71,4 +85,9 @@ public class JobEnrichmentUtil {
         return "Not disclosed";
     }
 
+    public static String truncate(String text, int maxLength) {
+        if (text == null) return null;
+        if (text.length() <= maxLength) return text;
+        return text.substring(0, maxLength);
+    }
 }

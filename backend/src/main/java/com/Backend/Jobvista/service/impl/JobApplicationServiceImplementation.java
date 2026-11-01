@@ -174,7 +174,7 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
         if (!isAdmin) {
             Company company = companyRepository.findByUser(user)
                     .orElseThrow(() -> new RuntimeException("Company not found"));
-            if (!application.getJob().getCompany().getId()
+            if (application.getJob().getCompany() == null || !application.getJob().getCompany().getId()
                     .equals(company.getId())) {
                 throw new RuntimeException("Unauthorized");
             }
@@ -244,7 +244,7 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
     }
 
     private void validateCompanyOwnership(Job job, UUID companyId) {
-        if (!job.getCompany().getCompanyId().equals(companyId)) {
+        if (job.getCompany() == null || !job.getCompany().getCompanyId().equals(companyId)) {
             throw new RuntimeException("You are not authorized to access this job");
         }
     }

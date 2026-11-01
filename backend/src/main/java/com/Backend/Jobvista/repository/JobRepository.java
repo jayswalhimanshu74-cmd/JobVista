@@ -23,6 +23,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @EntityGraph(attributePaths = {"company"})
     Page<Job> findAll(Pageable pageable);
     boolean existsByExternalId(String externalId);
+    List<Job> findAllByExternalIdIn(java.util.Collection<String> externalIds);
     // Filter by company
     @EntityGraph(attributePaths = {"company"})
     Page<Job> findByCompany_CompanyId(UUID companyId, Pageable pageable);

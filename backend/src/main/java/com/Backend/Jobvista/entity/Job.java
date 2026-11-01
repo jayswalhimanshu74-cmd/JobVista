@@ -47,13 +47,14 @@ public class Job {
     private Integer experienceRequired;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_Id",nullable = false)
+    @JoinColumn(name = "company_Id", nullable = true)
     private Company company;
 
     private String companyName;
 
     private LocalDateTime postedAt;
-    private  String redirectUrl;
+    @Column(columnDefinition = "TEXT")
+    private String redirectUrl;
 
     private LocalDateTime lastDate;
 

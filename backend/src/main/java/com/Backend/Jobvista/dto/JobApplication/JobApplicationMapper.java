@@ -6,14 +6,17 @@ import com.Backend.Jobvista.entity.JobApplication;
 public class JobApplicationMapper {
     public static JobApplicationResponseDToO toResponse(JobApplication application) {
 
-        String companyName="Confidential";
-        if (application.getJob() != null &&
-                application.getJob().getCompany() != null) {
-
-            companyName = application.getJob()
-                    .getCompany()
-                    .getCompanyName();
+        String companyName = null;
+        if (application.getJob() != null) {
+            companyName = application.getJob().getCompanyName();
+            if (companyName == null && application.getJob().getCompany() != null) {
+                companyName = application.getJob().getCompany().getCompanyName();
+            }
         }
+        if (companyName == null) {
+            companyName = "Confidential";
+        }
+
         return JobApplicationResponseDToO.builder()
                 .applicationId(application.getJobApplicationId())
                 .jobId(application.getJob() != null

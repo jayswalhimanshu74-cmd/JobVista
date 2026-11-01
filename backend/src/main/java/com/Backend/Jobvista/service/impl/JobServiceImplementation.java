@@ -86,7 +86,7 @@ public class JobServiceImplementation implements JobService {
                 .orElseThrow(() -> new RuntimeException("Company not found"));
 
         // 4. Authorization check
-        if (!job.getCompany().getId().equals(company.getId())) {
+        if (job.getCompany() == null || !job.getCompany().getId().equals(company.getId())) {
             throw new RuntimeException("You are not authorized to update this job");
         }
 
@@ -393,9 +393,10 @@ public class JobServiceImplementation implements JobService {
                 .description(job.getDescription())
                 .lastDate(job.getLastDate())
                 .companyName(
-                        Optional.ofNullable(job.getCompany())
-                                .map(Company::getCompanyName)
-                                .orElse(null))
+                        Optional.ofNullable(job.getCompanyName())
+                                .orElseGet(() -> Optional.ofNullable(job.getCompany())
+                                        .map(Company::getCompanyName)
+                                        .orElse("Unknown")))
                 .isSaved(false).build();
     }
 
