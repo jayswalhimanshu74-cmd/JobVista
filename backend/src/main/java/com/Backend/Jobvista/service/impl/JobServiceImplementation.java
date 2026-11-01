@@ -5,10 +5,17 @@ import com.Backend.Jobvista.dto.Job.JobRequestDTO;
 import com.Backend.Jobvista.dto.Job.JobResponseDTO;
 import com.Backend.Jobvista.entity.*;
 import com.Backend.Jobvista.repository.*;
+import com.Backend.Jobvista.service.AdzunaService;
 import com.Backend.Jobvista.service.JobService;
 import com.Backend.Jobvista.specification.JobSpecification;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -17,14 +24,20 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class JobServiceImplementation implements JobService {
+
+    private static final Logger log = LoggerFactory.getLogger(JobServiceImplementation.class);
 
     private final JobRepository jobRepository;
     private final CompanyRepository companyRepository;
@@ -35,6 +48,20 @@ public class JobServiceImplementation implements JobService {
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
     private final com.Backend.Jobvista.service.UserActivityService userActivityService;
     private final com.Backend.Jobvista.service.JobApplicationService jobApplicationService;
+    private final AdzunaService adzunaService;
+    private final CacheManager cacheManager;
+    private final TransactionTemplate transactionTemplate;
+
+    @Value("${adzuna.live-search.enabled:true}")
+    private boolean liveSearchEnabled;
+
+    @Value("${adzuna.live-search.min-results:10}")
+    private int minResults;
+
+    @Value("${adzuna.live-search.cooldown-hours:12}")
+    private int cooldownHours;
+
+    private final Map<String, Instant> cooldownMap = new ConcurrentHashMap<>();
 
     public Page<JobResponseDTO> getAllJobs(int page, int size, String email) {
         Pageable pageable = PageRequest.of(page, size,
@@ -446,7 +473,36 @@ public class JobServiceImplementation implements JobService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public Page<JobResponseDTO> searchJobsPublic(String keyword, int page, int size, String email) {
+        // 1. Initial DB search and mapping executed inside a transaction (protects against LazyInitializationException)
+        Page<JobResponseDTO> results = transactionTemplate.execute(status ->
+                searchFromDb(keyword, page, size, email)
+        );
+
+        // 2. Ignore normalised keywords shorter than 3 characters for live search (DB search still runs)
+        String normalised = normaliseKeyword(keyword);
+        if (liveSearchEnabled && page == 0 && normalised != null && normalised.length() >= 3
+                && (results == null || results.getTotalElements() < minResults)) {
+
+            // Runs outside any transaction - NO DB connection is held while waiting for Adzuna!
+            int saved = tryTriggerLiveSearch(normalised);
+
+            if (saved > 0) {
+                // 3. Re-query and map inside a fresh transaction
+                Page<JobResponseDTO> freshResults = transactionTemplate.execute(status ->
+                        searchFromDb(keyword, page, size, email)
+                );
+                if (freshResults != null) {
+                    results = freshResults;
+                }
+            }
+        }
+
+        return results;
+    }
+
+    private Page<JobResponseDTO> searchFromDb(String keyword, int page, int size, String email) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("postedAt").descending());
         Page<Job> jobPage = jobRepository.searchJobs(keyword, pageable);
 
@@ -476,6 +532,76 @@ public class JobServiceImplementation implements JobService {
             dto.setSaved(savedJobIds.contains(job.getId()));
             return dto;
         });
+    }
+
+    private String normaliseKeyword(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+        String normalised = keyword.trim().toLowerCase().replaceAll("\\s+", " ");
+        if (normalised.isEmpty()) {
+            return null;
+        }
+        if (normalised.length() > 60) {
+            normalised = normalised.substring(0, 60).trim();
+        }
+        return normalised.isEmpty() ? null : normalised;
+    }
+
+    private int tryTriggerLiveSearch(String normalisedKeyword) {
+        try {
+            Instant now = Instant.now();
+
+            if (!cooldownMap.containsKey(normalisedKeyword) && cooldownMap.size() >= 5000) {
+                // Prune expired entries
+                cooldownMap.entrySet().removeIf(entry -> entry.getValue().isBefore(now));
+                if (cooldownMap.size() >= 5000) {
+                    log.warn("Live search cooldown map full (5000 entries). Skipping live fetch for keyword '{}'", normalisedKeyword);
+                    return 0;
+                }
+            }
+
+            if (adzunaService.isDailyCapReached()) {
+                log.info("Live search daily cap reached. Skipping live fetch for keyword '{}'", normalisedKeyword);
+                return 0;
+            }
+
+            // Record cooldown entry BEFORE calling Adzuna with putIfAbsent semantics
+            Instant newExpiry = now.plus(cooldownHours, ChronoUnit.HOURS);
+            boolean[] acquired = new boolean[1];
+            cooldownMap.compute(normalisedKeyword, (k, currentExpiry) -> {
+                if (currentExpiry != null && now.isBefore(currentExpiry)) {
+                    // Already on cooldown or currently in-flight by another concurrent search
+                    acquired[0] = false;
+                    return currentExpiry;
+                }
+                acquired[0] = true;
+                return newExpiry;
+            });
+
+            if (!acquired[0]) {
+                log.debug("Live search cooldown active or already in-flight for keyword '{}'", normalisedKeyword);
+                return 0;
+            }
+
+            int savedCount = adzunaService.syncJobsSync(normalisedKeyword);
+
+            if (savedCount > 0 && cacheManager != null) {
+                try {
+                    Cache cache = cacheManager.getCache("jobs");
+                    if (cache != null) {
+                        cache.clear();
+                    }
+                } catch (Exception ce) {
+                    log.warn("Failed to clear 'jobs' cache after live sync (Redis may be down): {}", ce.getMessage());
+                }
+            }
+
+            return savedCount;
+        } catch (Exception e) {
+            log.warn("Adzuna live search failed for keyword '{}': {}", normalisedKeyword, e.getMessage());
+            return 0;
+        }
     }
 
     @Override

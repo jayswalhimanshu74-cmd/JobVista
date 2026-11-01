@@ -28,6 +28,22 @@ public class AdzunaServiceImplementation implements AdzunaService {
     @Override
     @Async
     public void syncJobs(String keyword) {
+        syncJobsSync(keyword);
+    }
+
+    @Override
+    public boolean isDailyCapReached() {
+        return adzunaClient.isDailyCapReached();
+    }
+
+    @Override
+    public int getDailyCallCount() {
+        return adzunaClient.getDailyCallCount();
+    }
+
+    @Override
+    public int syncJobsSync(String keyword) {
+        long startTime = System.currentTimeMillis();
         log.info("Starting external job sync for keyword: '{}'", keyword);
 
         AdzunaResponse response;
@@ -35,12 +51,14 @@ public class AdzunaServiceImplementation implements AdzunaService {
             response = adzunaClient.searchJobs(keyword, 1);
         } catch (Exception e) {
             log.error("Adzuna sync failed while calling API for keyword '{}': {}", keyword, e.getMessage());
-            return;
+            return 0;
         }
 
         if (response == null || response.getResults() == null || response.getResults().isEmpty()) {
-            log.info("No jobs fetched from Adzuna for keyword: '{}'", keyword);
-            return;
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("Adzuna sync finished for keyword '{}': fetched=0, saved=0, skippedDuplicates=0, failures=0, duration={}ms",
+                    keyword, duration);
+            return 0;
         }
 
         List<AdzunaJob> results = response.getResults();
@@ -144,7 +162,10 @@ public class AdzunaServiceImplementation implements AdzunaService {
             }
         }
 
-        log.info("Adzuna sync finished for keyword '{}': fetched={}, saved={}, skippedDuplicates={}, failures={}",
-                keyword, fetchedCount, savedCount, skippedDuplicates, failures);
+        long duration = System.currentTimeMillis() - startTime;
+        log.info("Adzuna sync finished for keyword '{}': fetched={}, saved={}, skippedDuplicates={}, failures={}, duration={}ms",
+                keyword, fetchedCount, savedCount, skippedDuplicates, failures, duration);
+
+        return savedCount;
     }
 }
