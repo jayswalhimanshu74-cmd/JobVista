@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/layouts/Navbar";
+import { Navigate, useParams } from "react-router-dom";
 import ProtectedAdmin from "./pages/admin/ProtectedAdmin";
 import About from "./pages/user/About";
 import Admin from "./pages/user/Admin";
@@ -16,8 +17,16 @@ import Signup from "./pages/user/Signup";
 import ProtectedRoute from "./pages/user/ProtectedRoute";
 import CompanyDashboard from "./pages/company/CompanyDashboard";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
+import NotFound from "./pages/user/NotFound";
 
 function App() {
+
+  function JobRedirect() {
+    const { jobId } = useParams();
+    return <Navigate to={`/jobs/${jobId}`} replace />;
+  }
+
+
   return (
     <Router>
       <Navbar />
@@ -39,7 +48,7 @@ function App() {
 
           <Route path="/jobs" element={<ErrorBoundary><Jobs /></ErrorBoundary>} />
           <Route path="/jobs/:jobId" element={<ErrorBoundary><JobDetails /></ErrorBoundary>} />
-          <Route path="/job/:jobId" element={<ErrorBoundary><JobDetails /></ErrorBoundary>} />
+          <Route path="/job/:jobId" element={<ErrorBoundary><JobRedirect /></ErrorBoundary>} />
 
           <Route path="/companies" element={<ErrorBoundary><Companies /></ErrorBoundary>} />
 
@@ -58,29 +67,9 @@ function App() {
             <ErrorBoundary>
               <CompanyDashboard />
             </ErrorBoundary></ProtectedRoute>} />
-          
 
-          <Route path="*" element={
-            <div style={{
-              display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center",
-              minHeight: "60vh", textAlign: "center"
-              }}>
-                <h2 style={{ fontSize: "1.5rem", color: "#111", marginBottom: "1rem" }}>
-                  404 — Page Not Found
-                </h2>
-                <p style={{ color: "#6b7280", marginBottom: "1.5rem" }}>
-                  The page you're looking for doesn't exist.
-                </p>
-                <a href="/" style={{
-                  padding: "10px 24px", borderRadius: "8px",
-                  background: "#2563eb", color: "#fff",
-                  textDecoration: "none", fontWeight: 600
-                }}>
-                  Go Home
-                </a>
-              </div>
-            } />
+          <Route path="*" element={<NotFound />} />
+
         </Routes>
       </div>
     </Router>
