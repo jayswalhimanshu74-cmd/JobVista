@@ -298,16 +298,17 @@ function Home() {
               )}
             </div>
 
-            <button className="scroll-btn left" aria-label="Scroll jobs left" onClick={() => scrollRef.current?.scrollBy({ left: -400, behavior: "smooth" })}>
+            <button className="scroll-btn right" aria-label="Scroll jobs right" onClick={() => scrollRef.current?.scrollBy({ left: 400, behavior: "smooth" })}>
               →
             </button>
+
           </div>
         </section>
 
         {/* ── Reliability Pillars ── */}
         <section className="reliability-section">
           <div className="section-header center">
-            <span className="eyebrow">Trust & Security</span>
+            <span className="eyebrow">Built in</span>
             <h2>What's built into JobVista.</h2>
           </div>
           <div className="reliability-grid">
@@ -316,11 +317,11 @@ function Home() {
               <h3>Company Profiles</h3>
               <p>Browse company profiles and see which roles each company is hiring for.</p>
             </div>
-          </div>
-          <div className="rel-card">
-            <div className="rel-icon-wrapper"><Lock size={32} /></div>
-            <h3>Secure Accounts</h3>
-            <p>Accounts use JWT-based authentication, and your resume and applications stay tied to your profile.</p>
+            <div className="rel-card">
+              <div className="rel-icon-wrapper"><Lock size={32} /></div>
+              <h3>Secure Accounts</h3>
+              <p>Accounts use JWT-based authentication, and your resume and applications stay tied to your profile.</p>
+            </div>
             <div className="rel-card">
               <div className="rel-icon-wrapper"><TrendingUp size={32} /></div>
               <h3>Resume Builder</h3>
