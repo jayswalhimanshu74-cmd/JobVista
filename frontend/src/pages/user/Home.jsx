@@ -4,6 +4,7 @@ import { Search, FileText, Rocket, ShieldCheck, Lock, TrendingUp } from "lucide-
 import "../../styles/home.css";
 import axiosInstance from "../../api/axiosConfig";
 import webSocketService from "../../api/webSocketService";
+import { Helmet } from "react-helmet-async";
 
 const categories = [
   {
@@ -52,17 +53,17 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
-  const [homeStats, setHomeStats] = useState({ jobs: "...", companies: "...", users: "...", rate: "95%" });
+  const [homeStats, setHomeStats] = useState({ jobs: "...", companies: "...", users: "..." });
 
   useEffect(() => {
     // Fetch Jobs
-    axiosInstance.get("/jobs/all", { params: { page: 0, size: 10} })
+    axiosInstance.get("/jobs/all", { params: { page: 0, size: 10 } })
       .then(res => setJobs(Array.isArray(res.data.content) ? res.data.content : []))
       .catch(() => setJobs([]))
       .finally(() => setLoading(false));
 
     // Fetch Companies
-    axiosInstance.get("/company/all", { params: { page: 0, size: 10} })
+    axiosInstance.get("/company/all", { params: { page: 0, size: 10 } })
       .then(res => setCompanies(Array.isArray(res.data.content) ? res.data.content : []))
       .catch(() => setCompanies([]));
 
@@ -72,11 +73,10 @@ function Home() {
         setHomeStats({
           jobs: `${res.data.totalJobs || 0}+`,
           companies: `${res.data.totalCompanies || 0}+`,
-          users: `${res.data.totalUsers || 0}+`,
-          rate: "98%"
+          users: `${res.data.totalUsers || 0}+`
         });
       })
-      .catch(() => {});
+      .catch(() => { });
 
     // 🔥 Real-time job updates
     webSocketService.connect(() => {
@@ -93,7 +93,7 @@ function Home() {
       webSocketService.unsubscribe("/topic/jobs");
     };
   }, []);
-  
+
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
@@ -118,7 +118,15 @@ function Home() {
     const term = searchTerm.trim().toLowerCase();
     const category = categories.find((item) => item.name === activeCategory);
 
-    return jobs.filter((job) => {
+    const seen = new Set();
+    const uniqueJobs = jobs.filter((job) => {
+      const key = `${job.title}|${job.companyName || job.company}|${job.location}`.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    return uniqueJobs.filter((job) => {
       const title = (job.title || "").toLowerCase();
       const company = (job.companyName || job.company || "").toLowerCase();
       const location = (job.location || "").toLowerCase();
@@ -138,307 +146,315 @@ function Home() {
   }, [jobs, activeCategory, searchTerm]);
 
   return (
-    <main className="home">
-      <section className="hero">
-        <div className="hero-copy">
-          <span className="eyebrow">Career discovery made effortless</span>
-          <h1>
-            Find your <span>Dream Job</span> faster.
-          </h1>
-          <p>
-            Discover verified jobs, internships, and hiring companies built for
-            modern talent. Search by role, location, or company in a polished,
-            responsive experience.
-          </p>
+    <>
+      <Helmet>
+        <title>JobVista | Job and Internship Portal</title>
+        <meta name="description" content="Full-stack job and internship portal built with React, Spring Boot and PostgreSQL. Browse listings, apply and track applications." />
+        <link rel="canonical" href="https://jobvista-pi.vercel.app/" />
+      </Helmet>
+      <main className="home">
+        <section className="hero">
+          <div className="hero-copy">
+            <span className="eyebrow">Career discovery made effortless</span>
+            <h1>
+              Find your <span>Dream Job</span> faster.
+            </h1>
+            <p>
+              Discover jobs, internships, and hiring companies. Search by role,
+              location, or company and apply from one place.
+            </p>
 
-          <div className="search-bar">
-            <div className="search-input-wrapper">
-              <Search size={18} />
-              <input
-                type="text"
-                placeholder="Search roles, companies, or locations"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-              />
-            </div>
-            <button type="button" className="home-btn secondary" onClick={() => null}>
-              Search
-            </button>
-          </div>
-
-          <div className="hero-actions">
-            <button className="home-btn primary" onClick={handleStart}>
-              Get Started
-            </button>
-            <Link to="/jobs" className="home-btn ghost">
-              Browse Jobs
-            </Link>
-          </div>
-
-          <div className="hero-stats">
-            <div>
-              <strong>{homeStats.jobs}</strong>
-              <span>Jobs</span>
-            </div>
-            <div>
-              <strong>{homeStats.companies}</strong>
-              <span>Companies</span>
-            </div>
-            <div>
-              <strong>{homeStats.rate}</strong>
-              <span>Success Rate</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="hero-panel">
-          <div className="hero-panel-card">
-            <h2>Popular categories</h2>
-            <div className="hero-chip-grid">
+            <div className="search-bar">
+              <div className="search-input-wrapper">
+                <Search size={18} />
+                <input
+                  type="text"
+                  aria-label="Search roles, companies, or locations"
+                  placeholder="Search roles, companies, or locations"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+              </div>
               <button
                 type="button"
-                className={`hero-chip ${activeCategory === "All" ? "selected" : ""}`}
-                onClick={() => setActiveCategory("All")}
+                className="home-btn secondary"
+                onClick={() =>
+                  document.getElementById("latest-jobs")?.scrollIntoView({ behavior: "smooth" })
+                }
               >
-                All
+                Search
               </button>
-              {categories.slice(0, 5).map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  className={`hero-chip ${activeCategory === category.name ? "selected" : ""}`}
-                  onClick={() => setActiveCategory(category.name)}
-                >
-                  {category.image && <img src={category.image} alt="" className="chip-icon" />}
-                  {category.name}
-                </button>
-              ))}
             </div>
-            {activeCategory !== "All" && (
-              <p className="panel-note">Showing {activeCategory} roles.</p>
-            )}
-          </div>
-        </div>
-      </section>
 
-      {/* ── Latest Opportunities ── */}
-      <section className="jobs-home-section">
-        <div className="section-header">
-          <h2 className="section-title">Latest Opportunities</h2>
-          <Link to="/jobs" className="view-all-link">View all jobs →</Link>
-        </div>
-        
-        <div className="jobs-home-scroll-wrapper">
-          <button className="scroll-btn left" onClick={() => scrollRef.current?.scrollBy({ left: -400, behavior: "smooth" })}>
-            ←
-          </button>
-          
-          <div className="jobs-home-scroll-container" ref={scrollRef}>
-            {filteredJobs.length > 0 ? (
-              filteredJobs.map((job) => (
-                <div key={job.jobId} className="job-home-card scroll-item">
-                  <div className="job-home-header">
-                    <div className="job-home-logo-box">
-                      {job.companyLogo || job.logoUrl ? (
-                        <img src={job.companyLogo || job.logoUrl} alt="" />
-                      ) : (
-                        <span>{(job.companyName || "J")[0]}</span>
-                      )}
-                    </div>
-                    <span className="job-home-type">{job.employmentType?.replace(/_/g, " ")}</span>
-                  </div>
+            <div className="hero-actions">
+              <button className="home-btn primary" onClick={handleStart}>
+                Get Started
+              </button>
+              <Link to="/jobs" className="home-btn ghost">
+                Browse Jobs
+              </Link>
+            </div>
 
-                  <div className="job-home-info">
-                    <h3>{job.title}</h3>
-                    <p className="job-home-company">{job.companyName}</p>
-                  </div>
-
-                  <div className="job-home-meta">
-                    <div className="job-home-meta-item">
-                      📍 <span>{job.location || "Remote"}</span>
-                    </div>
-                    <div className="job-home-meta-item">
-                      💰 <span>{job.salaryOrStipend || job.salary || "Not Disclosed"}</span>
-                    </div>
-                  </div>
-
-                  <Link to="/jobs" className="contact-pill" style={{marginTop: 'auto', textAlign: 'center', justifyContent: 'center'}}>
-                    View Details
-                  </Link>
-                </div>
-              ))
-            ) : (
-              <div className="empty-state">
-                <p>
-                  {loading 
-                    ? "Fetching the latest opportunities..." 
-                    : activeCategory !== "All" || searchTerm 
-                      ? `No jobs found matching "${searchTerm || activeCategory}"`
-                      : "No jobs available at the moment."
-                  }
-                </p>
+            <div className="hero-stats">
+              <div>
+                <strong>{homeStats.jobs}</strong>
+                <span>Jobs</span>
               </div>
-            )}
+              <div>
+                <strong>{homeStats.companies}</strong>
+                <span>Companies</span>
+              </div>
+
+            </div>
           </div>
 
-          <button className="scroll-btn right" onClick={() => scrollRef.current?.scrollBy({ left: 400, behavior: "smooth" })}>
-            →
-          </button>
-        </div>
-      </section>
+          <div className="hero-panel">
+            <div className="hero-panel-card">
+              <h2>Popular categories</h2>
+              <div className="hero-chip-grid">
+                <button
+                  type="button"
+                  className={`hero-chip ${activeCategory === "All" ? "selected" : ""}`}
+                  onClick={() => setActiveCategory("All")}
+                >
+                  All
+                </button>
+                {categories.slice(0, 5).map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    className={`hero-chip ${activeCategory === category.name ? "selected" : ""}`}
+                    onClick={() => setActiveCategory(category.name)}
+                  >
+                    {category.image && <img src={category.image} alt="" className="chip-icon" />}
+                    {category.name}
+                  </button>
+                ))}
+              </div>
+              {activeCategory !== "All" && (
+                <p className="panel-note">Showing {activeCategory} roles.</p>
+              )}
+            </div>
+          </div>
+        </section>
 
-      {/* ── Reliability Pillars ── */}
-      <section className="reliability-section">
-        <div className="section-header center">
-          <span className="eyebrow">Trust & Security</span>
-          <h2>Why professionals choose JobVista.</h2>
-        </div>
-        <div className="reliability-grid">
-          <div className="rel-card">
-            <div className="rel-icon-wrapper"><ShieldCheck size={32} /></div>
-            <h3>Verified Employers</h3>
-            <p>Every company profile is manually vetted by our team to ensure you only apply to legitimate, high-quality opportunities.</p>
+        {/* ── Latest Opportunities ── */}
+        <section className="jobs-home-section" id="latest-jobs">
+          <div className="section-header">
+            <h2 className="section-title">Latest Opportunities</h2>
+            <Link to="/jobs" className="view-all-link">View all jobs →</Link>
+          </div>
+
+          <div className="jobs-home-scroll-wrapper">
+            <button className="scroll-btn left" onClick={() => scrollRef.current?.scrollBy({ left: -400, behavior: "smooth" })}>
+              ←
+            </button>
+
+            <div className="jobs-home-scroll-container" ref={scrollRef}>
+              {filteredJobs.length > 0 ? (
+                filteredJobs.map((job) => (
+                  <div key={job.jobId} className="job-home-card scroll-item">
+                    <div className="job-home-header">
+                      <div className="job-home-logo-box">
+                        {job.companyLogo || job.logoUrl ? (
+                          <img src={job.companyLogo || job.logoUrl} alt="" />
+                        ) : (
+                          <span>{(job.companyName || "J")[0]}</span>
+                        )}
+                      </div>
+                      <span className="job-home-type">{job.employmentType?.replace(/_/g, " ")}</span>
+                    </div>
+
+                    <div className="job-home-info">
+                      <h3>{job.title}</h3>
+                      <p className="job-home-company">{job.companyName}</p>
+                    </div>
+
+                    <div className="job-home-meta">
+                      <div className="job-home-meta-item">
+                        📍 <span>{job.location || "Remote"}</span>
+                      </div>
+                      <div className="job-home-meta-item">
+                        💰 <span>{job.salaryOrStipend || job.salary || "Not Disclosed"}</span>
+                      </div>
+                    </div>
+
+                    <Link to={`/jobs/${job.jobId}`} className="contact-pill" style={{ marginTop: 'auto', textAlign: 'center', justifyContent: 'center' }}>
+                      View Details
+                    </Link>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-state">
+                  <p>
+                    {loading
+                      ? "Fetching the latest opportunities..."
+                      : activeCategory !== "All" || searchTerm
+                        ? `No jobs found matching "${searchTerm || activeCategory}"`
+                        : "No jobs available at the moment."
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <button className="scroll-btn left" aria-label="Scroll jobs left" onClick={() => scrollRef.current?.scrollBy({ left: -400, behavior: "smooth" })}>
+              →
+            </button>
+          </div>
+        </section>
+
+        {/* ── Reliability Pillars ── */}
+        <section className="reliability-section">
+          <div className="section-header center">
+            <span className="eyebrow">Trust & Security</span>
+            <h2>What's built into JobVista.</h2>
+          </div>
+          <div className="reliability-grid">
+            <div className="rel-card">
+              <div className="rel-icon-wrapper"><ShieldCheck size={32} /></div>
+              <h3>Company Profiles</h3>
+              <p>Browse company profiles and see which roles each company is hiring for.</p>
+            </div>
           </div>
           <div className="rel-card">
             <div className="rel-icon-wrapper"><Lock size={32} /></div>
-            <h3>Secure Data Vault</h3>
-            <p>Your personal details and resumes are encrypted using industry-standard protocols. We never share your data without consent.</p>
+            <h3>Secure Accounts</h3>
+            <p>Accounts use JWT-based authentication, and your resume and applications stay tied to your profile.</p>
+            <div className="rel-card">
+              <div className="rel-icon-wrapper"><TrendingUp size={32} /></div>
+              <h3>Resume Builder</h3>
+              <p>Beyond job listings, a built-in resume builder helps you prepare your applications.</p>
+            </div>
           </div>
-          <div className="rel-card">
-            <div className="rel-icon-wrapper"><TrendingUp size={32} /></div>
-            <h3>Career-First Approach</h3>
-            <p>Beyond job listings, we provide tools like our Resume Builder to help you present your best self to the world's top employers.</p>
+        </section>
+
+        {/* /* ── Top Companies Section ── */}
+        <section className="top-companies-section">
+          <div className="section-header">
+            <h2 className="section-title">Top Hiring Companies</h2>
+            <Link to="/companies" className="view-all-link">View all companies →</Link>
           </div>
-        </div>
-      </section>
 
-      {/* ── Top Companies Section ── */}
-      {/* <section className="top-companies-section">
-        <div className="section-header">
-          <h2 className="section-title">Top Hiring Companies</h2>
-          <Link to="/companies" className="view-all-link">View all companies →</Link>
-        </div>
+          <div className="jobs-home-scroll-wrapper">
+            <button className="scroll-btn left" onClick={() => companyScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}>
+              ←
+            </button>
 
-        <div className="jobs-home-scroll-wrapper">
-          <button className="scroll-btn left" onClick={() => companyScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}>
-            ←
-          </button>
-          
-          <div className="jobs-home-scroll-container" ref={companyScrollRef}>
-            {companies.map((company) => (
-              <Link to="/companies" key={company.id || company.companyId} className="company-home-card scroll-item-mini">
-                <div className="company-home-logo-box">
-                  {company.logoUrl ? (
-                    <img src={company.logoUrl} alt={company.companyName} 
-                         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}/>
-                  ) : null}
-                  <span className="modal-letter-avatar" style={{display: company.logoUrl ? 'none' : 'flex', width: '100%', height: '100%'}}>
-                    {(company.companyName || "C")[0]}
-                  </span>
+            <div className="jobs-home-scroll-container" ref={companyScrollRef}>
+              {companies.map((company) => (
+                <Link to="/companies" key={company.id || company.companyId} className="company-home-card scroll-item-mini">
+                  <div className="company-home-logo-box">
+                    {company.logoUrl ? (
+                      <img src={company.logoUrl} alt={company.companyName}
+                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                    ) : null}
+                    <span className="modal-letter-avatar" style={{ display: company.logoUrl ? 'none' : 'flex', width: '100%', height: '100%' }}>
+                      {(company.companyName || "C")[0]}
+                    </span>
+                  </div>
+                  <h4>{company.companyName}</h4>
+                  <p>{company.industry || "Technology"}</p>
+                </Link>
+              ))}
+            </div>
+
+            <button className="scroll-btn right" aria-label="Scroll jobs right" onClick={() => scrollRef.current?.scrollBy({ left: 400, behavior: "smooth" })}>
+              →
+            </button>
+
+          </div>
+        </section>
+
+        <section className="categories">
+          <h2 className="section-title">Explore Categories</h2>
+
+          <div className="categories-grid">
+            {categories.map((cat) => (
+              <div key={cat.id} className="category-card">
+                <div className="category-icon">
+                  <img src={cat.image} alt={cat.name} />
                 </div>
-                <h4>{company.companyName}</h4>
-                <p>{company.industry || "Technology"}</p>
-              </Link>
+                <h3>{cat.name}</h3>
+              </div>
             ))}
           </div>
+        </section>
 
-          <button className="scroll-btn right" onClick={() => companyScrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })}>
-            →
-          </button>
-        </div>
-      </section> */}
+        <section className="how-it-works">
+          <h2 className="section-title">How JobVista Works</h2>
+          <p className="section-sub">
+            A simple and fast way to land your dream job without the usual hassle.
+          </p>
 
-       <section className="categories">
-        <h2 className="section-title">Explore Categories</h2>
-
-        <div className="categories-grid">
-          {categories.map((cat) => (
-            <div key={cat.id} className="category-card">
-              <div className="category-icon">
-                <img src={cat.image} alt={cat.name} />
+          <div className="steps">
+            <div className="step">
+              <div className="step-icon">
+                <Search size={40} />
               </div>
-              <h3>{cat.name}</h3>
+              <h3>Discover Opportunities</h3>
+              <p>
+                Explore roles tailored to your skills, interests, and preferred
+                location.
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
 
-      <section className="how-it-works">
-        <h2 className="section-title">How JobVista Works</h2>
-        <p className="section-sub">
-          A simple and fast way to land your dream job without the usual hassle.
-        </p>
-
-        <div className="steps">
-          <div className="step">
-            <div className="step-icon">
-              <Search size={40} />
+            <div className="step">
+              <div className="step-icon">
+                <FileText size={40} />
+              </div>
+              <h3>Apply in Seconds</h3>
+              <p>
+                Submit applications quickly with a smooth, user-friendly process
+                and track your progress with ease.
+              </p>
             </div>
-            <h3>Discover Opportunities</h3>
-            <p>
-              Explore thousands of roles tailored to your skills, interests, and
-              preferred location.
-            </p>
-          </div>
 
-          <div className="step">
-            <div className="step-icon">
-              <FileText size={40} />
+            <div className="step">
+              <div className="step-icon">
+                <Rocket size={40} />
+              </div>
+              <h3>Kickstart Your Career</h3>
+              <p>
+                Apply to listed companies and begin your professional journey with
+                confidence.
+              </p>
             </div>
-            <h3>Apply in Seconds</h3>
-            <p>
-              Submit applications quickly with a smooth, user-friendly process
-              and track your progress with ease.
-            </p>
           </div>
+        </section>
 
-          <div className="step">
-            <div className="step-icon">
-              <Rocket size={40} />
+
+        <section className="stats">
+          <div className="stats-grid">
+            <div className="stat">
+              <h2>{homeStats.jobs}</h2>
+              <p>Jobs Available</p>
             </div>
-            <h3>Kickstart Your Career</h3>
-            <p>
-              Get hired by top companies and begin your professional journey with
-              confidence.
-            </p>
+            <div className="stat">
+              <h2>{homeStats.companies}</h2>
+              <p>Companies</p>
+            </div>
+            <div className="stat">
+              <h2>{homeStats.users}</h2>
+              <p>Registered Users</p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
+        <section className="cta">
+          <h2>Start Your Career Journey Today</h2>
+          <p>Create your free account and apply instantly.</p>
+          <button className="btn primary" onClick={handleStart}>
+            Create Account
+          </button>
+        </section>
 
-      <section className="stats">
-        <div className="stats-grid">
-          <div className="stat">
-            <h2>{homeStats.jobs}</h2>
-            <p>Jobs Available</p>
-          </div>
-          <div className="stat">
-            <h2>{homeStats.companies}</h2>
-            <p>Companies</p>
-          </div>
-          <div className="stat">
-            <h2>{homeStats.users}</h2>
-            <p>Active Users</p>
-          </div>
-          <div className="stat">
-            <h2>{homeStats.rate}</h2>
-            <p>Success Rate</p>
-          </div>
-        </div>
-      </section>
+        <footer className="footer">
+          <p>&copy; {new Date().getFullYear()} JobVista. All rights reserved.</p>
+        </footer>
+      </main>
+    </>
 
-      <section className="cta">
-        <h2>Start Your Career Journey Today</h2>
-        <p>Create your free account and apply instantly.</p>
-        <button className="btn primary" onClick={handleStart}>
-          Create Account
-        </button>
-      </section>
-
-      <footer className="footer">
-        <p> 2025 JobVista. All rights reserved.</p>
-      </footer>
-    </main>
   );
 }
 
