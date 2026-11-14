@@ -23,8 +23,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -184,7 +188,20 @@ public class JobServiceImplementation implements JobService {
     @Override
     public void deleteJob(UUID jobId) {
         Job job = jobRepository.findByJobId(jobId)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found"));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin) {
+            String currentUserEmail = auth != null ? auth.getName() : null;
+            if (job.getCompany() == null || job.getCompany().getUser() == null
+                    || job.getCompany().getUser().getEmail() == null
+                    || !job.getCompany().getUser().getEmail().equals(currentUserEmail)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to delete this job");
+            }
+        }
 
         jobRepository.delete(job);
     }

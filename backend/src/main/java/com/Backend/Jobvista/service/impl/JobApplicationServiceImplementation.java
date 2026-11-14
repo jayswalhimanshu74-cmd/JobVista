@@ -139,7 +139,7 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
 
         @Override
         @Transactional(readOnly = true)
-        @PreAuthorize("hasRole('COMPANY')")
+        @PreAuthorize("hasAnyRole('COMPANY','ADMIN')")
         public Page<JobApplicationResponseDToO> getApplicationsByJob(
                         UUID jobId,
                         ApplicationStatus status,
@@ -148,6 +148,21 @@ public class JobApplicationServiceImplementation implements JobApplicationServic
                 Job job = jobRepository.findByJobId(jobId)
                                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                                                 org.springframework.http.HttpStatus.NOT_FOUND, "Job not found"));
+
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                String currentUserEmail = auth != null ? auth.getName() : null;
+                boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+                if (!isAdmin) {
+                        if (job.getCompany() == null || job.getCompany().getUser() == null
+                                        || job.getCompany().getUser().getEmail() == null
+                                        || !job.getCompany().getUser().getEmail().equals(currentUserEmail)) {
+                                throw new org.springframework.web.server.ResponseStatusException(
+                                                org.springframework.http.HttpStatus.FORBIDDEN, "You do not own this job posting");
+                        }
+                }
+
                 Pageable pageable = PageRequest.of(page, size, Sort.by("appliedAt").descending());
 
                 Page<JobApplication> applications;

@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -353,6 +354,86 @@ public class SecurityRegressionTest {
     @DisplayName("Administrator can download application resume (HTTP 200)")
     void testApplicationResume_Admin_Permitted() throws Exception {
         mockMvc.perform(get("/api/v1/application/" + testApplicationId + "/resume"))
+                .andExpect(status().isOk());
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 7. IDOR: Applicants by Job & Delete Job Ownership Tests
+    // ─────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Anonymous user cannot view applicants by job (HTTP 401/403)")
+    void testApplicantsByJob_Anonymous_Denied() throws Exception {
+        mockMvc.perform(get("/api/v1/application/job/" + existingJobId))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    @WithMockUser(username = "candidate@test.com", roles = "USER")
+    @DisplayName("Candidate cannot view applicants by job (HTTP 403)")
+    void testApplicantsByJob_Candidate_Forbidden() throws Exception {
+        mockMvc.perform(get("/api/v1/application/job/" + existingJobId))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "unrelated_company@test.com", roles = "COMPANY")
+    @DisplayName("Unrelated company cannot view applicants of another company's job (HTTP 403)")
+    void testApplicantsByJob_UnrelatedCompany_Forbidden() throws Exception {
+        mockMvc.perform(get("/api/v1/application/job/" + existingJobId))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Job owning company can view applicants of its job (HTTP 200)")
+    void testApplicantsByJob_OwnerCompany_Permitted() throws Exception {
+        mockMvc.perform(get("/api/v1/application/job/" + existingJobId)
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(companyOwnerEmail).roles("COMPANY")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Anonymous user cannot delete job (HTTP 401/403)")
+    void testDeleteJob_Anonymous_Denied() throws Exception {
+        mockMvc.perform(delete("/api/v1/job/" + existingJobId))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    @WithMockUser(username = "candidate@test.com", roles = "USER")
+    @DisplayName("Candidate cannot delete job (HTTP 403)")
+    void testDeleteJob_Candidate_Forbidden() throws Exception {
+        mockMvc.perform(delete("/api/v1/job/" + existingJobId))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "unrelated_company@test.com", roles = "COMPANY")
+    @DisplayName("Unrelated company cannot delete another company's job (HTTP 403)")
+    void testDeleteJob_UnrelatedCompany_Forbidden() throws Exception {
+        mockMvc.perform(delete("/api/v1/job/" + existingJobId))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Job owning company can delete its own job (HTTP 200)")
+    void testDeleteJob_OwnerCompany_Permitted() throws Exception {
+        UUID jobToDelete = UUID.randomUUID();
+        Job job = Job.builder()
+                .jobId(jobToDelete)
+                .title("Job To Delete")
+                .description("Description")
+                .location("Remote")
+                .requiredSkills("Skills")
+                .experienceRequired(1)
+                .company(companyRepository.findAll().get(0))
+                .companyName("Regression Corp")
+                .postedAt(LocalDateTime.now())
+                .build();
+        jobRepository.save(job);
+
+        mockMvc.perform(delete("/api/v1/job/" + jobToDelete)
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(companyOwnerEmail).roles("COMPANY")))
                 .andExpect(status().isOk());
     }
 

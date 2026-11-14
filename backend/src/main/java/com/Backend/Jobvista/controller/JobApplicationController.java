@@ -62,7 +62,7 @@ public class JobApplicationController {
 
     // Get all applications for a job (company dashboard)
     @GetMapping("/job/{jobId}")
-    @PreAuthorize("hasRole('COMPANY')")
+    @PreAuthorize("hasAnyRole('COMPANY','ADMIN')")
     public Page<JobApplicationResponseDToO> getApplicationsByJob(
             @PathVariable UUID jobId,
             @RequestParam(required = false) ApplicationStatus status,
