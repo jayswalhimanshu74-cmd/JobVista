@@ -1,11 +1,9 @@
 package com.Backend.Jobvista.entity;
 
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import lombok.*;
 
 import java.util.Date;
@@ -19,7 +17,6 @@ import java.util.UUID;
 @Builder
 public class BlackListedToken {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -28,4 +25,3 @@ public class BlackListedToken {
 
     private Date expiryDate;
 }
-

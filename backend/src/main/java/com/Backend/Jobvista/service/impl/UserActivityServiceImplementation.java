@@ -5,7 +5,6 @@ import com.Backend.Jobvista.entity.RecentlyViewedJob;
 import com.Backend.Jobvista.entity.User;
 import com.Backend.Jobvista.repository.RecentlyViewedRepository;
 import com.Backend.Jobvista.service.UserActivityService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 

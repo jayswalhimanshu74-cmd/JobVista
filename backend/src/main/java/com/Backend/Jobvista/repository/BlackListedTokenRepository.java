@@ -6,10 +6,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.UUID;
 
-public  interface BlackListedTokenRepository extends JpaRepository<BlackListedToken, UUID> {
+public interface BlackListedTokenRepository extends JpaRepository<BlackListedToken, UUID> {
 
     boolean existsByToken(String token);
 

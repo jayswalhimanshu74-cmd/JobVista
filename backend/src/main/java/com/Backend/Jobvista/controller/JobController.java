@@ -8,7 +8,6 @@ import com.Backend.Jobvista.service.JobService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,8 +18,9 @@ import com.Backend.Jobvista.utills.PageUtils;
 
 import java.util.List;
 import java.util.UUID;
+
 @RestController
-@RequestMapping({"/api/v1/job", "/api/v1/jobs"})
+@RequestMapping({ "/api/v1/job", "/api/v1/jobs" })
 @RequiredArgsConstructor
 public class JobController {
 
@@ -39,8 +39,9 @@ public class JobController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = (auth != null && auth.isAuthenticated()
                 && !"anonymousUser".equals(auth.getPrincipal()))
-                ? auth.getName() : null;
-        return jobService.getAllJobs(page, size,email);
+                        ? auth.getName()
+                        : null;
+        return jobService.getAllJobs(page, size, email);
     }
 
     // ✅ Anyone (public search)
@@ -55,7 +56,8 @@ public class JobController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = (auth != null && auth.isAuthenticated()
                 && !"anonymousUser".equals(auth.getPrincipal()))
-                ? auth.getName() : null;
+                        ? auth.getName()
+                        : null;
         return jobService.searchJobsPublic(keyword, page, size, email);
     }
 
@@ -65,8 +67,8 @@ public class JobController {
     public ResponseEntity<JobResponseDTO> postJob(
             @Valid @RequestBody JobRequestDTO dto) {
 
-         String email =securityUtill.getCurrentUserEmail();
-        return ResponseEntity.ok(jobService.createJob(dto,email));
+        String email = securityUtill.getCurrentUserEmail();
+        return ResponseEntity.ok(jobService.createJob(dto, email));
     }
 
     // ✅ ADMIN ONLY
@@ -93,21 +95,21 @@ public class JobController {
 
         String email = securityUtill.getCurrentUserEmail();
         return ResponseEntity.ok(
-                jobService.getRecommendedJobs(email, page, size)
-        );
+                jobService.getRecommendedJobs(email, page, size));
     }
+
     @PutMapping("/{jobId}")
     @PreAuthorize("hasRole('COMPANY')")
     public ResponseEntity<JobResponseDTO> updateJob(
             @PathVariable UUID jobId,
-            @RequestBody JobRequestDTO dto
-    ) {
+            @RequestBody JobRequestDTO dto) {
         String email = securityUtill.getCurrentUserEmail();
 
         JobResponseDTO updatedJob = jobService.updateJob(jobId, email, dto);
 
         return ResponseEntity.ok(updatedJob);
     }
+
     @GetMapping("/applied")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Page<?>> getAppliedJobs(
@@ -123,12 +125,13 @@ public class JobController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = (auth != null && auth.isAuthenticated()
                 && !"anonymousUser".equals(auth.getPrincipal()))
-                ? auth.getName() : null;
+                        ? auth.getName()
+                        : null;
 
         return ResponseEntity.ok(
-                jobService.getJobByJobId(jobId, email)
-        );
+                jobService.getJobByJobId(jobId, email));
     }
+
     @GetMapping("/recent")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<JobResponseDTO>> getRecentJobs() {
@@ -136,19 +139,18 @@ public class JobController {
         String email = securityUtill.getCurrentUserEmail();
 
         return ResponseEntity.ok(
-                jobService.getRecentJobs(email)
-        );
+                jobService.getRecentJobs(email));
     }
-    @GetMapping({"/company/{companyId}", "/jobs/company/{companyId}"})
+
+    @GetMapping({ "/company/{companyId}", "/jobs/company/{companyId}" })
     public ResponseEntity<Page<JobResponseDTO>> getJobsByCompany(
             @PathVariable UUID companyId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
+            @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(
-                jobService.getJobsByCompany(companyId, page, size)
-        );
+                jobService.getJobsByCompany(companyId, page, size));
     }
+
     @GetMapping("/featured")
     public ResponseEntity<List<JobResponseDTO>> getFeaturedJobs() {
         return ResponseEntity.ok(jobService.getFeaturedJobs());

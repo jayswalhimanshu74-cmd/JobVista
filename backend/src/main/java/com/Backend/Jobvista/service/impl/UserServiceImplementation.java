@@ -16,8 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -60,14 +59,14 @@ public class UserServiceImplementation implements UserService {
         return UserMapper.toResponse(savedUser);
     }
 
-
     @Override
     public UserResponseDTO getUserByEmail(String email) throws UserNotFoundException {
 
-        return  UserMapper.toResponse(userRepository.findByEmail(email)
+        return UserMapper.toResponse(userRepository.findByEmail(email)
                 .orElseThrow());
 
     }
+
     @Override
     public List<UserResponseDTO> getAllUsers() throws UserNotFoundException {
         return userRepository.findAll()
@@ -78,8 +77,7 @@ public class UserServiceImplementation implements UserService {
 
     @Override
     @Transactional
-    public UserResponseDTO updateUser(  String  email ,UserRequestDTO dto) throws  UserNotFoundException {
-
+    public UserResponseDTO updateUser(String email, UserRequestDTO dto) throws UserNotFoundException {
 
         User existingUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -93,30 +91,30 @@ public class UserServiceImplementation implements UserService {
         if (dto.getMobileNumber() != null && !dto.getMobileNumber().trim().isEmpty()) {
             existingUser.setMobileNumber(dto.getMobileNumber());
         }
-        
+
         existingUser.setUpdatedAt(LocalDateTime.now());
 
         User updated = userRepository.save(existingUser);
         return UserMapper.toResponse(updated);
     }
 
-    public UserResponseDTO findByEmail(String email){
-        return UserMapper.toResponse(userRepository.findByEmail(email).orElseThrow(()->new UsernameNotFoundException("Invalid ")));
+    public UserResponseDTO findByEmail(String email) {
+        return UserMapper.toResponse(
+                userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("Invalid ")));
     }
 
-    public Page<UserResponseDTO> findAll(int page , int size,String sort) {
-        Pageable pageable = PageRequest.of(page,size, Sort.by("email").ascending());
+    public Page<UserResponseDTO> findAll(int page, int size, String sort) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("email").ascending());
         Page<User> userPage = userRepository.findAll(pageable);
         return userPage.map(UserMapper::toResponse);
-
 
     }
 
     @Override
     public UserResponseDTO getUserById(Long id) {
-        return UserMapper.toResponse(userRepository.findById(id).orElseThrow(()->new RuntimeException( " User Not Found ")));
+        return UserMapper
+                .toResponse(userRepository.findById(id).orElseThrow(() -> new RuntimeException(" User Not Found ")));
     }
-
 
     @Override
     @Transactional
@@ -128,61 +126,64 @@ public class UserServiceImplementation implements UserService {
         userRepository.delete(user);
     }
 
-
     @Override
     @Transactional
     public String uploadProfilePicture(String email, org.springframework.web.multipart.MultipartFile file) {
-    
-    User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
-    try {
-        // Validate file
-        if (file.isEmpty()) throw new RuntimeException("File is empty");
-        if (file.getSize() > 5 * 1024 * 1024) throw new RuntimeException("File too large. Max 5MB allowed");
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new RuntimeException("Only image files are allowed");
+        try {
+            // Validate file
+            if (file.isEmpty())
+                throw new RuntimeException("File is empty");
+            if (file.getSize() > 5 * 1024 * 1024)
+                throw new RuntimeException("File too large. Max 5MB allowed");
+
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new RuntimeException("Only image files are allowed");
+            }
+
+            // Whitelist extensions
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null)
+                throw new RuntimeException("Invalid filename");
+            String extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
+            if (!java.util.List.of(".jpg", ".jpeg", ".png", ".webp").contains(extension)) {
+                throw new RuntimeException("Only JPG, PNG and WEBP images are allowed");
+            }
+
+            // Delete old picture if exists
+            if (user.getProfilePicture() != null) {
+                try {
+                    java.nio.file.Path basePath = java.nio.file.Paths.get("uploads/profiles/").toAbsolutePath()
+                            .normalize();
+                    java.nio.file.Path oldFile = basePath.resolve(user.getProfilePicture()).normalize();
+                    if (oldFile.startsWith(basePath)) {
+                        java.nio.file.Files.deleteIfExists(oldFile);
+                    }
+                } catch (Exception e) {
+                    /* ignore */ }
+            }
+
+            // Safe filename — never use original filename directly
+            String fileName = user.getUserId() + "_" + System.currentTimeMillis() + extension;
+            java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads/profiles/").toAbsolutePath().normalize();
+            java.nio.file.Files.createDirectories(uploadPath);
+
+            java.nio.file.Path filePath = uploadPath.resolve(fileName);
+            java.nio.file.Files.write(filePath, file.getBytes());
+
+            user.setProfilePicture(fileName);
+            userRepository.save(user);
+
+            return fileName;
+
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Profile picture upload failed", e);
         }
-
-        // Whitelist extensions
-        String originalFilename = file.getOriginalFilename();
-        if (originalFilename == null) throw new RuntimeException("Invalid filename");
-        String extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
-        if (!java.util.List.of(".jpg", ".jpeg", ".png", ".webp").contains(extension)) {
-            throw new RuntimeException("Only JPG, PNG and WEBP images are allowed");
-        }
-
-        // Delete old picture if exists
-        if (user.getProfilePicture() != null) {
-            try {
-                java.nio.file.Path basePath = java.nio.file.Paths.get("uploads/profiles/").toAbsolutePath().normalize();
-                java.nio.file.Path oldFile = basePath.resolve(user.getProfilePicture()).normalize();
-                if (oldFile.startsWith(basePath)) {
-                    java.nio.file.Files.deleteIfExists(oldFile);
-                }
-            } catch (Exception e) { /* ignore */ }
-        }
-
-        // Safe filename — never use original filename directly
-        String fileName = user.getUserId() + "_" + System.currentTimeMillis() + extension;
-        java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads/profiles/").toAbsolutePath().normalize();
-        java.nio.file.Files.createDirectories(uploadPath);
-
-        java.nio.file.Path filePath = uploadPath.resolve(fileName);
-        java.nio.file.Files.write(filePath, file.getBytes());
-
-        user.setProfilePicture(fileName);
-        userRepository.save(user);
-
-        return fileName;
-
-    } catch (java.io.IOException e) {
-        throw new RuntimeException("Profile picture upload failed", e);
     }
- }
-
 
     @Override
     @Transactional
@@ -192,8 +193,10 @@ public class UserServiceImplementation implements UserService {
 
         try {
             // Validate file
-            if (file.isEmpty()) throw new RuntimeException("File is empty");
-            if (file.getSize() > 5 * 1024 * 1024) throw new RuntimeException("File too large. Max 5MB allowed");
+            if (file.isEmpty())
+                throw new RuntimeException("File is empty");
+            if (file.getSize() > 5 * 1024 * 1024)
+                throw new RuntimeException("File too large. Max 5MB allowed");
 
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
@@ -202,7 +205,8 @@ public class UserServiceImplementation implements UserService {
 
             // Whitelist extensions
             String originalFilename = file.getOriginalFilename();
-            if (originalFilename == null) throw new RuntimeException("Invalid filename");
+            if (originalFilename == null)
+                throw new RuntimeException("Invalid filename");
             String extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
             if (!java.util.List.of(".jpg", ".jpeg", ".png", ".webp").contains(extension)) {
                 throw new RuntimeException("Only JPG, PNG and WEBP images are allowed");
@@ -211,12 +215,14 @@ public class UserServiceImplementation implements UserService {
             // Delete old cover photo if exists
             if (user.getCoverPhoto() != null) {
                 try {
-                    java.nio.file.Path basePath = java.nio.file.Paths.get("uploads/banners/").toAbsolutePath().normalize();
+                    java.nio.file.Path basePath = java.nio.file.Paths.get("uploads/banners/").toAbsolutePath()
+                            .normalize();
                     java.nio.file.Path oldFile = basePath.resolve(user.getCoverPhoto()).normalize();
                     if (oldFile.startsWith(basePath)) {
                         java.nio.file.Files.deleteIfExists(oldFile);
                     }
-                } catch (Exception e) { /* ignore */ }
+                } catch (Exception e) {
+                    /* ignore */ }
             }
 
             // Safe filename — never use original filename directly

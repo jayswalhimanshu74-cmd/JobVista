@@ -18,7 +18,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -37,9 +36,9 @@ public class SavedJobServiceImplementation implements SavedJobService {
     @Override
     @Transactional
     public void saveJob(UUID jobId, String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(()->new RuntimeException("User Not Found :"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User Not Found :"));
 
-        Job job =jobRepository.findByJobId(jobId).orElseThrow(()->new RuntimeException("Job Not Found :"));
+        Job job = jobRepository.findByJobId(jobId).orElseThrow(() -> new RuntimeException("Job Not Found :"));
 
         if (savedJobRepository.existsByUserAndJob(user, job)) {
             return;
@@ -53,22 +52,21 @@ public class SavedJobServiceImplementation implements SavedJobService {
         savedJobRepository.save(savedJob);
     }
 
-
     @PreAuthorize("hasRole('USER')")
     @Override
     @Transactional
     public void removeSavedJob(UUID jobId, String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(()->new RuntimeException("User Not Found :"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User Not Found :"));
 
-        Job job =jobRepository.findByJobId(jobId).orElseThrow(()->new RuntimeException("Job Not Found :"));
+        Job job = jobRepository.findByJobId(jobId).orElseThrow(() -> new RuntimeException("Job Not Found :"));
 
-        savedJobRepository.deleteByUserAndJob(user,job);
+        savedJobRepository.deleteByUserAndJob(user, job);
     }
 
     @Override
     @PreAuthorize("hasRole('USER')")
-    public Page<JobResponseDTO> getSavedJobs(String email,int page , int size ) {
-        User user = userRepository.findByEmail(email).orElseThrow(()->new RuntimeException("User Not Found :"));
+    public Page<JobResponseDTO> getSavedJobs(String email, int page, int size) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User Not Found :"));
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("savedAt").descending());
 

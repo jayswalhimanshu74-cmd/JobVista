@@ -21,13 +21,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @RequiredArgsConstructor
-public class AuthServiceImplementation  implements AuthService {
+public class AuthServiceImplementation implements AuthService {
 
     @Value("${jwt.refresh-expiration}")
     private long refreshExpiration;
@@ -54,9 +53,7 @@ public class AuthServiceImplementation  implements AuthService {
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        requestDTO.getEmail(), requestDTO.getPassword()
-                )
-        );
+                        requestDTO.getEmail(), requestDTO.getPassword()));
 
         User user = userRepository.findByEmail(requestDTO.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -64,22 +61,20 @@ public class AuthServiceImplementation  implements AuthService {
         String accessToken = jwtService.generateAccessToken(user);
         RefreshToken refreshToken = refreshTokenService.createOrUpdate(
                 user,
-                 Instant.now().plusMillis(refreshExpiration)
-           );
+                Instant.now().plusMillis(refreshExpiration));
         ResponseCookie cookie = createRefreshTokenCookie(refreshToken.getToken(), refreshExpiration / 1000);
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        return new TokenResponseDTO(accessToken,user.getRole());
+        return new TokenResponseDTO(accessToken, user.getRole());
     }
 
     @Override
     @Transactional
-    public TokenResponseDTO refreshToken(String refreshTokenValue ,HttpServletResponse response) {
+    public TokenResponseDTO refreshToken(String refreshTokenValue, HttpServletResponse response) {
 
         RefreshToken refreshToken = refreshTokenService.verifyAndRotate(
-                refreshTokenValue
-        );
+                refreshTokenValue);
 
         User user = refreshToken.getUser();
 
@@ -88,7 +83,7 @@ public class AuthServiceImplementation  implements AuthService {
         ResponseCookie cookie = createRefreshTokenCookie(refreshToken.getToken(), 7 * 24 * 60 * 60);
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return new TokenResponseDTO(newAccessToken,user.getRole());
+        return new TokenResponseDTO(newAccessToken, user.getRole());
 
     }
 
@@ -100,9 +95,9 @@ public class AuthServiceImplementation  implements AuthService {
     private ResponseCookie createRefreshTokenCookie(String token, long maxAgeSeconds) {
         jakarta.servlet.http.HttpServletRequest request = null;
         try {
-            request = ((org.springframework.web.context.request.ServletRequestAttributes) 
-                org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes())
-                .getRequest();
+            request = ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder
+                    .currentRequestAttributes())
+                    .getRequest();
         } catch (Exception e) {
             // Fallback
         }
@@ -112,7 +107,7 @@ public class AuthServiceImplementation  implements AuthService {
             String origin = request.getHeader("Origin");
             String referer = request.getHeader("Referer");
             String host = request.getServerName();
-            
+
             if (origin != null && !origin.contains("localhost") && !origin.contains("127.0.0.1")) {
                 isLocal = false;
             } else if (referer != null && !referer.contains("localhost") && !referer.contains("127.0.0.1")) {
@@ -129,10 +124,10 @@ public class AuthServiceImplementation  implements AuthService {
 
         if (isLocal) {
             cookieBuilder.secure(false)
-                         .sameSite("Lax");
+                    .sameSite("Lax");
         } else {
             cookieBuilder.secure(true)
-                         .sameSite("None");
+                    .sameSite("None");
         }
 
         return cookieBuilder.build();
