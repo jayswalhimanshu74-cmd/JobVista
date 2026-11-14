@@ -98,4 +98,10 @@ public class JobApplicationController {
         return ResponseEntity.ok(
                 applicationService.getAllApplications(status, page, size));
     }
+
+    @GetMapping("/{applicationId}/resume")
+    @PreAuthorize("hasAnyRole('COMPANY','USER','ADMIN')")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadResume(@PathVariable UUID applicationId) {
+        return applicationService.downloadResume(applicationId);
+    }
 }

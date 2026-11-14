@@ -15,7 +15,6 @@ public class StaticResourceConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         exposeDirectory("uploads/profiles", registry);
-        exposeDirectory("uploads/resumes", registry);
         exposeDirectory("uploads/banners", registry);
     }
 

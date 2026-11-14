@@ -107,7 +107,7 @@ public class JobSeekerServiceImplementation  implements JobSeekerService {
                 .orElseThrow(() -> new RuntimeException("Profile not found"));
 
         if (jobSeeker.getResumeUrl() == null) {
-            throw new RuntimeException("Resume not uploaded");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume not uploaded");
         }
 
         if (jobSeeker.getResumeUrl().startsWith("http")) {
@@ -124,13 +124,13 @@ public class JobSeekerServiceImplementation  implements JobSeekerService {
 
             //  Security check
             if (!filePath.startsWith(basePath)) {
-                throw new RuntimeException("Invalid file path");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file path");
             }
 
             Resource resource = new UrlResource(filePath.toUri());
 
             if (!resource.exists()) {
-                throw new RuntimeException("File not found");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found");
             }
 
             String contentType = Files.probeContentType(filePath);
@@ -145,7 +145,7 @@ public class JobSeekerServiceImplementation  implements JobSeekerService {
                     .body(resource);
 
         } catch (IOException e) {
-            throw new RuntimeException("Error while downloading resume", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while downloading resume", e);
         }
     }
 

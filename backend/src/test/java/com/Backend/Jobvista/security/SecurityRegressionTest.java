@@ -54,9 +54,16 @@ public class SecurityRegressionTest {
     private com.Backend.Jobvista.repository.JobApplicationRepository jobApplicationRepository;
 
     @Autowired
+    private com.Backend.Jobvista.repository.JobSeekersRepository jobSeekersRepository;
+
+    @Autowired
     private com.Backend.Jobvista.repository.SavedJobRepository savedJobRepository;
 
     private UUID existingJobId;
+    private String companyOwnerEmail;
+    private UUID testApplicationId;
+    private String candidateOwnerEmail = "candidate_owner@test.com";
+    private java.nio.file.Path tempResumePath;
 
     @BeforeEach
     void setUp() {
@@ -70,8 +77,11 @@ public class SecurityRegressionTest {
         savedJobRepository.deleteAll();
         jobRepository.deleteAll();
         companyRepository.deleteAll();
+        jobSeekersRepository.deleteAll();
+        userRepository.deleteAll();
 
         String uniqueEmail = "compowner_" + UUID.randomUUID() + "@test.com";
+        companyOwnerEmail = uniqueEmail;
         User compUser = User.builder()
                 .userId(UUID.randomUUID())
                 .name("Regression Company User")
@@ -107,7 +117,44 @@ public class SecurityRegressionTest {
                 .companyName("Regression Corp")
                 .postedAt(LocalDateTime.now())
                 .build();
-        jobRepository.save(job);
+        job = jobRepository.save(job);
+
+        // Candidate user and JobSeeker profile
+        candidateOwnerEmail = "cand_" + UUID.randomUUID() + "@test.com";
+        User candidateUser = User.builder()
+                .userId(UUID.randomUUID())
+                .name("Test Candidate")
+                .email(candidateOwnerEmail)
+                .password("password")
+                .mobileNumber("9876543210")
+                .role(Role.USER)
+                .status(Status.ACTIVE)
+                .build();
+        candidateUser = userRepository.save(candidateUser);
+
+        String resumeFileName = "dummy-resume-" + UUID.randomUUID() + ".pdf";
+        try {
+            java.nio.file.Path resumeDir = java.nio.file.Paths.get("uploads/resumes").toAbsolutePath().normalize();
+            java.nio.file.Files.createDirectories(resumeDir);
+            tempResumePath = resumeDir.resolve(resumeFileName);
+            java.nio.file.Files.write(tempResumePath, "%PDF-1.4 dummy content".getBytes());
+        } catch (java.io.IOException ignored) {}
+
+        com.Backend.Jobvista.entity.JobSeeker seeker = com.Backend.Jobvista.entity.JobSeeker.builder()
+                .jobSeekerId(UUID.randomUUID())
+                .user(candidateUser)
+                .resumeUrl(resumeFileName)
+                .build();
+        seeker = jobSeekersRepository.save(seeker);
+
+        com.Backend.Jobvista.entity.JobApplication application = com.Backend.Jobvista.entity.JobApplication.builder()
+                .job(job)
+                .jobSeeker(seeker)
+                .applicationStatus(com.Backend.Jobvista.entity.ApplicationStatus.APPLIED)
+                .appliedAt(LocalDateTime.now())
+                .build();
+        application = jobApplicationRepository.save(application);
+        testApplicationId = application.getJobApplicationId();
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -244,7 +291,6 @@ public class SecurityRegressionTest {
     }
 
     @Test
-    @WithMockUser(username = "employer@test.com", roles = "COMPANY")
     @DisplayName("Employer cannot upload resume (restricted to ROLE_USER, HTTP 403)")
     void testResumeUpload_Employer_Forbidden() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "resume.pdf", "application/pdf", "PDF test content".getBytes());
@@ -252,12 +298,77 @@ public class SecurityRegressionTest {
                 .andExpect(status().isForbidden());
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // 6. Resume Exposure Protection Tests
+    // ─────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Anonymous users cannot directly access /uploads/resumes/** (HTTP 401/403)")
+    void testStaticResumes_Anonymous_Denied() throws Exception {
+        mockMvc.perform(get("/uploads/resumes/dummy-resume.pdf"))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    @DisplayName("Anonymous users cannot download application resume (HTTP 401/403)")
+    void testApplicationResume_Anonymous_Denied() throws Exception {
+        mockMvc.perform(get("/api/v1/application/" + testApplicationId + "/resume"))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    @WithMockUser(username = "other_candidate@test.com", roles = "USER")
+    @DisplayName("Unrelated candidate cannot download another candidate's resume (HTTP 403)")
+    void testApplicationResume_UnrelatedCandidate_Forbidden() throws Exception {
+        mockMvc.perform(get("/api/v1/application/" + testApplicationId + "/resume"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "other_company@test.com", roles = "COMPANY")
+    @DisplayName("Unrelated company cannot download candidate resume for another company's job (HTTP 403)")
+    void testApplicationResume_UnrelatedCompany_Forbidden() throws Exception {
+        mockMvc.perform(get("/api/v1/application/" + testApplicationId + "/resume"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Candidate owner can download own application resume (HTTP 200)")
+    void testApplicationResume_CandidateOwner_Permitted() throws Exception {
+        mockMvc.perform(get("/api/v1/application/" + testApplicationId + "/resume")
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(candidateOwnerEmail).roles("USER")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Job posting company can download applicant's resume (HTTP 200)")
+    void testApplicationResume_JobOwnerCompany_Permitted() throws Exception {
+        mockMvc.perform(get("/api/v1/application/" + testApplicationId + "/resume")
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(companyOwnerEmail).roles("COMPANY")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@jobvista.com", roles = "ADMIN")
+    @DisplayName("Administrator can download application resume (HTTP 200)")
+    void testApplicationResume_Admin_Permitted() throws Exception {
+        mockMvc.perform(get("/api/v1/application/" + testApplicationId + "/resume"))
+                .andExpect(status().isOk());
+    }
+
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
+        if (tempResumePath != null) {
+            try {
+                java.nio.file.Files.deleteIfExists(tempResumePath);
+            } catch (java.io.IOException ignored) {}
+        }
         recentlyViewedRepository.deleteAll();
         jobApplicationRepository.deleteAll();
         savedJobRepository.deleteAll();
+        jobSeekersRepository.deleteAll();
         jobRepository.deleteAll();
         companyRepository.deleteAll();
+        userRepository.deleteAll();
     }
 }
