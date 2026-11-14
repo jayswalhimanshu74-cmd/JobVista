@@ -26,11 +26,18 @@ public class NotificationServiceImplementation implements NotificationService {
     }
 
     @Override
-    public void markAsRead(Long notificationId) {
-        notificationRepository.findById(notificationId).ifPresent(n -> {
-            n.setRead(true);
-            notificationRepository.save(n);
-        });
+    public void markAsRead(Long notificationId, String email) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Notification not found"));
+
+        if (!notification.getUserId().equals(email)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN, "You do not own this notification");
+        }
+
+        notification.setRead(true);
+        notificationRepository.save(notification);
     }
 
     @Override

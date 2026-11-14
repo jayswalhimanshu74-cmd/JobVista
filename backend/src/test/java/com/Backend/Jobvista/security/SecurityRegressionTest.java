@@ -28,6 +28,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -60,9 +61,13 @@ public class SecurityRegressionTest {
     @Autowired
     private com.Backend.Jobvista.repository.SavedJobRepository savedJobRepository;
 
+    @Autowired
+    private com.Backend.Jobvista.repository.NotificationRepository notificationRepository;
+
     private UUID existingJobId;
     private String companyOwnerEmail;
     private UUID testApplicationId;
+    private Long testNotificationId;
     private String candidateOwnerEmail = "candidate_owner@test.com";
     private java.nio.file.Path tempResumePath;
 
@@ -73,6 +78,7 @@ public class SecurityRegressionTest {
                 .apply(springSecurity())
                 .build();
 
+        notificationRepository.deleteAll();
         recentlyViewedRepository.deleteAll();
         jobApplicationRepository.deleteAll();
         savedJobRepository.deleteAll();
@@ -156,6 +162,15 @@ public class SecurityRegressionTest {
                 .build();
         application = jobApplicationRepository.save(application);
         testApplicationId = application.getJobApplicationId();
+
+        com.Backend.Jobvista.entity.Notification notification = com.Backend.Jobvista.entity.Notification.builder()
+                .userId(candidateOwnerEmail)
+                .message("Your application was received")
+                .type(com.Backend.Jobvista.entity.NotificationType.INFO)
+                .isRead(false)
+                .build();
+        notification = notificationRepository.save(notification);
+        testNotificationId = notification.getId();
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -437,6 +452,33 @@ public class SecurityRegressionTest {
                 .andExpect(status().isOk());
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // 8. Notification Mark-As-Read IDOR Protection Tests
+    // ─────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Anonymous user cannot mark notification as read (HTTP 401/403)")
+    void testNotificationMarkRead_Anonymous_Denied() throws Exception {
+        mockMvc.perform(patch("/api/v1/notifications/" + testNotificationId + "/read"))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    @WithMockUser(username = "other_user@test.com", roles = "USER")
+    @DisplayName("User cannot mark another user's notification as read (HTTP 403)")
+    void testNotificationMarkRead_OtherUser_Forbidden() throws Exception {
+        mockMvc.perform(patch("/api/v1/notifications/" + testNotificationId + "/read"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Notification owner can mark notification as read (HTTP 204)")
+    void testNotificationMarkRead_Owner_Success() throws Exception {
+        mockMvc.perform(patch("/api/v1/notifications/" + testNotificationId + "/read")
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(candidateOwnerEmail).roles("USER")))
+                .andExpect(status().isNoContent());
+    }
+
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
         if (tempResumePath != null) {
@@ -444,6 +486,7 @@ public class SecurityRegressionTest {
                 java.nio.file.Files.deleteIfExists(tempResumePath);
             } catch (java.io.IOException ignored) {}
         }
+        notificationRepository.deleteAll();
         recentlyViewedRepository.deleteAll();
         jobApplicationRepository.deleteAll();
         savedJobRepository.deleteAll();
