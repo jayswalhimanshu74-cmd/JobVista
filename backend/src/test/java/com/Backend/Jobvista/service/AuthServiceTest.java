@@ -46,6 +46,7 @@ public class AuthServiceTest {
         requestDTO = new UserRequestDTO();
         requestDTO.setEmail("test@example.com");
         requestDTO.setName("Test User");
+        requestDTO.setPassword("password123");
         requestDTO.setRole(Role.USER);
 
         responseDTO = new UserResponseDTO();
