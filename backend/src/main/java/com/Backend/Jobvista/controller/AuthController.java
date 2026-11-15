@@ -41,6 +41,7 @@ public class AuthController {
     private JwtService jwtService;
     private BlackListedTokenService blackListedTokenService;
     private RefreshTokenService refreshTokenService;
+    private com.Backend.Jobvista.repository.UserRepository userRepository;
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
@@ -50,7 +51,10 @@ public class AuthController {
         try {
             String baseUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder
                     .fromCurrentContextPath().build().toUriString();
-            String verificationLink = baseUrl + "/api/v1/auth/verify?token=" + user.getVerificationToken();
+            String token = userRepository.findByEmail(user.getEmail())
+                    .map(com.Backend.Jobvista.entity.User::getVerificationToken)
+                    .orElse("");
+            String verificationLink = baseUrl + "/api/v1/auth/verify?token=" + token;
 
             emailService.sendMail(
                     user.getEmail(),

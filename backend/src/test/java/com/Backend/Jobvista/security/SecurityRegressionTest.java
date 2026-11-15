@@ -479,6 +479,19 @@ public class SecurityRegressionTest {
                 .andExpect(status().isNoContent());
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // 9. Token Leak Prevention in User Responses
+    // ─────────────────────────────────────────────────────────────
+
+    @Test
+    @WithMockUser(username = "admin@jobvista.com", roles = "ADMIN")
+    @DisplayName("User profile and directory responses do not expose verificationToken")
+    void testUserResponses_DoNotExposeVerificationToken() throws Exception {
+        mockMvc.perform(get("/api/v1/users"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].verificationToken").doesNotExist());
+    }
+
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
         if (tempResumePath != null) {

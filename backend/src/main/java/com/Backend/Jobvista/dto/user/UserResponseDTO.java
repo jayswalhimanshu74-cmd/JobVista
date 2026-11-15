@@ -27,7 +27,6 @@ public class UserResponseDTO {
     private Status status;
     private String profilePicture;
     private String coverPhoto;
-    private String verificationToken;
 
     // getters & setters
 }

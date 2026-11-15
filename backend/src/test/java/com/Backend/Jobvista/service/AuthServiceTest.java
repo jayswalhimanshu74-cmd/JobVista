@@ -52,7 +52,6 @@ public class AuthServiceTest {
         responseDTO.setEmail("test@example.com");
         responseDTO.setName("Test User");
         responseDTO.setRole(Role.USER);
-        responseDTO.setVerificationToken("test-token");
 
         user = new User();
         user.setEmail("test@example.com");
