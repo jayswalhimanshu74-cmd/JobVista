@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -521,6 +522,31 @@ public class SecurityRegressionTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").exists())
                 .andExpect(jsonPath("$.experienceRequired").exists());
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 11. Rate Limiting Tests (429 & Retry-After Header)
+    // ─────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Exceeding rate limit on application apply returns 429 with Retry-After header")
+    void testApplyRateLimit_Exceeded_Returns429WithRetryAfter() throws Exception {
+        String testIp = "198.51.100." + (int)(Math.random() * 200 + 10);
+        UUID dummyJobId = UUID.randomUUID();
+
+        // 10 requests allowed
+        for (int i = 0; i < 10; i++) {
+            mockMvc.perform(post("/api/v1/application/apply/" + dummyJobId)
+                    .header("X-Forwarded-For", testIp)
+                    .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(candidateOwnerEmail).roles("USER")));
+        }
+
+        // 11th request triggers rate limit
+        mockMvc.perform(post("/api/v1/application/apply/" + dummyJobId)
+                .header("X-Forwarded-For", testIp)
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(candidateOwnerEmail).roles("USER")))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string("Retry-After", "60"));
     }
 
     @org.junit.jupiter.api.AfterEach
