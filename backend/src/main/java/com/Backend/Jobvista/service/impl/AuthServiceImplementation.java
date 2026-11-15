@@ -40,6 +40,18 @@ public class AuthServiceImplementation implements AuthService {
     @Override
     public UserResponseDTO regiser(UserRequestDTO requestDTO) {
 
+        if (requestDTO.getEmail() == null || requestDTO.getEmail().trim().isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Email is required");
+        }
+        if (requestDTO.getPassword() == null || requestDTO.getPassword().trim().isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Password is required");
+        }
+        if (requestDTO.getName() == null || requestDTO.getName().trim().isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Name is required");
+        }
+        if (requestDTO.getRole() == null) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Role is required");
+        }
         if (requestDTO.getRole() == Role.ADMIN) {
             throw new RuntimeException("Admin registration not allowed");
         }

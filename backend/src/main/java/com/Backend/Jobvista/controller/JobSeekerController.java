@@ -5,6 +5,7 @@ import com.Backend.Jobvista.config.SecurityUtill;
 import com.Backend.Jobvista.dto.jobSeeker.JobSeekerRequestDTO;
 import com.Backend.Jobvista.dto.jobSeeker.JobSeekersResponseDTO;
 import com.Backend.Jobvista.service.JobSeekerService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -67,7 +68,7 @@ public class JobSeekerController {
     @PutMapping("/me")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<JobSeekersResponseDTO> updateMyProfile(
-            @RequestBody JobSeekerRequestDTO dto) {
+            @Valid @RequestBody JobSeekerRequestDTO dto) {
         String email = securityUtill.getCurrentUserEmail();
         return ResponseEntity.ok(jobSeekerService.updateJobSeeker(email, dto));
     }

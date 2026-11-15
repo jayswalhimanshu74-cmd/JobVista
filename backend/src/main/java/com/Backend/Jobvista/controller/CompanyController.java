@@ -5,6 +5,7 @@ import com.Backend.Jobvista.dto.company.CompanyRequestDTO;
 import com.Backend.Jobvista.dto.company.CompanyResponseDTO;
 
 import com.Backend.Jobvista.service.CompanyService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 
@@ -24,7 +25,7 @@ public class CompanyController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CompanyResponseDTO> updateCompany(
             @PathVariable Long id,
-            @RequestBody CompanyRequestDTO company
+            @Valid @RequestBody CompanyRequestDTO company
     ) {
         return ResponseEntity.ok(companyService.updateCompany(id, company));
     }  
@@ -32,7 +33,7 @@ public class CompanyController {
     @PostMapping
     @PreAuthorize("hasAnyRole('USER','COMPANY')")
     public ResponseEntity<CompanyResponseDTO> createCompany(
-            @RequestBody CompanyRequestDTO dto) {
+            @Valid @RequestBody CompanyRequestDTO dto) {
 
         String email = securityUtill.getCurrentUserEmail();
         return ResponseEntity.ok(companyService.createCompany(dto, email));
@@ -60,7 +61,7 @@ public class CompanyController {
     @PutMapping("/me")
     @PreAuthorize("hasRole('COMPANY')")
     public ResponseEntity<CompanyResponseDTO> updateMyCompany(
-            @RequestBody CompanyRequestDTO dto
+            @Valid @RequestBody CompanyRequestDTO dto
     ) {
         String email = securityUtill.getCurrentUserEmail();
         return ResponseEntity.ok(companyService.updateCompanyByEmail(email, dto));

@@ -102,7 +102,7 @@ public class JobController {
     @PreAuthorize("hasRole('COMPANY')")
     public ResponseEntity<JobResponseDTO> updateJob(
             @PathVariable UUID jobId,
-            @RequestBody JobRequestDTO dto) {
+            @Valid @RequestBody JobRequestDTO dto) {
         String email = securityUtill.getCurrentUserEmail();
 
         JobResponseDTO updatedJob = jobService.updateJob(jobId, email, dto);

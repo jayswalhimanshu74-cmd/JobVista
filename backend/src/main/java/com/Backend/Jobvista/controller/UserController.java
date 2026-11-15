@@ -6,6 +6,7 @@ import com.Backend.Jobvista.dto.user.UserRequestDTO;
 import com.Backend.Jobvista.dto.user.UserResponseDTO;
 import com.Backend.Jobvista.exception.UserNotFoundException;
 import com.Backend.Jobvista.service.UserService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,7 @@ public class UserController {
     @PutMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserResponseDTO> updateMyProfile(
-            @RequestBody UserRequestDTO userRequestDTO)
+            @Valid @RequestBody UserRequestDTO userRequestDTO)
             throws UserNotFoundException {
 
         String email = securityUtil.getCurrentUserEmail();

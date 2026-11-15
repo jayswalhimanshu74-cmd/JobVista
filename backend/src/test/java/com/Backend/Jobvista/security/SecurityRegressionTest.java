@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import org.springframework.http.MediaType;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -29,6 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -490,6 +492,35 @@ public class SecurityRegressionTest {
         mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].verificationToken").doesNotExist());
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 10. Jakarta Validation Tests (@Valid)
+    // ─────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Login with invalid email or blank password returns HTTP 400 Bad Request")
+    void testLoginValidation_InvalidPayload_ReturnsBadRequest() throws Exception {
+        String invalidPayload = "{\"email\":\"not-an-email\",\"password\":\"\"}";
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidPayload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.email").exists())
+                .andExpect(jsonPath("$.password").exists());
+    }
+
+    @Test
+    @DisplayName("Job creation with blank title or negative experience returns HTTP 400 Bad Request")
+    void testJobValidation_BlankTitle_ReturnsBadRequest() throws Exception {
+        String invalidJob = "{\"title\":\"\",\"description\":\"valid description\",\"experienceRequired\":-1}";
+        mockMvc.perform(post("/api/v1/job")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidJob)
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(companyOwnerEmail).roles("COMPANY")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").exists())
+                .andExpect(jsonPath("$.experienceRequired").exists());
     }
 
     @org.junit.jupiter.api.AfterEach
